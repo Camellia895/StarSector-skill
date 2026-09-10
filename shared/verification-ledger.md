@@ -144,6 +144,7 @@ prio(check) = Σ(severity权重 × 每次命中) − c × 运行次数      # c 
 | `check_rules_arg_quotes.js` | red | cond | 仅当有 rules.csv；静默截断（R2） |
 | `verify_all_data.js` | red | base | 数据层易漏区/键唯一性（R10） |
 | `check_refs.js` | red | cond | 改过装配/舰船/武器/贴图引用 |
+| `LoadTest.java` | red | cond | 离线类加载/实例化 + 脚本类存在性（skill 自带脚本，见 `script-registry.md` F 节） |
 | `validate_star_system.ps1` | yellow | cond | 仅星系 mod（skill 自带脚本，路径见 `script-registry.md` F 节） |
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3） |
 | `check_content.js` | yellow | base | 空译文/占位符/字段结构 |
