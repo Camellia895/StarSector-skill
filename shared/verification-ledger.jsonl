@@ -1,0 +1,29 @@
+{"t":"2026-09-10T15:02:11.538Z","check":"check_font_glyphs.js","target":"core-0.98a","exit":0,"hit":false,"probe":false,"note":"官方中文核心 rules.csv 含 U+200B 零宽空格 ×3：修正脚本口径后判 clean（零宽字符不计命中）"}
+{"t":"2026-09-10T15:02:27.890Z","check":"check_content.js","target":"probe","exit":1,"hit":true,"probe":true,"note":"注入裸%与丢%s"}
+{"t":"2026-09-10T15:02:28.065Z","check":"check_content.js","target":"probe-control","exit":0,"hit":false,"probe":true,"note":""}
+{"t":"2026-04-27T10:00:00+08:00","check":"verify_identifiers.js","target":"FDS_ROTS","exit":1,"hit":true,"probe":false,"seed":true,"note":"字段 x 被误译 → TylosShipsystem.apply 闪退（R7 事故）"}
+{"t":"2026-04-27T10:20:00+08:00","check":"verify_identifiers.js","target":"FDS_ROTS","exit":0,"hit":false,"probe":false,"seed":true,"note":"修复映射后复查"}
+{"t":"2026-05-02T11:00:00+08:00","check":"check_csv_quotes.js","target":"rules.csv","exit":1,"hit":true,"probe":false,"seed":true,"note":"整格以弯引号开头 → 拆列 → 启动崩 JSONObject[options] not found（R1 事故）"}
+{"t":"2026-05-02T11:40:00+08:00","check":"check_csv_quotes.js","target":"rules.csv","exit":0,"hit":false,"probe":false,"seed":true,"note":"改 ASCII 引号后复查"}
+{"t":"2026-05-03T09:30:00+08:00","check":"check_rules_arg_quotes.js","target":"Tania/rules.csv","exit":1,"hit":true,"probe":false,"seed":true,"note":"AddText 参数内嵌弯引号 → 文本在「Tania最」处截断（R2 事故，不崩只截断）"}
+{"t":"2026-05-03T10:10:00+08:00","check":"check_rules_arg_quotes.js","target":"Tania/rules.csv","exit":0,"hit":false,"probe":false,"seed":true,"note":"参数内改用【】后复查"}
+{"t":"2026-05-06T14:00:00+08:00","check":"check_font_glyphs.js","target":"FDS_ROTS","exit":1,"hit":true,"probe":false,"seed":true,"note":"「」无字形 → 游戏内显示 ?（R3 事故）"}
+{"t":"2026-05-06T14:30:00+08:00","check":"check_font_glyphs.js","target":"FDS_ROTS","exit":1,"hit":true,"probe":false,"seed":true,"note":"生僻字 艏(U+824F) 无字形 → 改「舰首」"}
+{"t":"2026-05-06T15:00:00+08:00","check":"check_font_glyphs.js","target":"FDS_ROTS","exit":0,"hit":false,"probe":false,"seed":true,"note":"换字后复查"}
+{"t":"2026-05-08T16:00:00+08:00","check":"check_u0001.js","target":"automatic-orders","exit":1,"hit":true,"probe":false,"seed":true,"note":"Kotlin indy 拼接 u0001 数量漂移 → StringConcatException（R6 事故）"}
+{"t":"2026-05-08T16:30:00+08:00","check":"check_u0001.js","target":"automatic-orders","exit":0,"hit":false,"probe":false,"seed":true,"note":"修译文后复查"}
+{"t":"2026-05-10T10:00:00+08:00","check":"verify_all_data.js","target":"FDS_ROTS","exit":1,"hit":true,"probe":false,"seed":true,"note":"LunaSettings defaultValue 列 + variants displayName 漏译（易漏区 ②③）"}
+{"t":"2026-05-10T10:40:00+08:00","check":"verify_all_data.js","target":"FDS_ROTS","exit":1,"hit":true,"probe":false,"seed":true,"note":"designTypeColors 键重复 → Duplicate key 深渊（R10 事故）"}
+{"t":"2026-05-10T11:10:00+08:00","check":"verify_all_data.js","target":"FDS_ROTS","exit":0,"hit":false,"probe":false,"seed":true,"note":"合并同义键后复查"}
+{"t":"2026-05-12T09:00:00+08:00","check":"check_content.js","target":"automatic-orders","exit":1,"hit":true,"probe":false,"seed":true,"note":"hull_mods 写「10%时」→ UnknownFormatConversionException（R4 事故）"}
+{"t":"2026-05-12T09:20:00+08:00","check":"check_content.js","target":"automatic-orders","exit":0,"hit":false,"probe":false,"seed":true,"note":"改「10%%时」后复查"}
+{"t":"2026-05-14T13:00:00+08:00","check":"check_refs.js","target":"sylphon","exit":1,"hit":true,"probe":false,"seed":true,"note":"升级 0.98a 引用链核查（.skin/.variant/.wpn 交叉）"}
+{"t":"2026-05-14T13:30:00+08:00","check":"check_refs.js","target":"sylphon","exit":0,"hit":false,"probe":false,"seed":true,"note":"排除已知假阳性后为 0 真问题"}
+{"t":"2026-05-15T10:00:00+08:00","check":"cmp_strings.js","target":"sylphon","exit":0,"hit":false,"probe":false,"seed":true,"note":"jar↔源码一致性证明：字符串常量全包含 ⇒ 可安全整包重编译"}
+{"t":"2026-09-10T15:02:11.538Z","check":"check_font_glyphs.js","target":"core-0.98a","exit":0,"hit":false,"probe":false,"note":"官方中文核心 rules.csv 含 U+200B 零宽空格 ×3：修正脚本口径后判 clean（零宽字符不计命中）"}
+{"t":"2026-09-10T15:04:54.505Z","check":"verify_identifiers.js","target":"empty-dir","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-10T15:05:09.352Z","check":"check_content.js","target":"probe2","exit":1,"hit":true,"probe":true,"note":""}
+{"t":"2026-09-10T15:05:25.126Z","check":"verify_identifiers.js","target":"empty-dir2","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-10T15:05:25.292Z","check":"check_content.js","target":"probe3","exit":1,"hit":true,"probe":true,"note":""}
+{"t":"2026-09-10T15:05:35.020Z","check":"verify_identifiers.js","target":"empty-dir3","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-10T15:05:35.145Z","check":"check_content.js","target":"probe4","exit":1,"hit":true,"probe":true,"note":""}

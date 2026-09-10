@@ -15,11 +15,25 @@ description: Starsector（远行星号）mod 汉化的验证环节——把"看�
 - **每一层都要有可复现命令与通过标准**，不接受"我看了一遍没问题"。
 - 已知**假阳性**要预先排除（列在 §4），否则会为了"修假 bug"改坏真东西。
 - 校验只读：发现问题 → 回到 `starsector-mod-localization-apply` 修 → 重跑本流程。
+- **跑校验一律用 `run_check.js` 包装**（退出码自动记账；默认不透传子命令输出，省上下文）。
+  **别直接 `node xxx.js`**，否则这条校验的历史票会丢：
+
+  ```powershell
+  node <skills>\shared\scripts\run_check.js --check=<校验名> --expect-args=<N> --target=<Mod> -- <原命令...>
+  ```
+
+  退出码约定：`0` = clean（减票）/ `1` = hit（加票）/ `2+` = 调用错误（**不计票**）。
+  **`--expect-args=<N>` 要填**（只数脚本自身参数）：部分脚本在参数不足时也返回 1
+  （实测 `verify_identifiers.js`），不声明的话一次错误调用会被记成"命中"，
+  把这条校验的价值虚高——详见 `shared\verification-ledger.md` §7.1。
+- 档位（每次跑 / 抽样 / 休眠）见 `<skills>\shared\verification-ledger.md`：`base` 必跑、
+  `cond` 在对应场景存在时跑、`sample`/`dormant` 本次可以不跑。
 
 ## 1. G2 内容完整
 
 ```powershell
-node <skills>\skills\starsector-mod-localization-content\scripts\check_content.js <worklist.json...>
+node <skills>\shared\scripts\run_check.js --check=check_content.js --target=<Mod> -- `
+     node <skills>\skills\starsector-mod-localization-content\scripts\check_content.js <worklist.json...>
 ```
 
 - [ ] 空 `zh` = 0
@@ -102,3 +116,20 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <modSrcDir>
 | `Duplicate key "xxx"` | JSON 键译后重复（R10） | 合并同义键 |
 | 悬停即崩 `UnknownFormatConversionException` | 字面 `%` 未写 `%%`（R4） | 修正后重跑 G2/G3 |
 | 症状无法归因 | 需引擎级复现 | → `starsector-engine-diagnose` |
+
+## 7. 校验记账（让校验集合自我修剪）
+
+每次跑校验都会经 `run_check.js` 落一条记录到 `<skills>\shared\verification-ledger.jsonl`——
+**只记"检查项 + 退出码 + 目标"，不记原始输出**（账本自己不能变成吃上下文的东西）。
+
+累积后的处置原则（完整机制见 `shared\verification-ledger.md`）：
+
+- **升档**（抽样 → 每次跑）：该条有过真实命中即可。
+- **降档/休眠**：必须同时满足「命中频率低 **+** 后果等级允许 **+** **探针通过**」。
+  关键：**"长期通过"不等于"多余"**——也可能是它根本没在工作（正则失效、路径变了），
+  所以降档前必须用**注入缺陷的探针**验证它确实能报警（`wf-audit-checks.md` 阶段 2）。
+  红级（崩服/静默失效）校验**永不退役**，最多转抽样；**未探针过的校验禁止退役**。
+
+**触发词**：用户说"校验一直没问题" / "这次校验发现 X" / "校验审计" → 按 `workflows\wf-audit-checks.md` 处理，
+不要凭感觉手写账本。
+

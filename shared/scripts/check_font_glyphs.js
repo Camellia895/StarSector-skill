@@ -70,5 +70,21 @@ for (const [cp, v] of arr) {
   console.log(`  ${String.fromCodePoint(cp)}  U+${cp.toString(16).toUpperCase().padStart(4, '0')}  x${v.count}  [有字形字体: ${holders.length ? holders.join(',') : '无'}]`);
   v.samples.forEach(s => console.log('      ' + s.slice(0, 150)));
 }
-if (arr.length) console.log('!! 上述字符在游戏内会显示为 "?"；改用【】《》（）等有字形字符，或换成同义常用字。');
-process.exit(arr.length ? 1 : 0);
+// 零宽 / 格式类字符（Cf）：无字形也没关系——渲染为空，**不会显示成 "?"**。
+// 与普通缺字形区分开，避免误报"会显示 ?"（实测：官方中文核心 rules.csv 含 U+200B ×3，无实际影响）。
+const isZeroWidth = cp =>
+  cp === 0x200B || cp === 0x200C || cp === 0x200D || cp === 0xFEFF ||
+  (cp >= 0x2060 && cp <= 0x2064) ||
+  (cp >= 0x200E && cp <= 0x200F) ||
+  (cp >= 0x202A && cp <= 0x202E) ||
+  /\p{Cf}/u.test(String.fromCodePoint(cp));
+
+const real = arr.filter(([cp]) => !isZeroWidth(cp));
+const zero = arr.filter(([cp]) => isZeroWidth(cp));
+if (real.length) console.log('!! 上述字符在游戏内会显示为 "?"；改用【】《》（）等有字形字符，或换成同义常用字。');
+if (zero.length) console.log(
+  `注意：其中 ${zero.length} 类为零宽/格式字符（如 U+200B），渲染为空、**不会显示成 "?"**，` +
+  `无实际影响；建议清理但不阻塞交付。`
+);
+// 退出码只由"会显示成 ?"的真实缺字形决定 → 避免零宽字符造成假阳性命中（记账口径见 shared\verification-ledger.md）
+process.exit(real.length ? 1 : 0);
