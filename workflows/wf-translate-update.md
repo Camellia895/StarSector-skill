@@ -27,16 +27,29 @@
 
 ## 1. 阶段 1 · 迁移旧译（AI 做）
 
+0. **先给旧汉化"体检"再算复用面**（**2026-09 Hostile Intercept 教训**：`_work\mod_zh\` 里名为"中文版"的存档，
+   实际只有 2 条 jar 字符串 + 4 行注释是中文 ⇒ 有效复用 5 条，其余 88 条全新 ⇒ 名义 ③ 档）：
+   - 逐文件数中文字符数（`[regex]::Matches($t,'[\u4e00-\u9fff]').Count`，**别只看 `mod_info.json` 的 name**，见 `conventions.md` §1.3）；
+   - 解包旧汉化 jar，用 `analyze_jar_strings.js` 数**实际被译的可见字符串条数**（不是常量总数）；
+   - 把"体检结论"写进 `out\old_reuse_detail.json`（哪些真能复用、哪些只是英文壳）。
+   > 体检结果若为"稀疏补丁"，本次性质其实更接近**首次汉化**（`wf-localize.md`），R 会天然接近 100%，
+   > **不要**因为"有个中文目录"就假设能复用大半、把 R 算低而误落 ①/② 档。
+
 1. 定位旧汉化（**外部中文版**）：`<game>\_work\mod_zh\`（本项目收存的外部中文版与旧汉化存档）、旧版发布 zip、`mods\` 内残留旧版目录。
+
+   > **旧汉化 jar 是"重编译产物"且类名与新 jar 完全不同时**（如 1.3.2 Java `scripts\HostileIntercept_*` → 1.6.0 Kotlin `hostileIntercept\**`）：
+   > `align_newjar_oldzh.js` 按类名对齐会**一条都配不上**。改用"**旧 EN 源码 ↔ 旧中文 jar**"配对
+   > （旧汉化包里常带反编译源码；`scan_jar_sources.js` 或自写脚本按类取源码字面量 vs jar 字符串常量做 LCS），
+   > 再用新版的 `src`+`strings.json` 判断哪些新串能接上旧译。
 2. 备份新版英文原版：`mods\<Mod>\` → `<game>\_work\mod_bak\<Mod>_<新版本>_EN_backup`。
 3. 若本次同时含版本升级，另存 `_premerge_backup` / `_pre_zh_backup`（后缀含义见 `conventions.md` §1.2）。
-3. 执行 `starsector-mod-localization-migrate`：
+4. 执行 `starsector-mod-localization-migrate`：
    - 判定旧汉化 jar 是**常量池补丁**还是**重编译产物**；
    - `extract_old_map.js`（LCS）→ `align_newjar_oldzh.js`；
    - 数据层 `csvtool.js` / `migrate_rules_script.js` / `migrate_faction2.js` / `migrate_json.js`；
    - **可疑条目逐条核验**（纯数字/纯占位符/超短/空串）；
    - **低质旧译标记不沿用**（误译、错位、语病、与核心术语冲突）。
-4. 产出 `old_en_zh_map.json` + 已预填的 worklist（`zh` 已填、`source:"old-migrated"`）。
+5. 产出 `old_en_zh_map.json` + 已预填的 worklist（`zh` 已填、`source:"old-migrated"`）。
 
 ## 2. 阶段 2 · 提取新内容并算 R（AI 做）
 
@@ -92,3 +105,17 @@
 - [ ] 闸门：G1–G3 必过；动过 jar 加 G4；改了引用加 G5；交付前 G6
 - [ ] `mod_info.json`/`*.version` 版本号与 changelog 已按 `starsector-mod-delivery` 处理（若本次含版本升级）
 - [ ] 留档更新（映射、术语表、脚本、清单）
+
+## 5. 反复踩到的坑（2026-09 追加，来自 Hostile Intercept 1.3.2→1.6.0 实战）
+
+| 坑 | 现象 | 正确做法 |
+|---|---|---|
+| **管线顺序** | 先 `apply_zh.js` 再 `build_worklist.js` ⇒ 清单里抽到的是中文，回填全失败（"未译 94 条"） | 严格 **build → fill → apply**；每次重跑前先从 `mod_bak\..._EN_backup\` 还原英文原版 |
+| **换行风格被抹平** | 注入脚本一律写 CRLF，而上游 `mod_info.json` / `*.version` 是 **LF-only** ⇒ 全文件 diff 噪声 | 注入器写盘时**探测并保持**原文件 EOL（`'keep'` 模式），交付前逐文件对比注入前的 `LF/CRLF` 计数 |
+| **全角符号缺字形** | `－`(U+FF0D)/`／`(U+FF0F) 在 6742 字形外，游戏内显示 `?`（R3） | 减号/斜杠一律 ASCII；落笔后**必跑** `check_font_glyphs.js` |
+| **Header 行的 `defaultValue`** | 只译 `fieldName`，`verify_all_data.js` 仍报英文残留 | LunaSettings 的 **Header 行**把 `defaultValue` 一起译（LunaLib 在 `tab` 为空时用它当分区标题）；非 Header 行一律不译 |
+| **Radio 取值被译** | 译了 LunaLib 的 `Disabled`/`All Contacts`… ⇒ 代码 `when(string)` 不匹配，功能静默失效 | 取值保持英文，并在 `settings.json` 注释里加中文警示；校验脚本只提示不改 |
+| **"有中文目录"≠"有汉化"** | 旧版存档只有 2 条中文串，却按"有旧汉化"走 ② 档 | 先做 §1 step 0 的体检，用数字说话 |
+
+> 工具复用：本类任务的注入器/清单器结构直接抄 `_work\mod_work\Hostile Intercept\tools\`（`zh_table.json` 单一译文源 +
+> `build_worklist.js` + `fill_review.js` + `apply_zh.js`（`--dry` + 结构自查 + EOL 保持）），比每次重写省一半时间。

@@ -80,6 +80,22 @@
 | `Abyssal Grid` / `Abyssal Adaptability` | 深渊幅能网络 / 深渊适应 | [自定] |
 | `Crew Conversion` | 船员改造 | [自定] |
 
+### 6.1 敌对拦截 Hostile Intercept（1.6.0 汉化）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `Hostile Intercept (and Autopause!)` | 敌对拦截 (Hostile Intercept) | [社区]（沿用旧汉化 `mod_info.json` 里的社区名「敌对拦截」，括注保留原文） |
+| `autopause` | 自动暂停 | [社区]（沿用旧汉化；Pause 单独出现时作「暂停」） |
+| `jump pause` | 跳跃暂停 | [自定]（`jump point` 用核心「跳跃点」，故取「跳跃」而非「跃迁」） |
+| `intercept` / `intercepting` | 拦截 / 正在拦截 | [核心]（`swarmer` 武器描述作「拦截或抵御」） |
+| `hostile` | 敌对 | [核心] |
+| `alarm` | 警报 | [核心]（`cr_allied_warning` 类音效提示） |
+| `sensor contact` | 传感器接触目标 | [核心]（核心用「传感器」，contact 取「接触目标」以别于已识别舰队） |
+| `autopilot` | 自动驾驶 | [核心]（`descriptions.csv` 的 `ACTION_TOOLTIP`） |
+| `course` | 航线 | [核心] |
+| `(Cheat)` | （作弊） | [自定]（模组作弊开关标记，全角括号） |
+| `LunaSettings` 的 Radio 取值（`Disabled`/`All Contacts`/`Intercept Or Hostile`/`Intercept Only`/`Always`/`Hostile Only`） | **保留英文** | [自定·铁律]（被 `Settings.loadAutopauseMode`/`loadJumpPauseMode` 的 `when(string)` 精确匹配，译后静默失效） |
+
 ## 7. 写作铁律摘要（详见 `iron-rules.md`）
 
 - 标点全角：，。；：？！（）——…；中文强调用 **`【】`/`《》`**，**禁用 `「」『』`**（缺字形 → `?`，铁律 R3）。

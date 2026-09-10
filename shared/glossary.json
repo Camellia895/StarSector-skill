@@ -122,7 +122,16 @@
     "Independent": "独立势力",
     "Persean": "英仙座",
     "Sindrian Diktat": "辛达强权",
-    "Luddic Path": "卢德左径"
+    "Luddic Path": "卢德左径",
+    "Hostile Intercept": "敌对拦截",
+    "autopause": "自动暂停",
+    "jump pause": "跳跃暂停",
+    "intercept": "拦截",
+    "hostile fleet": "敌对舰队",
+    "alarm": "警报",
+    "sensor contact": "传感器接触目标",
+    "autopilot": "自动驾驶",
+    "course": "航线"
   },
   "style_notes": [
     "沿用旧版汉化风格：正式、略带克苏鲁/深渊的阴郁气息",
