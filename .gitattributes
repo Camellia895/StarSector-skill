@@ -1,0 +1,7 @@
+# 技能库为 Windows 环境资产：文件字节必须原样保留。
+# 说明：
+#  - .bat/.cmd 需要 CRLF；含中文的 .ps1 需要 UTF-8 BOM（EF BB BF）；
+#  - 交付脚本 deliver.ps1 亦依赖 BOM；
+#  - 参考 HTML、术语 JSON 等按原字节保存即可。
+# 因此全局关闭 Git 的行尾与编码转换，避免 checkout 时改字节。
+* -text
