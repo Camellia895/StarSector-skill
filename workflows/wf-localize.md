@@ -12,10 +12,15 @@
 
 ## 阶段 0 · 立项（10 分钟）
 
-1. 备份英文原版：`mods\<Mod>\` → `<game>\_work\mod_zh\<Mod>_<版本>_EN_backup`。
-2. 建工作区：`<game>\_work\mod_work\<Mod>\{out, tools, verify}`。
+1. 备份英文原版：`mods\<Mod>\` → `<game>\_work\mod_bak\<Mod>_<版本>_EN_backup`。
+2. 建工作区：`<game>\_work\mod_work\<Mod>\out\`（产物）+ `tools\`（本次脚本）——最小约定见 `conventions.md` §1.1。
 3. 需要源码 → `starsector-repo-source`。
 4. 判定翻译机制（strings 表 vs 硬编码）→ `starsector-mod-localization-extract` §0。
+
+> **目录分工**（别放错，详见 `shared\conventions.md` §1）：
+> `mod_src` = 源码**只读基线**；`mod_bak` = **改动前备份**（含英文原版）；`mod_work` = 本次产物与脚本；
+> `mod_zh` = **从外部拿到的中文版**（社区版 / 旧汉化存档，只读参照物）。
+> **我们自己合并好的中文成品只在 `_work\deliver\` 打包**，不进 `mod_zh`。
 
 ## 阶段 1 · 提取（AI 做）
 

@@ -17,14 +17,14 @@ data\strings\strings.json 存在 且 代码用 getString(category,key)?
 ├─ 是 → 汉化 = 翻译该 JSON + 各 CSV，jar 基本不动
 └─ 否 → 字符串硬编码在源码（src\*.kt/*.java）或已编进 jars\<Mod>.jar → 必须处理 jar 层（§3）
 
-存在旧版汉化（mods\old\... 或 _work\mod_zh\<Mod>*）?
+存在旧版汉化（外部中文版：`_work\mod_zh\` 或旧版发布 zip）?
 └─ 有 → 先走 starsector-mod-localization-migrate 抽旧译，本次只提"新内容"
 ```
 
 同时做：
 
-1. 备份英文原版基线：`Copy-Item -Recurse mods\<Mod> _work\mod_zh\<Mod>_<版本>_EN_backup`（汉化前必做）。
-2. 工作区：`_work\mod_work\<Mod>\{out, tools, verify}\`（约定见 `conventions.md` §1）。
+1. 备份英文原版基线：`Copy-Item -Recurse mods\<Mod> _work\mod_bak\<Mod>_<版本>_EN_backup`（汉化前必做）。
+2. 工作区：`_work\mod_work\<Mod>\out\`（产物）+ `tools\`（本次脚本）（约定见 `conventions.md` §1.1）。
 3. 编码抽查：字节级确认参考文件编码（`<skills>\shared\scripts\check_encoding.js`）；产出**一律 UTF-8 无 BOM**。
 4. 源码不在手上 → `starsector-repo-source`（fork / codeload tarball）。
 
@@ -117,6 +117,6 @@ node <skills>\shared\scripts\build_jar_worklist.js <candidates.json> <outTransla
 - [ ] jar 层候选已分类，`skip` 项有 `category` 与理由（留档审计）
 - [ ] 清单里 `locator` 唯一（无重复回填目标）
 - [ ] `excluded_entries.json` 已生成，排除理由可复核
-- [ ] 英文原版已备份（`_work\mod_zh\<Mod>_<版本>_EN_backup`）
+- [ ] 英文原版已备份（`_work\mod_bak\<Mod>_<版本>_EN_backup`）
 
 **交给上游时说明**：每份清单覆盖什么、条目数、哪些区域**故意不译**（理由）、建议翻译顺序（先术语密集区）。

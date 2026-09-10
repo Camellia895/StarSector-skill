@@ -27,8 +27,9 @@
 
 ## 1. 阶段 1 · 迁移旧译（AI 做）
 
-1. 定位旧汉化：`mods\old\…`、`<game>\_work\mod_zh\<Mod>*`、旧版发布 zip。
-2. 备份新版英文原版：`mods\<Mod>\` → `_work\mod_zh\<Mod>_<新版本>_EN_backup`。
+1. 定位旧汉化（**外部中文版**）：`<game>\_work\mod_zh\`（本项目收存的外部中文版与旧汉化存档）、旧版发布 zip、`mods\` 内残留旧版目录。
+2. 备份新版英文原版：`mods\<Mod>\` → `<game>\_work\mod_bak\<Mod>_<新版本>_EN_backup`。
+3. 若本次同时含版本升级，另存 `_premerge_backup` / `_pre_zh_backup`（后缀含义见 `conventions.md` §1.2）。
 3. 执行 `starsector-mod-localization-migrate`：
    - 判定旧汉化 jar 是**常量池补丁**还是**重编译产物**；
    - `extract_old_map.js`（LCS）→ `align_newjar_oldzh.js`；

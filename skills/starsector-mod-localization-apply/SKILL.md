@@ -14,7 +14,7 @@ description: Starsector（远行星号）mod 汉化的第三阶段——把填�
 ## 0. 动手前
 
 1. **确认所有清单 `zh` 已填**（空 `zh` = 0）——空值注入会写出空字符串，比漏译更糟。
-2. **一次性备份**：`mods\<Mod>\` → `_work\mod_zh\<Mod>_<版本>_pre_zh_backup`；jar 另存 `*.orig`。
+2. **一次性备份**：`mods\<Mod>\` → `_work\mod_bak\<Mod>_<版本>_pre_zh_backup`（写入中文之前的状态）；jar 另存 `*.orig`。
 3. **本任务脚本放** `_work\mod_work\<Mod>\tools\`；能复用的进 `<skills>\shared\scripts\`（先查 `script-registry.md`）。
 4. **游戏必须完全退出**才能替换 jar（Windows 文件锁）。
 

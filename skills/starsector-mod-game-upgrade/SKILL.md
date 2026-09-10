@@ -49,7 +49,7 @@ jar 内是否含 CJK 字符串?
 
 ```powershell
 # 1. 备份
-Copy-Item -Recurse mods\<Mod> _work\mod_bak\<Mod>_backup
+Copy-Item -Recurse mods\<Mod> _work\mod_bak\<Mod>_<版本>_backup
 Copy-Item mods\<Mod>\jars\<X>.jar mods\<Mod>\jars\<X>.jar.orig
 # 2. 结构概览
 Get-ChildItem mods\<Mod> -Recurse -File | Group-Object Extension | Sort-Object Count -Descending

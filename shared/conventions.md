@@ -5,22 +5,86 @@
 | 目录 | 用途 | 说明 |
 |---|---|---|
 | `_work\mod_src\<Mod>` | **上游源码基线** | 保持纯净 = 上游，禁止放分析/汉化产物 |
-| `_work\mod_work\<Mod>\` | **本任务工作区** | `out\`（映射/清单）、`tools\`（本次专用脚本）、`verify\`（验证产物） |
-| `_work\mod_zh\<Mod>_<版本>_EN_backup` | **英文原版备份** | 汉化/改动前的基线 |
-| `_work\mod_bak\<Mod>_<版本>_backup` | 改动前备份（编译/升级场景） | jar 另存 `*.orig` |
+| `_work\mod_work\<Mod>\` | **本任务工作区** | 见 §1.1 最小约定 |
+| `_work\mod_zh\` | **外部中文版仓库** | 见 §1.3；**只放"从外部拿到的中文版"** |
+| `_work\mod_bak\` | **mod 备份区** | 见 §1.2；改动前的快照 |
 | `_work\deliver\` | 交付 zip 输出 | `deliver.ps1` 默认输出目录 |
 | `_work\_tools\` | 工具链 | cfr / kotlinc / maven |
-| `_work\_tmp\<名字>\` | 反编译/解包等**中间产物** | 绝不落在 mod 目录内 |
+| `_work\_tmp\<名字>\` | 反编译/解包/探针等**中间产物** | 绝不落在 mod 目录内 |
 | `_work\_archive\` | 归档，**只移动不删除** | 废弃 skill、重复副本 |
-| `_work\语料库\` | 全项目语料 | `parallel\core_parallel.plain.jsonl`（核心中英平行语料，术语取证用） |
+| `_work\语料库\` | 全项目语料 | `parallel\core_parallel.plain.jsonl`（术语取证用） |
 
 **原则**：产物留档、可回溯、可回滚；分析中间物一律 `_work\_` 下，避免被打进交付 zip。
+
+### 1.1 `mod_work\<Mod>\` — 本任务工作区（最小约定）
+
+**必须**有这两个子目录（其余子目录自由，按 mod 实际流程加）：
+
+| 子目录 | 放什么 |
+|---|---|
+| `out\` | **所有产物**：待译清单、EN→ZH 映射、跳过的条目审计、验证输出、中间 JSON |
+| `tools\` | **本次专用脚本**（跨任务复用的才进 `<skills>\shared\scripts\`） |
+
+**自由附加**（现有项目里的实际用法，按需取用）：
+`worklist\`/`recipe\`（清单与 recipe 的单列）、`verify\`（验证产物）、`jarwork\`/`jarcheck*\`（jar 解包与补丁工作区）、
+`stage\`/`jars_new`/`jars_old`（分阶段产物）、`logs\`、`review\`、`analysis\`、`_api_src`（解包的 API 源码副本）。
+
+> 存量项目（15 个）结构各异，**不强制迁移**；新任务按本节落地。
+> 命名：`<mod名>` 用 mod 的目录名或 id；旧项目里 `_xxx_work` 这种下划线前缀是历史写法。
+
+### 1.2 `mod_bak\` — mod 备份区
+
+**放"改动前的快照"**，命名后缀表明备份时机：
+
+| 后缀 | 含义 |
+|---|---|
+| `_<版本>_EN_backup` / `_<版本>_EN` | **英文原版**（汉化前的干净基线，最常用） |
+| `_premerge_backup` | 合并/注入**之前**的状态 |
+| `_pre_zh_backup` | 写入中文**之前**的状态 |
+| `_backup_<版本>` / `_<版本>_backup` | 通用改动前备份（升级、重建 jar 等） |
+| `*.jar.orig` / `_<mod>_<版本>_jar_backup` | 单个 jar 的原件（重编译/打补丁前必存） |
+
+### 1.3 `mod_zh\` — 外部中文版仓库（**注意边界**）
+
+**只放"从外部拿到的中文版"**，用于参考、迁移与对照：
+
+- 社区/汉化组发布的中文版；
+- 旧版汉化存档（本项目迁移时的参照物，如"某 mod 旧汉化存档版"）；
+- 外部中文版原始压缩包（`.rar`/`.zip` 原样留存）。
+
+**明确不放**（这是最容易搞错的地方）：
+
+- ❌ **我们自己合并好的中文成品** → 只在 `_work\deliver\` 打包为 zip（+ `mods\<Mod>\` 活副本）。
+  `mod_zh` 是**参照物仓库，不是产出仓库**：产出自带出处（deliver zip + git），混淆两者就分不清
+  "哪个是社区版、哪个是我们做的"。
+- ❌ **英文原版备份** → 归 `mod_bak`（见 §1.2）。
+  现状里有 5 个 `*_EN_backup` 与 3 个 `*_backup` 落在 `mod_zh` 下，属**历史污染**；
+  **不强制迁移**，但新任务不要再往 `mod_zh` 放英文备份。
+
+### 1.4 `mod_src\<Mod>\` — 源码基线
+
+**放源代码**，两个来源都用它：
+
+| 来源 | 说明 |
+|---|---|
+| GitHub 上游仓库（fork / codeload tarball） | 走 `starsector-repo-source`；落地后 `git init` + "Import …" 根提交 + `origin` 指向 fork |
+| 反编译产物 | 无源码的 mod（只有 jar）反编译得到的 `.java`；走 `starsector-jar-decompile`（CFR） |
+
+**铁律**：`mod_src` 是**只读基线**。
+
+- ✅ 只做：摸底、grep、diff、与安装版比对哈希、编译探测（输出到别处）。
+- ❌ 不做：改文件、放汉化产物、放分析中间物、装生成物。
+- 需要改动源码时 → 复制到 `mod_work\<Mod>\` 再改（保持基线可 diff 出"我们改了什么"）。
+
+> 现状备注：`mod_src\_jar_inst`、`mod_src\_jar_repo` 是 jar 相关目录（非源码仓库），
+> `Kyeltziv_Technocracy_1.9` 未 `git init`；新任务按本节落地即可。
 
 ## 2. 命名约定
 
 - 工作清单/映射：`<用途>.json`（如 `worklist_data.json`、`old_en_zh_map.json`、`jar_constants.json`）。
 - 本任务专用脚本放 `_work\mod_work\<Mod>\tools\`；**跨任务复用**的脚本才进 `<skills>\shared\scripts\`。
 - 补丁/映射产物命名带层与作用域：`patch_map_<file>.json`、`skip_audit.json`。
+- 备份后缀见 §1.2（`_EN_backup` / `_premerge_backup` / `_pre_zh_backup` / `*.orig`）。
 
 ## 3. 条目计数口径（任务2 分流用）
 

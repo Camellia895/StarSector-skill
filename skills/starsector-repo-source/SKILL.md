@@ -6,6 +6,11 @@ description: 为 Starsector（远行星号）mod 汉化/分析准备"上游源�
 # 上游源码基线获取（fork + codeload tarball）
 
 **目标**：把上游 mod 源码可靠地拿到 `_work\mod_src\<Mod>`，形成"可追溯、可回推、与安装版可比对"的源码基线。
+
+> **`mod_src` 是只读基线**（`shared\conventions.md` §1.4）：只做摸底 / grep / diff / 编译探测；
+> **不改文件、不放汉化产物、不放分析中间物**。要改源码 → 复制到 `_work\mod_work\<Mod>\` 再改。
+> 无源码的 mod 走 `starsector-jar-decompile`（CFR）反编译，**产物同样落 `mod_src\<Mod>\`** ——
+> 它就是"源码基线"目录，无论来源是 GitHub 还是反编译。
 **调用方**：`wf-localize.md`（需要源码做摸底）、`wf-translate-update.md`、`wf-game-update.md`（第 2/3 步要源码）、
 `starsector-engine-diagnose`（对比 EN 基线）、`starsector-jar-decompile`（装 CFR 时复用本流程）。
 **必读**：`<skills>\shared\env.md`（gh/git 状态、网络与工具链）、`<skills>\shared\conventions.md`（目录约定）。
