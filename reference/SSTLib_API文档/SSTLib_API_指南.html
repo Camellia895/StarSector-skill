@@ -1,0 +1,2818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSTLib API 指南 - 远行星号模组开发</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --bg-hover: #30363d;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent-hover: #79c0ff;
+    --accent-bg: rgba(56, 139, 253, 0.15);
+    --code-bg: #1e242c;
+    --code-text: #e6edf3;
+    --table-header: #21262d;
+    --table-stripe: #161b22;
+    --shadow: rgba(0, 0, 0, 0.4);
+    --success: #3fb950;
+    --warning: #d29922;
+    --danger: #f85149;
+    --link: #58a6ff;
+  }
+
+  [data-theme="light"] {
+    --bg: #ffffff;
+    --bg-secondary: #f6f8fa;
+    --bg-tertiary: #eaeef2;
+    --bg-hover: #d8dee4;
+    --text: #1f2328;
+    --text-secondary: #59636e;
+    --text-muted: #818b98;
+    --border: #d0d7de;
+    --accent: #0969da;
+    --accent-hover: #0550ae;
+    --accent-bg: rgba(9, 105, 218, 0.1);
+    --code-bg: #eff1f3;
+    --code-text: #1f2328;
+    --table-header: #eaeef2;
+    --table-stripe: #f6f8fa;
+    --shadow: rgba(140, 149, 159, 0.2);
+    --link: #0969da;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 70px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  /* 顶部栏 */
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 100;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+
+  .topbar-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text);
+    margin-right: 20px;
+    white-space: nowrap;
+  }
+
+  .topbar-title span {
+    color: var(--accent);
+  }
+
+  /* 搜索框 */
+  .search-container {
+    flex: 1;
+    max-width: 500px;
+    position: relative;
+    margin-right: 16px;
+  }
+
+  .search-input {
+    width: 100%;
+    height: 34px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0 12px 0 36px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+  }
+
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .search-results {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+    z-index: 200;
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+
+  .search-results.active {
+    display: block;
+  }
+
+  .search-result-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .search-result-item:last-child {
+    border-bottom: none;
+  }
+
+  .search-result-item:hover {
+    background: var(--bg-hover);
+  }
+
+  .search-result-title {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .search-result-preview {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-top: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .search-result-highlight {
+    background: var(--warning);
+    color: var(--bg);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+
+  /* 顶部按钮 */
+  .topbar-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+
+  .icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  /* 侧边栏 */
+  .sidebar {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px 0;
+    z-index: 50;
+    transition: transform 0.3s;
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+
+  .nav-section {
+    margin-bottom: 4px;
+  }
+
+  .nav-section-title {
+    padding: 8px 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-section-title:hover {
+    color: var(--text);
+  }
+
+  .nav-section-title .chevron {
+    transition: transform 0.2s;
+    font-size: 10px;
+  }
+
+  .nav-section.collapsed .chevron {
+    transform: rotate(-90deg);
+  }
+
+  .nav-section.collapsed .nav-items {
+    display: none;
+  }
+
+  .nav-items {
+    padding: 2px 0;
+  }
+
+  .nav-item {
+    display: block;
+    padding: 6px 20px 6px 28px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13.5px;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+
+  .nav-item:hover {
+    color: var(--text);
+    background: var(--bg-hover);
+    border-left-color: var(--accent);
+  }
+
+  .nav-item.active {
+    color: var(--accent);
+    background: var(--accent-bg);
+    border-left-color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* 可展开子章节 */
+  .nav-item-group {
+    /* 容器：父链接 + 子列表 */
+  }
+  .nav-item-row {
+    display: flex;
+    align-items: stretch;
+  }
+  .nav-item-row .nav-item {
+    flex: 1;
+    border-left: 2px solid transparent;
+  }
+  .sub-chevron {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .sub-chevron:hover { color: var(--accent); }
+  .nav-item-group.collapsed .nav-sub-items { display: none; }
+  .nav-item-group.collapsed .sub-chevron { transform: rotate(-90deg); }
+  .nav-sub-items {
+    padding: 2px 0;
+  }
+  .nav-sub-items .nav-item.sub {
+    padding-left: 44px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* 主内容 */
+  .content {
+    margin-left: 280px;
+    margin-top: 56px;
+    padding: 32px 48px 80px;
+    max-width: 1200px;
+    transition: margin-left 0.3s;
+  }
+
+  .content.expanded {
+    margin-left: 0;
+  }
+
+  /* 内容样式 */
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-top: 48px;
+    margin-bottom: 16px;
+    color: var(--text);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 70px;
+  }
+
+  h3 {
+    font-size: 19px;
+    font-weight: 600;
+    margin-top: 32px;
+    margin-bottom: 12px;
+    color: var(--text);
+    scroll-margin-top: 70px;
+  }
+
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    color: var(--text);
+    scroll-margin-top: 70px;
+  }
+
+  p {
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+
+  ul, ol {
+    margin: 10px 0 14px 24px;
+  }
+
+  li {
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  a {
+    color: var(--link);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  a:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+  }
+
+  code {
+    font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  pre code {
+    background: transparent;
+    padding: 0;
+    font-size: 13px;
+  }
+
+  blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-bg);
+    padding: 12px 18px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+    color: var(--text);
+  }
+
+  blockquote p {
+    margin-bottom: 0;
+  }
+
+  /* 表格 */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 14px 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  th {
+    background: var(--table-header);
+    color: var(--text);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td {
+    background: var(--table-stripe);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: var(--bg-hover);
+  }
+
+  td code {
+    font-size: 12.5px;
+    word-break: break-all;
+  }
+
+  /* 提示框 */
+  .callout {
+    border-left: 4px solid;
+    padding: 12px 18px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .callout-info {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+
+  .callout-warning {
+    border-color: var(--warning);
+    background: rgba(210, 153, 34, 0.1);
+  }
+
+  .callout-success {
+    border-color: var(--success);
+    background: rgba(63, 185, 80, 0.1);
+  }
+
+  .callout-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* 目录标题 */
+  .doc-header {
+    margin-bottom: 32px;
+  }
+
+  .doc-subtitle {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin-top: 4px;
+  }
+
+  .doc-meta {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  /* 锚点链接 */
+  .anchor-link {
+    opacity: 0;
+    margin-left: 8px;
+    color: var(--text-muted);
+    font-size: 14px;
+    transition: opacity 0.15s;
+  }
+
+  h2:hover .anchor-link,
+  h3:hover .anchor-link,
+  h4:hover .anchor-link {
+    opacity: 1;
+  }
+
+  /* 返回顶部 */
+  .back-to-top {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 42px;
+    height: 42px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--text);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    z-index: 90;
+    box-shadow: 0 4px 12px var(--shadow);
+    transition: all 0.2s;
+  }
+
+  .back-to-top.visible {
+    display: flex;
+  }
+
+  .back-to-top:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  /* 移动端菜单按钮 */
+  .menu-toggle {
+    display: none;
+  }
+
+  /* 面包屑 */
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .breadcrumb a {
+    color: var(--text-secondary);
+  }
+
+  /* 高亮搜索结果 */
+  .highlight-match {
+    background: var(--warning);
+    color: var(--bg);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+
+  /* 响应式 */
+  @media (max-width: 1024px) {
+    .sidebar {
+      width: 240px;
+    }
+    .content {
+      margin-left: 240px;
+      padding: 24px 32px 80px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .sidebar {
+      transform: translateX(-100%);
+    }
+    .sidebar.show {
+      transform: translateX(0);
+    }
+    .content {
+      margin-left: 0;
+      padding: 20px 16px 80px;
+    }
+    .menu-toggle {
+      display: flex;
+    }
+    .topbar-title {
+      display: none;
+    }
+    .search-container {
+      max-width: none;
+    }
+  }
+
+  /* 滚动条 */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--bg-hover);
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
+
+  /* 章节标记 */
+  .section-number {
+    color: var(--accent);
+    margin-right: 8px;
+  }
+
+  /* 徽章 */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .badge-core {
+    background: rgba(88, 166, 255, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+  }
+
+  .badge-impl {
+    background: rgba(63, 185, 80, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+  }
+
+  .badge-util {
+    background: rgba(210, 153, 34, 0.15);
+    color: var(--warning);
+    border: 1px solid rgba(210, 153, 34, 0.3);
+  }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- 顶部栏 -->
+<div class="topbar">
+  <button class="icon-btn menu-toggle" id="menuToggle" title="菜单">☰</button>
+  <div class="topbar-title">SSTLib <span>API 指南</span></div>
+
+  <div class="search-container">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="search-input" id="searchInput" placeholder="搜索类名、方法、概念..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <div class="topbar-actions">
+    <button class="icon-btn" id="themeToggle" title="切换主题">🌙</button>
+    <button class="icon-btn" id="sidebarToggle" title="折叠侧边栏">◀</button>
+  </div>
+</div>
+
+<!-- 侧边栏 -->
+<aside class="sidebar" id="sidebar">
+  <div class="nav-section">
+    <div class="nav-section-title">入门 <span class="chevron">▼</span></div>
+    <div class="nav-items">
+      <a class="nav-item" href="#section-1">1. 总览与架构</a>
+      <a class="nav-item" href="#section-2">2. 核心包</a>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">战役层 <span class="chevron">▼</span></div>
+    <div class="nav-items">
+      <a class="nav-item" href="#section-3">3. 战役包</a>
+      <a class="nav-item" href="#section-5">5. 监听器包</a>
+      <a class="nav-item" href="#section-6">6. 经济包</a>
+      <a class="nav-item" href="#section-7">7. 规则/内存包</a>
+      <a class="nav-item" href="#section-8">8. 通讯/情报包</a>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">战斗层 <span class="chevron">▼</span></div>
+    <div class="nav-items">
+      <a class="nav-item" href="#section-4">4. 战斗包</a>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">数据与角色 <span class="chevron">▼</span></div>
+    <div class="nav-items">
+      <a class="nav-item" href="#section-9">9. 舰队包</a>
+      <a class="nav-item" href="#section-10">10. 角色包</a>
+      <a class="nav-item" href="#section-11">11. 加载/规格包</a>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">辅助系统 <span class="chevron">▼</span></div>
+    <div class="nav-items">
+      <a class="nav-item" href="#section-12">12. 输入包</a>
+      <a class="nav-item" href="#section-13">13. UI 包</a>
+      <a class="nav-item" href="#section-14">14. 插件包</a>
+      <a class="nav-item" href="#section-17">17. 任务包</a>
+      <a class="nav-item" href="#section-16">16. 工具包</a>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">实现与速查 <span class="chevron">▼</span></div>
+    <div class="nav-items">
+      <a class="nav-item" href="#section-15">15. 实现包</a>
+      <div class="nav-item-group collapsed">
+        <div class="nav-item-row">
+          <a class="nav-item" href="#section-18">18. 开发流程速查</a>
+          <span class="sub-chevron" title="展开/折叠小节">▶</span>
+        </div>
+        <div class="nav-sub-items">
+          <a class="nav-item sub" href="#section-18-7">18.7 反射调用未公开 API</a>
+          <a class="nav-item sub" href="#section-18-8">18.8 调度器主菜单注册</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- 主内容 -->
+<main class="content" id="content">
+
+<div class="doc-header">
+  <h1>SSTLib (Starsector Mod API) 中文指南</h1>
+  <div class="doc-subtitle">远行星号（Starsector）模组开发接口文档</div>
+  <div class="doc-meta">基于 <code>com.fs.starfarer.api</code> 源码注释整理 · 根包路径：<code>SSTLib/starfarer.api/com/fs/starfarer/api/</code></div>
+</div>
+
+<h2 id="section-1"><span class="section-number">1.</span>总览与架构</h2>
+
+<p>SSTLib 是远行星号官方提供的模组开发 API（即 <code>starfarer.api</code>），位于 <code>SSTLib/starfarer.api/com/fs/starfarer/api/</code> 目录下。它以 Java 接口（interface）为主，配合少量抽象基类，让模组作者无需接触游戏内部实现即可扩展游戏。</p>
+
+<h3 id="section-1-1">1.1 包结构总览</h3>
+
+<pre><code>com.fs.starfarer.api
+├── (根包)         核心入口：Global、ModPlugin、SettingsAPI、FactoryAPI
+├── campaign/      战役层：星区、舰队、市场、对话、事件、规则
+│   ├── ai/        舰队 AI 模块
+│   ├── comm/      通讯与情报系统
+│   ├── econ/      经济与市场
+│   ├── events/    战役事件
+│   ├── listeners/ 各类监听器（含输入监听）
+│   └── rules/     规则与内存系统
+├── combat/        战斗层：战斗引擎、舰船、武器、弹丸、舰船改装
+│   └── listeners/ 战斗监听器（伤害、部署等）
+├── characters/    角色：人物、技能、军官
+├── fleet/         舰队成员数据
+├── graphics/      图形：精灵图
+├── impl/          官方参考实现（含大量可继承基类）
+├── input/         输入事件
+├── loading/       数据规格（武器、舰船、改装等 Spec）
+├── mission/       任务模式
+├── plugins/       通用插件接口（舰船系统、自动装配等）
+├── ui/            用户界面组件
+└── util/          工具类</code></pre>
+
+<h3 id="section-1-2">1.2 两种游戏状态</h3>
+
+<p>API 区分两大游戏状态（见 <code>GameState.java</code>）：</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">💡 游戏状态</div>
+  <p><strong>CAMPAIGN</strong>（战役）：大地图探索、经济、舰队管理。通过 <code>Global.getSector()</code> 访问。</p>
+  <p><strong>COMBAT</strong>（战斗）：实时战斗。通过 <code>Global.getCombatEngine()</code> 访问。</p>
+  <p><strong>TITLE</strong>：主菜单（也使用 CombatEngine 渲染）。</p>
+</div>
+
+<h3 id="section-1-3">1.3 模组入口</h3>
+
+<p>模组通过 <code>mod_info.json</code> 中声明的 <code>modPlugin</code> 类被加载。该类需实现 <code>ModPlugin</code> 接口（推荐继承 <code>BaseModPlugin</code>）。</p>
+
+<h2 id="section-2"><span class="section-number">2.</span>核心包 <code>com.fs.starfarer.api</code></h2>
+
+<p>根包是整个 API 的入口，提供全局访问点和模组生命周期管理。</p>
+
+<h3 id="section-2-1">2.1 Global —— 全局访问器 <span class="badge badge-core">核心</span></h3>
+
+<p><code>Global</code> 是一个静态工具类，是获取游戏各子系统的<strong>唯一入口</strong>。所有模组代码都从这里开始。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getSettings()</code></td><td>获取 SettingsAPI，读写游戏配置、加载文件</td></tr>
+<tr><td><code>getSector()</code></td><td>获取 SectorAPI，战役星区（仅战役中可用）</td></tr>
+<tr><td><code>getCombatEngine()</code></td><td>获取 CombatEngineAPI，战斗引擎</td></tr>
+<tr><td><code>getFactory()</code></td><td>获取 FactoryAPI，创建游戏对象（仅战役中）</td></tr>
+<tr><td><code>getSoundPlayer()</code></td><td>获取声音播放器</td></tr>
+<tr><td><code>getCurrentState()</code></td><td>获取当前游戏状态（CAMPAIGN / COMBAT / TITLE）</td></tr>
+<tr><td><code>getLogger(Class c)</code></td><td>获取 log4j 日志器</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>关键静态字段</strong>：</p>
+<ul>
+<li><code>LOADING_SAVE</code>：是否正在加载存档</li>
+<li><code>CODEX_TOOLTIP_MODE</code>：图鉴工具提示模式</li>
+</ul>
+
+<h3 id="section-2-2">2.2 ModPlugin —— 模组插件接口</h3>
+
+<p>定义模组的<strong>生命周期回调</strong>。游戏会在特定时机调用这些方法。</p>
+
+<div class="callout callout-warning">
+  <div class="callout-title">⚠️ 官方建议</div>
+  <p>不要直接实现此接口，请继承 <code>BaseModPlugin</code>。</p>
+</div>
+
+<h4>生命周期方法（按调用顺序）</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>调用时机</th><th>典型用途</th></tr></thead>
+<tbody>
+<tr><td><code>onApplicationLoad()</code></td><td>所有核心加载完成、脚本编译完成后</td><td>加载模组自定义数据、注册配置</td></tr>
+<tr><td><code>onNewGame()</code></td><td>创建新游戏时</td><td>生成星区内容（替代 generators.csv）</td></tr>
+<tr><td><code>onNewGameAfterProcGen()</code></td><td>程序化生成完成后</td><td>在程序生成基础上添加内容</td></tr>
+<tr><td><code>onNewGameAfterEconomyLoad()</code></td><td>经济系统加载并步进后</td><td>此时 <code>getMarket()</code> 可返回正确市场</td></tr>
+<tr><td><code>onNewGameAfterTimePass()</code></td><td>新游戏初始 2 个月时间流逝后</td><td>最终调整</td></tr>
+<tr><td><code>onEnabled(boolean)</code></td><td>模组被启用时</td><td>处理模组首次启用逻辑</td></tr>
+<tr><td><code>onGameLoad(boolean)</code></td><td>存档加载后/新游戏创建后</td><td>注册监听器、脚本，恢复运行时状态</td></tr>
+<tr><td><code>beforeGameSave()</code></td><td>存档保存前</td><td>准备持久化数据</td></tr>
+<tr><td><code>afterGameSave()</code></td><td>存档保存后</td><td>恢复临时状态</td></tr>
+<tr><td><code>onGameSaveFailed()</code></td><td>存档保存失败时</td><td>回滚</td></tr>
+<tr><td><code>onDevModeF8Reload()</code></td><td>开发模式下按 F8 热重载后</td><td>调试用</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>AI 选择方法</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>pickShipAI(member, ship)</code></td><td>为舰船选择 AI 实现（返回 <code>null</code> 用默认）</td></tr>
+<tr><td><code>pickWeaponAutofireAI(weapon)</code></td><td>为武器选择自动开火 AI</td></tr>
+<tr><td><code>pickDroneAI(drone, mothership, system)</code></td><td>为无人机选择 AI</td></tr>
+<tr><td><code>pickMissileAI(missile, launchingShip)</code></td><td>为导弹选择 AI</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>其他方法</h4>
+<ul>
+<li><code>configureXStream(XStream x)</code>：配置存档序列化（XStream），注册自定义类的别名。</li>
+<li><code>onAboutToStartGeneratingCodex()</code> / <code>onAboutToLinkCodexEntries()</code> / <code>onCodexDataGenerated()</code>：图鉴生成相关回调。</li>
+</ul>
+
+<h3 id="section-2-3">2.3 BaseModPlugin —— 模组插件基类</h3>
+
+<p>实现 <code>ModPlugin</code> 的空实现基类。<strong>继承此类</strong>而非直接实现接口的好处：</p>
+<ul>
+<li>所有方法都有默认空实现，只需重写需要的方法。</li>
+<li>未来 API 新增方法时，你的模组不会因缺少实现而报错。</li>
+</ul>
+
+<h3 id="section-2-4">2.4 SettingsAPI —— 设置与数据访问</h3>
+
+<p>这是读取游戏数据和配置的核心接口，功能极为丰富。</p>
+
+<h4>文件加载（路径用 <code>/</code>，不要用 <code>\</code>）</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>loadJSON(filename)</code></td><td>加载 JSON 文件为 <code>JSONObject</code></td></tr>
+<tr><td><code>loadCSV(filename)</code></td><td>加载 CSV 文件为 <code>JSONArray</code>（每行一个对象，键为列名）</td></tr>
+<tr><td><code>loadText(filename)</code></td><td>加载文本文件为 <code>String</code></td></tr>
+<tr><td><code>openStream(filename)</code></td><td>打开文件输入流</td></tr>
+<tr><td><code>getMergedSpreadsheetDataForMod(idColumn, path, masterMod)</code></td><td>合并多模组的 CSV 数据（主模组为基础，其他模组覆盖同 id 行）</td></tr>
+<tr><td><code>getMergedJSONForMod(path, masterMod)</code></td><td>合并多模组的 JSON</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>规格查询（Spec）</h4>
+
+<p>各类游戏数据的规格查询方法，返回对应的 <code>*SpecAPI</code>：</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>返回类型</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>getWeaponSpec(id)</code></td><td><code>WeaponSpecAPI</code></td><td>武器规格</td></tr>
+<tr><td><code>getHullSpec(id)</code></td><td><code>ShipHullSpecAPI</code></td><td>船体规格</td></tr>
+<tr><td><code>getVariant(id)</code></td><td><code>ShipVariantAPI</code></td><td>舰船变体</td></tr>
+<tr><td><code>getFighterWingSpec(id)</code></td><td><code>FighterWingSpecAPI</code></td><td>战机联队规格</td></tr>
+<tr><td><code>getHullModSpec(id)</code></td><td><code>HullModSpecAPI</code></td><td>改装规格</td></tr>
+<tr><td><code>getAbilitySpec(id)</code></td><td><code>AbilitySpecAPI</code></td><td>能力规格</td></tr>
+<tr><td><code>getIndustrySpec(id)</code></td><td><code>IndustrySpecAPI</code></td><td>产业规格</td></tr>
+<tr><td><code>getCommoditySpec(id)</code></td><td><code>CommoditySpecAPI</code></td><td>商品规格</td></tr>
+<tr><td><code>getSpecialItemSpec(id)</code></td><td><code>SpecialItemSpecAPI</code></td><td>特殊物品规格</td></tr>
+<tr><td><code>getSkillSpec(id)</code></td><td><code>SkillSpecAPI</code></td><td>技能规格</td></tr>
+<tr><td><code>getMarketConditionSpec(id)</code></td><td><code>MarketConditionSpecAPI</code></td><td>市场条件规格</td></tr>
+<tr><td><code>getFactionSpec(id)</code></td><td><code>FactionSpecAPI</code></td><td>派系规格</td></tr>
+<tr><td><code>getCustomEntitySpec(id)</code></td><td><code>CustomEntitySpecAPI</code></td><td>自定义实体规格</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>图形与界面</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getSprite(filename)</code></td><td>按文件名获取精灵图</td></tr>
+<tr><td><code>getSprite(category, key)</code></td><td>按 settings.json 中 graphics 分类获取精灵图</td></tr>
+<tr><td><code>loadTexture(filename)</code></td><td>加载纹理</td></tr>
+<tr><td><code>getColor(id)</code></td><td>获取 settings.json 中定义的颜色</td></tr>
+<tr><td><code>createLabel(text, font)</code></td><td>创建文本标签</td></tr>
+<tr><td><code>getDescription(id, type)</code></td><td>获取 descriptions.csv 中的描述</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>通用文件读写（跨存档持久化）</h4>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>writeTextFileToCommon(filename, data)</code></td><td>写入公共目录（最大 1MB）</td></tr>
+<tr><td><code>readTextFileFromCommon(filename)</code></td><td>读取公共目录</td></tr>
+<tr><td><code>fileExistsInCommon(filename)</code></td><td>检查文件是否存在</td></tr>
+<tr><td><code>deleteTextFileFromCommon(filename)</code></td><td>删除文件</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-2-5">2.5 FactoryAPI —— 对象工厂</h3>
+
+<div class="callout callout-warning">
+  <div class="callout-title">⚠️ 仅战役中可用</div>
+  <p>FactoryAPI 仅在战役模式下可用，战斗或主菜单中不可用。</p>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>创建对象</th></tr></thead>
+<tbody>
+<tr><td><code>createFleetMember(type, variantOrWingId)</code></td><td>舰队成员（舰船）</td></tr>
+<tr><td><code>createCargo(boolean unlimitedStacks)</code></td><td>货舱</td></tr>
+<tr><td><code>createCrewComposition()</code></td><td>船员组成</td></tr>
+<tr><td><code>createJumpPoint(id, name)</code></td><td>跳跃点</td></tr>
+<tr><td><code>createCircularOrbit(focus, angle, radius, days)</code></td><td>圆形轨道</td></tr>
+<tr><td><code>createMemory()</code></td><td>内存对象</td></tr>
+<tr><td><code>createMarket(id, name, size)</code></td><td>市场</td></tr>
+<tr><td><code>createEmptyFleet(factionId, name, aiMode)</code></td><td>空舰队</td></tr>
+<tr><td><code>createPerson()</code></td><td>人物</td></tr>
+<tr><td><code>createOfficerData(person)</code></td><td>军官数据</td></tr>
+<tr><td><code>createBattle(fleetOne, fleetTwo)</code></td><td>战斗</td></tr>
+<tr><td><code>createMessage()</code></td><td>通讯消息</td></tr>
+<tr><td><code>createFleetAI(fleet)</code></td><td>舰队 AI</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-2-6">2.6 EveryFrameScript —— 每帧脚本</h3>
+
+<p>战役中每帧执行的脚本接口。通过 <code>SectorAPI.addScript()</code> 注册。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>advance(float amount)</code></td><td>每帧调用，<code>amount</code> 为秒数（用 <code>SectorAPI.getClock()</code> 转换为天数）</td></tr>
+<tr><td><code>isDone()</code></td><td>返回 <code>true</code> 时脚本结束并被清理</td></tr>
+<tr><td><code>runWhilePaused()</code></td><td>是否在游戏暂停时仍执行 <code>advance()</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-3"><span class="section-number">3.</span>战役包 <code>com.fs.starfarer.api.campaign</code></h2>
+
+<p>战役层是远行星号的核心游戏模式。此包包含星区、舰队、市场、对话等所有大地图相关接口。</p>
+
+<h3 id="section-3-1">3.1 SectorAPI —— 星区</h3>
+
+<p>整个战役的根对象，通过 <code>Global.getSector()</code> 获取。管理所有星系、派系、脚本和事件。</p>
+
+<h4>星系与位置</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getStarSystems()</code></td><td>获取所有星系</td></tr>
+<tr><td><code>getStarSystem(name)</code></td><td>按名获取星系</td></tr>
+<tr><td><code>createStarSystem(name)</code></td><td>创建新星系</td></tr>
+<tr><td><code>getHyperspace()</code></td><td>获取超空间</td></tr>
+<tr><td><code>getCurrentLocation()</code></td><td>玩家当前所在位置</td></tr>
+<tr><td><code>getAllLocations()</code></td><td>所有位置（含超空间和星系）</td></tr>
+<tr><td><code>doHyperspaceTransition(fleet, jumpLocation, dest)</code></td><td>执行超空间跳跃</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>派系与玩家</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getFaction(id)</code></td><td>获取派系</td></tr>
+<tr><td><code>getAllFactions()</code></td><td>所有派系</td></tr>
+<tr><td><code>getPlayerFleet()</code></td><td>玩家舰队</td></tr>
+<tr><td><code>getPlayerFaction()</code></td><td>玩家所属派系</td></tr>
+<tr><td><code>getCharacterData()</code></td><td>玩家角色数据</td></tr>
+<tr><td><code>getPlayerPerson()</code></td><td>玩家人物对象</td></tr>
+<tr><td><code>getPlayerStats()</code></td><td>玩家属性</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>脚本与监听器</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>addScript(script)</code></td><td>添加持久化每帧脚本（存档保存）</td></tr>
+<tr><td><code>addTransientScript(script)</code></td><td>添加临时脚本（不存档）</td></tr>
+<tr><td><code>removeScript(script)</code> / <code>removeScriptsOfClass(c)</code></td><td>移除脚本</td></tr>
+<tr><td><code>addListener(listener)</code></td><td>添加持久化事件监听器</td></tr>
+<tr><td><code>addTransientListener(listener)</code></td><td>添加临时监听器</td></tr>
+<tr><td><code>addListenerWithTimeout(listener, days)</code></td><td>添加带超时的监听器</td></tr>
+<tr><td><code>getListenerManager()</code></td><td>获取监听器管理器</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>经济与时钟</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getEconomy()</code></td><td>获取经济系统</td></tr>
+<tr><td><code>getClock()</code></td><td>获取战役时钟</td></tr>
+<tr><td><code>setPaused(boolean)</code> / <code>isPaused()</code></td><td>暂停控制</td></tr>
+<tr><td><code>isInFastAdvance()</code></td><td>是否在快速推进</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>持久化数据</h4>
+<p><code>getPersistentData()</code>：返回 <code>Map&lt;String, Object&gt;</code>，可跨存档保存数据（即使类不在存档中，如 ModPlugin）。</p>
+
+<h3 id="section-3-2">3.2 CampaignFleetAPI —— 舰队</h3>
+
+<p>继承自 <code>SectorEntityToken</code>。代表大地图上的舰队。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getCommander()</code> / <code>getCommanderStats()</code></td><td>舰队指挥官及属性</td></tr>
+<tr><td><code>getFlagship()</code></td><td>旗舰</td></tr>
+<tr><td><code>getFleetData()</code></td><td>舰队数据</td></tr>
+<tr><td><code>getMembersListCopy()</code></td><td>所有舰船成员列表</td></tr>
+<tr><td><code>getAI()</code></td><td>舰队 AI</td></tr>
+<tr><td><code>getLogistics()</code></td><td>后勤</td></tr>
+<tr><td><code>getTravelSpeed()</code></td><td>旅行速度</td></tr>
+<tr><td><code>getFleetPoints()</code></td><td>舰队点数</td></tr>
+<tr><td><code>isPlayerFleet()</code></td><td>是否为玩家舰队</td></tr>
+<tr><td><code>addAssignment(assignment, target, days, ...)</code></td><td>添加任务指令</td></tr>
+<tr><td><code>clearAssignments()</code></td><td>清除任务指令</td></tr>
+<tr><td><code>setLocation(x, y)</code></td><td>设置位置</td></tr>
+<tr><td><code>despawn()</code></td><td>消失</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-warning">
+  <div class="callout-title">⚠️ 位置设置</div>
+  <p>不要使用 <code>getLocation().x = ...</code>，必须用 <code>setLocation(x, y)</code>。</p>
+</div>
+
+<h3 id="section-3-3">3.3 CargoAPI —— 货舱</h3>
+
+<p>物品库存管理。</p>
+
+<p><strong>内部枚举 <code>CargoItemType</code></strong>：</p>
+<ul>
+<li><code>RESOURCES</code>：资源（补给、燃料等）</li>
+<li><code>WEAPONS</code>：武器</li>
+<li><code>FIGHTER_CHIP</code>：战机芯片</li>
+<li><code>SPECIAL</code>：特殊物品</li>
+<li><code>NULL</code>：空</li>
+</ul>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getSupplies()</code> / <code>getFuel()</code></td><td>补给/燃料数量</td></tr>
+<tr><td><code>addWeapons(id, count)</code> / <code>removeWeapons(id, count)</code></td><td>添加/移除武器</td></tr>
+<tr><td><code>getNumWeapons(id)</code></td><td>武器数量</td></tr>
+<tr><td><code>addCrew(qty)</code> / <code>getCrew()</code></td><td>船员</td></tr>
+<tr><td><code>getStacksCopy()</code></td><td>所有物品堆叠</td></tr>
+<tr><td><code>addCargo(stack)</code> / <code>removeCargo(stack)</code></td><td>添加/移除堆叠</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-3-6">3.6 交互对话系统</h3>
+
+<h4>InteractionDialogPlugin —— 对话插件</h4>
+
+<p>驱动对话逻辑的接口。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>init(dialog)</code></td><td>对话开始时初始化</td></tr>
+<tr><td><code>optionSelected(optionText, optionData)</code></td><td>玩家选择选项时</td></tr>
+<tr><td><code>optionMousedOver(optionText, optionData)</code></td><td>鼠标悬停选项时</td></tr>
+<tr><td><code>advance(amount)</code></td><td>每帧</td></tr>
+<tr><td><code>backFromEngagement(battleResult)</code></td><td>从战斗返回时</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>相关面板接口</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>TextPanelAPI</code></td><td>对话文本区域，添加文本、高亮、段落</td></tr>
+<tr><td><code>VisualPanelAPI</code></td><td>对话视觉区域，显示人物、舰船图像</td></tr>
+<tr><td><code>OptionPanelAPI</code></td><td>对话选项区域，添加/移除/清空选项</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-3-7">3.7 CampaignEventListener —— 战役事件监听器</h3>
+
+<div class="callout callout-info">
+  <div class="callout-title">💡 "Event" 的含义</div>
+  <p>指值得注意的事情，不仅仅是 events.json 中的事件。</p>
+</div>
+
+<p><strong>内部枚举 <code>FleetDespawnReason</code></strong>：</p>
+<ul>
+<li><code>REACHED_DESTINATION</code>：到达目的地（param 为 <code>SectorEntityToken</code>）</li>
+<li><code>DESTROYED_BY_BATTLE</code>：被战斗摧毁（param 为 <code>BattleAPI</code>）</li>
+<li><code>NO_MEMBERS</code>：无成员</li>
+<li><code>PLAYER_FAR_AWAY</code>：玩家太远</li>
+<li><code>OTHER</code> / <code>NO_REASON_PROVIDED</code></li>
+</ul>
+
+<p><strong>主要回调</strong>：</p>
+<ul>
+<li><code>reportPlayerOpenedMarket(market)</code> / <code>reportPlayerClosedMarket(market)</code></li>
+<li><code>reportPlayerMarketTransaction(transaction)</code></li>
+<li><code>reportBattleOccurred(winner, battle)</code> / <code>reportBattleFinished(winner, battle)</code></li>
+<li><code>reportPlayerEngagement(result)</code></li>
+<li><code>reportFleetDespawned(fleet, reason, param)</code> / <code>reportFleetSpawned(fleet)</code></li>
+<li><code>reportFleetJumped(fleet, from, to)</code> / <code>reportFleetReachedEntity(fleet, entity)</code></li>
+<li><code>reportPlayerReputationChange(faction, delta)</code> / <code>reportPlayerReputationChange(person, delta)</code></li>
+<li><code>reportEconomyTick(iterIndex)</code> / <code>reportEconomyMonthEnd()</code></li>
+</ul>
+
+<h3 id="section-3-8">3.8 CampaignPlugin —— 战役插件</h3>
+
+<p>注册到 <code>SectorAPI</code> 的插件，用于自定义各类行为选择。</p>
+
+<p><strong>内部枚举 <code>PickPriority</code></strong>（优先级从低到高）：</p>
+<ol>
+<li><code>CORE_GENERAL</code></li>
+<li><code>MOD_GENERAL</code> — 模组替换核心功能</li>
+<li><code>CORE_SET</code></li>
+<li><code>MOD_SET</code> — 处理一组情况（如所有丛林行星）</li>
+<li><code>CORE_SPECIFIC</code></li>
+<li><code>MOD_SPECIFIC</code> — 特定遭遇</li>
+<li><code>HIGHEST</code> — 绝对最高，慎用</li>
+</ol>
+
+<div class="callout callout-success">
+  <div class="callout-title">✅ Transient 推荐</div>
+  <p>若 <code>isTransient()</code> 为 <code>true</code>，数据不存档，每次 <code>onGameLoad()</code> 需重新注册。<strong>推荐 transient</strong>，便于增删模组。</p>
+</div>
+
+<h2 id="section-4"><span class="section-number">4.</span>战斗包 <code>com.fs.starfarer.api.combat</code></h2>
+
+<p>战斗层接口，管理实时战斗中的舰船、武器、弹丸、伤害等。</p>
+
+<h3 id="section-4-1">4.1 CombatEngineAPI —— 战斗引擎</h3>
+
+<p>战斗的根对象，通过 <code>Global.getCombatEngine()</code> 获取。</p>
+
+<h4>状态查询</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>isInCampaign()</code></td><td>是否为战役中的战斗（非任务/模拟）</td></tr>
+<tr><td><code>isInCampaignSim()</code></td><td>是否为战役中的模拟</td></tr>
+<tr><td><code>isSimulation()</code> / <code>isMission()</code></td><td>是否为模拟/任务</td></tr>
+<tr><td><code>isPaused()</code> / <code>setPaused(boolean)</code></td><td>暂停</td></tr>
+<tr><td><code>isCombatOver()</code></td><td>战斗是否结束</td></tr>
+<tr><td><code>getWinningSideId()</code></td><td>获胜方（0=玩家，1=敌人，2=玩家盟友）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>实体获取</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getShips()</code></td><td>所有舰船</td></tr>
+<tr><td><code>getMissiles()</code></td><td>所有导弹</td></tr>
+<tr><td><code>getProjectiles()</code></td><td>所有弹丸（含导弹）</td></tr>
+<tr><td><code>getAsteroids()</code></td><td>小行星</td></tr>
+<tr><td><code>getBeams()</code></td><td>所有光束</td></tr>
+<tr><td><code>getObjectives()</code></td><td>战斗目标</td></tr>
+<tr><td><code>getPlayerShip()</code></td><td>玩家舰船</td></tr>
+<tr><td><code>getFleetManager(side)</code></td><td>舰队管理器</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>生成实体与效果</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>spawnProjectile(ship, weapon, weaponId, point, angle, shipVelocity)</code></td><td>发射弹丸</td></tr>
+<tr><td><code>spawnEmpArc(...)</code></td><td>生成 EMP 弧光</td></tr>
+<tr><td><code>spawnEmpArcPierceShields(...)</code></td><td>穿透护盾的 EMP 弧光</td></tr>
+<tr><td><code>spawnExplosion(loc, vel, color, size, duration)</code></td><td>爆炸特效</td></tr>
+<tr><td><code>spawnDamagingExplosion(spec, source, location)</code></td><td>有伤害的爆炸</td></tr>
+<tr><td><code>spawnAsteroid(size, x, y, dx, dy)</code></td><td>生成小行星</td></tr>
+<tr><td><code>addHitParticle(...)</code> / <code>addSmoothParticle(...)</code> / <code>addSmokeParticle(...)</code></td><td>粒子效果</td></tr>
+<tr><td><code>addFloatingText(...)</code> / <code>addFloatingDamageText(...)</code></td><td>浮动文字</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>伤害</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>applyDamage(entity, point, amount, type, emp, bypassShields, softFlux, source, playSound)</code></td><td>对实体造成伤害</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>时间</h4>
+<div class="callout callout-info">
+  <div class="callout-title">💡 时间方法</div>
+  <p><code>getElapsedInLastFrame()</code>：上一帧流逝时间（秒），<strong>暂停时不为 0</strong>，返回当前帧。</p>
+  <p><code>getTotalElapsedTime(includePaused)</code>：总流逝时间。</p>
+</div>
+
+<h3 id="section-4-2">4.2 ShipAPI —— 舰船</h3>
+
+<p>继承 <code>CombatEntityAPI</code>。战斗中的舰船。</p>
+
+<p><strong>内部枚举 <code>HullSize</code></strong>：</p>
+<ul>
+<li><code>DEFAULT</code>、<code>FIGHTER</code>、<code>FRIGATE</code>（护卫）、<code>DESTROYER</code>（驱逐）、<code>CRUISER</code>（巡洋）、<code>CAPITAL_SHIP</code>（主力舰）</li>
+<li><code>smaller(allowFighter)</code> / <code>larger()</code>：获取相邻尺寸</li>
+</ul>
+
+<p>关键方法：<code>getHullSpec()</code>、<code>getVariant()</code>、<code>getWeaponGroupsCopy()</code>、<code>getSystem()</code>、<code>getFluxTracker()</code>、<code>getShield()</code>、<code>getEngineController()</code>、<code>getShipAI()</code>、<code>getMouseTarget()</code>、<code>getAllWeapons()</code>、<code>getFighterWings()</code>。</p>
+
+<h3 id="section-4-3">4.3 武器与弹丸</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>WeaponAPI</code></td><td>武器（含 <code>WeaponType</code>、<code>WeaponSize</code> 枚举）</td></tr>
+<tr><td><code>DamagingProjectileAPI</code></td><td>有伤害的弹丸</td></tr>
+<tr><td><code>MissileAPI</code></td><td>导弹</td></tr>
+<tr><td><code>BeamAPI</code></td><td>光束</td></tr>
+<tr><td><code>AmmoTrackerAPI</code></td><td>弹药追踪器</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-4-4">4.4 战斗插件接口</h3>
+
+<h4>EveryFrameCombatPlugin —— 每帧战斗插件</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>advance(amount, events)</code></td><td>每帧逻辑</td></tr>
+<tr><td><code>processInputPreCoreControls(amount, events)</code></td><td>在核心控制前处理输入</td></tr>
+<tr><td><code>renderInWorldCoords(viewport)</code></td><td>在世界坐标渲染</td></tr>
+<tr><td><code>renderInUICoords(viewport)</code></td><td>在 UI 坐标渲染</td></tr>
+<tr><td><code>init(engine)</code></td><td>初始化</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><strong>基类</strong>：<code>BaseEveryFrameCombatPlugin</code>，所有方法空实现。</p>
+
+<h4>其他战斗插件</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>ShipAIPlugin</code></td><td>舰船 AI</td></tr>
+<tr><td><code>AutofireAIPlugin</code></td><td>武器自动开火 AI</td></tr>
+<tr><td><code>MissileAIPlugin</code></td><td>导弹 AI</td></tr>
+<tr><td><code>BeamEffectPlugin</code></td><td>光束效果</td></tr>
+<tr><td><code>OnFireEffectPlugin</code></td><td>开火效果</td></tr>
+<tr><td><code>OnHitEffectPlugin</code></td><td>命中效果</td></tr>
+<tr><td><code>EveryFrameWeaponEffectPlugin</code></td><td>每帧武器效果</td></tr>
+<tr><td><code>BaseHullMod</code></td><td>舰船改装基类</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-4-5">4.5 BaseHullMod —— 舰船改装基类 <span class="badge badge-impl">impl</span></h3>
+
+<p>实现 <code>HullModEffect</code> 接口。自定义舰船改装（HullMod）的基类。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>applyEffectsBeforeShipCreation(hullSize, stats, id)</code></td><td>舰船创建前应用效果（修改属性）</td></tr>
+<tr><td><code>applyEffectsAfterShipCreation(ship, id)</code></td><td>舰船创建后应用效果</td></tr>
+<tr><td><code>getDescriptionParam(index, hullSize)</code></td><td>描述参数</td></tr>
+<tr><td><code>isSMod(stats)</code> / <code>isSMod(ship)</code></td><td>是否为 S-mod（故事点改装）</td></tr>
+<tr><td><code>isBuiltIn(ship)</code></td><td>是否为内置改装</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-4-6">4.6 伤害系统</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口/类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>DamageType</code></td><td>伤害类型枚举（KINETIC、HIGH_EXPLOSIVE、ENERGY、FRAGMENTATION、OTHER）</td></tr>
+<tr><td><code>DamageAPI</code></td><td>伤害数据</td></tr>
+<tr><td><code>MutableShipStatsAPI</code></td><td>舰船可变属性</td></tr>
+<tr><td><code>MutableStat</code> / <code>StatBonus</code></td><td>可变数值（含加成系统）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-4-7">4.7 战斗监听器</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>DamageListener</code></td><td>伤害监听</td></tr>
+<tr><td><code>DamageDealtModifier</code></td><td>伤害造成修改器</td></tr>
+<tr><td><code>DamageTakenModifier</code></td><td>伤害承受修改器</td></tr>
+<tr><td><code>HullDamageAboutToBeTakenListener</code></td><td>即将承受船体伤害监听</td></tr>
+<tr><td><code>FleetMemberDeploymentListener</code></td><td>舰船部署监听</td></tr>
+<tr><td><code>WeaponRangeModifier</code></td><td>武器射程修改器</td></tr>
+<tr><td><code>WeaponOPCostModifier</code> / <code>FighterOPCostModifier</code></td><td>OP 消耗修改器</td></tr>
+<tr><td><code>AdvanceableListener</code></td><td>可推进监听（每帧）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-5"><span class="section-number">5.</span>监听器包 <code>com.fs.starfarer.api.campaign.listeners</code></h2>
+
+<p>此包包含大量细粒度监听器接口，比 <code>CampaignEventListener</code> 更精准。</p>
+
+<h3 id="section-5-1">5.1 ListenerManagerAPI —— 监听器管理器</h3>
+
+<p>通过 <code>SectorAPI.getListenerManager()</code> 获取。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>addListener(listener)</code></td><td>添加持久化监听器</td></tr>
+<tr><td><code>addListener(listener, isTransient)</code></td><td>添加监听器（可设为临时）</td></tr>
+<tr><td><code>removeListener(listener)</code></td><td>移除监听器</td></tr>
+<tr><td><code>getListeners(Class c)</code></td><td>获取某类所有监听器</td></tr>
+<tr><td><code>hasListener(listener)</code> / <code>hasListenerOfClass(c)</code></td><td>检查是否存在</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-5-2">5.2 输入监听器</h3>
+
+<h4>CampaignInputListener —— 战役输入监听</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getListenerInputPriority()</code></td><td>优先级（数字越大越先处理）</td></tr>
+<tr><td><code>processCampaignInputPreCore(events)</code></td><td>核心控制前处理</td></tr>
+<tr><td><code>processCampaignInputPreFleetControl(events)</code></td><td>舰队控制前处理</td></tr>
+<tr><td><code>processCampaignInputPostCore(events)</code></td><td>核心控制后处理</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-5-3">5.3 其他监听器一览</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>监听器接口</th><th>触发场景</th></tr></thead>
+<tbody>
+<tr><td><code>FleetEventListener</code> / <code>BaseFleetEventListener</code></td><td>舰队事件</td></tr>
+<tr><td><code>FleetSpawnListener</code></td><td>舰队生成</td></tr>
+<tr><td><code>FleetInflationListener</code></td><td>舰队填充</td></tr>
+<tr><td><code>EconomyTickListener</code></td><td>经济周期</td></tr>
+<tr><td><code>SurveyPlanetListener</code></td><td>行星调查</td></tr>
+<tr><td><code>PlayerColonizationListener</code></td><td>玩家殖民</td></tr>
+<tr><td><code>ColonyInteractionListener</code></td><td>殖民地交互</td></tr>
+<tr><td><code>ColonySizeChangeListener</code></td><td>殖民地规模变化</td></tr>
+<tr><td><code>ColonyDecivListener</code></td><td>殖民地去文明化</td></tr>
+<tr><td><code>ColonyCrisesSetupListener</code></td><td>殖民地危机</td></tr>
+<tr><td><code>ColonyPlayerHostileActListener</code></td><td>殖民地敌对行为</td></tr>
+<tr><td><code>CoreUITabListener</code></td><td>核心 UI 标签页</td></tr>
+<tr><td><code>CurrentLocationChangedListener</code></td><td>当前位置变化</td></tr>
+<tr><td><code>DetectedEntityListener</code></td><td>发现实体</td></tr>
+<tr><td><code>DiscoverEntityListener</code> / <code>DiscoverEntityPlugin</code></td><td>发现实体</td></tr>
+<tr><td><code>GateTransitListener</code></td><td>星门通行</td></tr>
+<tr><td><code>GroundRaidObjectivesListener</code></td><td>地面突袭目标</td></tr>
+<tr><td><code>IndustryOptionProvider</code> / <code>BaseIndustryOptionProvider</code></td><td>产业选项</td></tr>
+<tr><td><code>CargoGainedListener</code></td><td>获得货物</td></tr>
+<tr><td><code>CargoScreenListener</code></td><td>货物界面</td></tr>
+<tr><td><code>RefitScreenListener</code></td><td>改装界面</td></tr>
+<tr><td><code>ShipRecoveryListener</code></td><td>舰船打捞</td></tr>
+<tr><td><code>ShowLootListener</code></td><td>显示战利品</td></tr>
+<tr><td><code>SubmarketInteractionListener</code> / <code>SubmarketUpdateListener</code></td><td>子市场交互/更新</td></tr>
+<tr><td><code>CommissionEndedListener</code></td><td>佣金结束</td></tr>
+<tr><td><code>CoreAutoresolveListener</code></td><td>自动战斗</td></tr>
+<tr><td><code>PatherCellListener</code></td><td>路径教细胞</td></tr>
+<tr><td><code>CharacterStatsRefreshListener</code></td><td>角色属性刷新</td></tr>
+<tr><td><code>CampaignUIRenderingListener</code></td><td>战役 UI 渲染</td></tr>
+<tr><td><code>CodexEventListener</code></td><td>图鉴事件</td></tr>
+<tr><td><code>MarineLossesStatModifier</code></td><td>陆战队损失修改</td></tr>
+<tr><td><code>ExtraSalvageShownListener</code></td><td>额外打捞显示</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-5-4">5.4 ListenerUtil —— 监听器工具</h3>
+<p>静态工具类，提供分发事件到所有监听器的便捷方法。例如：</p>
+<ul>
+<li><code>getSortedInputListeners()</code>：按优先级排序输入监听器</li>
+<li><code>processCampaignInputPreCore(events)</code> / <code>processCampaignInputPostCore(events)</code> / <code>processCampaignInputPreFleetControl(events)</code></li>
+<li><code>reportPlayerSurveyedPlanet(planet)</code> 等</li>
+</ul>
+
+<h2 id="section-6"><span class="section-number">6.</span>经济包 <code>com.fs.starfarer.api.campaign.econ</code></h2>
+
+<h3 id="section-6-2">6.2 MarketAPI —— 市场</h3>
+<p>继承 <code>HasMemory</code>。代表一个殖民地市场。</p>
+
+<p><strong>内部枚举</strong>：</p>
+<ul>
+<li><code>MarketInteractionMode</code>：<code>LOCAL</code>（本地）、<code>REMOTE</code>（远程）</li>
+<li><code>SurveyLevel</code>：<code>NONE</code>、<code>SEEN</code>、<code>PRELIMINARY</code>、<code>FULL</code></li>
+</ul>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getId()</code> / <code>getName()</code> / <code>getSize()</code></td><td>市场基本信息</td></tr>
+<tr><td><code>getPrimaryEntity()</code></td><td>主实体（行星/空间站）</td></tr>
+<tr><td><code>getConnectedEntities()</code></td><td>相连实体</td></tr>
+<tr><td><code>getFaction()</code></td><td>所属派系</td></tr>
+<tr><td><code>getAllCommodities()</code></td><td>所有商品</td></tr>
+<tr><td><code>getCommodityData(id)</code></td><td>指定商品数据</td></tr>
+<tr><td><code>getConditions()</code></td><td>市场条件</td></tr>
+<tr><td><code>addCondition(id)</code> / <code>removeCondition(token)</code></td><td>添加/移除条件</td></tr>
+<tr><td><code>getIndustries()</code></td><td>产业列表</td></tr>
+<tr><td><code>addIndustry(id)</code> / <code>removeIndustry(id)</code></td><td>添加/移除产业</td></tr>
+<tr><td><code>getCommDirectory()</code></td><td>通讯目录</td></tr>
+<tr><td><code>getMemory()</code></td><td>市场记忆</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-6-3">6.3 Industry —— 产业</h3>
+<p>市场中的产业（如农场、采矿、重工业等）。</p>
+<p>关键方法：<code>getId()</code>、<code>getSpec()</code>、<code>getMarket()</code>、<code>isFunctional()</code>、<code>isBuilding()</code>、<code>apply()</code>（每月应用经济效果）、<code>getSupply(id)</code> / <code>getDemand(id)</code>、<code>getImage()</code>。</p>
+<p><strong>基类</strong>：<code>BaseIndustry</code>（在 impl 包），自定义产业继承此类。</p>
+
+<h3 id="section-6-4">6.4 其他经济类</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>CommodityOnMarketAPI</code></td><td>市场上的商品（供需量）</td></tr>
+<tr><td><code>CommoditySpecAPI</code></td><td>商品规格</td></tr>
+<tr><td><code>MarketConditionAPI</code></td><td>市场条件（如气候、资源）</td></tr>
+<tr><td><code>MarketConditionPlugin</code></td><td>条件插件</td></tr>
+<tr><td><code>SubmarketAPI</code></td><td>子市场（如军事、黑市）</td></tr>
+<tr><td><code>SubmarketPlugin</code></td><td>子市场插件</td></tr>
+<tr><td><code>EconomyAPI</code></td><td>经济系统总管</td></tr>
+<tr><td><code>ImmigrationPlugin</code></td><td>移民插件</td></tr>
+<tr><td><code>MonthlyReport</code></td><td>月度报告</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-7"><span class="section-number">7.</span>规则/内存包 <code>com.fs.starfarer.api.campaign.rules</code></h2>
+
+<h3 id="section-7-1">7.1 MemoryAPI —— 记忆系统</h3>
+<p>键值对存储，用于在规则系统中传递状态。可设置过期时间。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>set(key, value)</code></td><td>设置（永不过期）</td></tr>
+<tr><td><code>set(key, value, expire)</code></td><td>设置（<code>expire</code> 天后过期）</td></tr>
+<tr><td><code>get(key)</code> / <code>getString(key)</code> / <code>getFloat(key)</code> / <code>getBoolean(key)</code> / <code>getInt(key)</code> / <code>getLong(key)</code></td><td>获取值</td></tr>
+<tr><td><code>getEntity(key)</code> / <code>getFleet(key)</code> / <code>getVector2f(key)</code></td><td>获取特定类型</td></tr>
+<tr><td><code>unset(key)</code></td><td>删除</td></tr>
+<tr><td><code>expire(key, days)</code></td><td>设置过期</td></tr>
+<tr><td><code>contains(key)</code> / <code>is(key, value)</code></td><td>检查</td></tr>
+<tr><td><code>between(key, min, max)</code></td><td>检查值是否在范围内</td></tr>
+<tr><td><code>addRequired(key, requiredKey)</code></td><td>当所有 <code>requiredKey</code> 都不存在时，<code>key</code> 才被移除</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">💡 记忆层级</div>
+  <p><strong>全局记忆</strong>：<code>SectorAPI.getMemory()</code></p>
+  <p><strong>实体记忆</strong>：<code>SectorEntityToken.getMemory()</code></p>
+  <p><strong>人物记忆</strong>：<code>PersonAPI.getMemory()</code></p>
+  <p><strong>市场记忆</strong>：<code>MarketAPI.getMemory()</code></p>
+</div>
+
+<h3 id="section-7-2">7.2 RulesAPI —— 规则系统</h3>
+<p>管理 <code>rules.csv</code> 中定义的规则。通过 <code>SectorAPI.getRules()</code> 获取。</p>
+
+<h3 id="section-7-3">7.3 其他</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>RuleAPI</code></td><td>单条规则</td></tr>
+<tr><td><code>CommandPlugin</code></td><td>命令插件（规则执行的动作）</td></tr>
+<tr><td><code>ExpressionAPI</code></td><td>表达式求值</td></tr>
+<tr><td><code>MemKeys</code></td><td>记忆键常量</td></tr>
+<tr><td><code>Option</code></td><td>对话选项</td></tr>
+<tr><td><code>HasMemory</code></td><td>拥有记忆的接口（实体、人物、市场都实现）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-8"><span class="section-number">8.</span>通讯/情报包 <code>com.fs.starfarer.api.campaign.comm</code></h2>
+
+<h3 id="section-8-1">8.1 IntelManagerAPI —— 情报管理器</h3>
+<p>通过 <code>SectorAPI.getIntelManager()</code> 获取。管理玩家收到的情报。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>addIntel(plugin)</code></td><td>立即添加情报（玩家立刻知道）</td></tr>
+<tr><td><code>addIntel(plugin, forceNoMessage)</code></td><td>添加（可选是否显示消息）</td></tr>
+<tr><td><code>queueIntel(plugin, maxCommQueueDays)</code></td><td>排队（玩家进入通讯中继范围后收到，超时取消）</td></tr>
+<tr><td><code>queueIntel(plugin)</code></td><td>排队（不超时，直到收到或 <code>shouldRemoveIntel()</code>）</td></tr>
+<tr><td><code>removeIntel(plugin)</code></td><td>移除并取消排队</td></tr>
+<tr><td><code>getIntel()</code></td><td>所有情报</td></tr>
+<tr><td><code>getIntel(Class c)</code></td><td>按类获取情报</td></tr>
+<tr><td><code>getCommQueue()</code></td><td>排队中的情报</td></tr>
+<tr><td><code>isPlayerInRangeOfCommRelay()</code></td><td>玩家是否在通讯中继范围内</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="section-8-2">8.2 IntelInfoPlugin —— 情报插件</h3>
+<p>自定义情报需实现此接口。定义情报的显示、图标、文本等。</p>
+
+<h3 id="section-8-3">8.3 消息</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>MessagePriority</code></td><td>消息优先级枚举</td></tr>
+<tr><td><code>CommMessageAPI</code></td><td>通讯消息</td></tr>
+<tr><td><code>MessageSectionAPI</code> / <code>MessageParaAPI</code></td><td>消息段落</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-9"><span class="section-number">9.</span>舰队包 <code>com.fs.starfarer.api.fleet</code></h2>
+
+<h3>9.1 FleetMemberAPI —— 舰队成员</h3>
+<p>代表舰队中的一艘船（不是战斗中的 <code>ShipAPI</code>，而是舰队层面的数据）。</p>
+<p>关键方法：<code>getId()</code>、<code>getHullId()</code>、<code>getVariant()</code>、<code>getCaptain()</code>、<code>getRepairTracker()</code>、<code>getStatus()</code>、<code>getFleetData()</code>、<code>getMemberStrength()</code>。</p>
+
+<h3>9.2 其他</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>FleetAPI</code></td><td>舰队基接口</td></tr>
+<tr><td><code>FleetMemberType</code></td><td>成员类型（SHIP、FIGHTER_WING）</td></tr>
+<tr><td><code>FleetMemberStatusAPI</code></td><td>成员状态（CR、Hull 等）</td></tr>
+<tr><td><code>FleetLogisticsAPI</code></td><td>舰队后勤</td></tr>
+<tr><td><code>MutableFleetStatsAPI</code></td><td>舰队可变属性</td></tr>
+<tr><td><code>CrewCompositionAPI</code></td><td>船员组成</td></tr>
+<tr><td><code>RepairTrackerAPI</code></td><td>修理/CR 追踪</td></tr>
+<tr><td><code>FleetGoal</code></td><td>舰队目标枚举</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-10"><span class="section-number">10.</span>角色包 <code>com.fs.starfarer.api.characters</code></h2>
+
+<h3>10.1 PersonAPI —— 人物</h3>
+<p>继承 <code>HasMemory</code>。代表游戏中的 NPC 或玩家。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getName()</code> / <code>setName(name)</code></td><td>姓名（<code>FullName</code>）</td></tr>
+<tr><td><code>getPortraitSprite()</code> / <code>setPortraitSprite(path)</code></td><td>头像</td></tr>
+<tr><td><code>getGender()</code> / <code>isMale()</code> / <code>isFemale()</code></td><td>性别</td></tr>
+<tr><td><code>getRankId()</code> / <code>setRankId(id)</code></td><td>军衔</td></tr>
+<tr><td><code>getPostId()</code> / <code>setPostId(id)</code></td><td>职位</td></tr>
+<tr><td><code>getStats()</code></td><td>角色属性（<code>MutableCharacterStatsAPI</code>）</td></tr>
+<tr><td><code>getFaction()</code> / <code>setFactionId(id)</code></td><td>派系</td></tr>
+<tr><td><code>getMemory()</code></td><td>人物记忆</td></tr>
+<tr><td><code>setPersonality(id)</code></td><td>性格</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>10.2 技能系统</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>LevelBasedEffect</code></td><td>基于等级的效果基接口</td></tr>
+<tr><td><code>ShipSkillEffect</code></td><td>舰船技能效果</td></tr>
+<tr><td><code>FleetStatsSkillEffect</code></td><td>舰队属性技能效果</td></tr>
+<tr><td><code>CharacterStatsSkillEffect</code></td><td>角色属性技能效果</td></tr>
+<tr><td><code>AfterShipCreationSkillEffect</code></td><td>舰船创建后技能效果</td></tr>
+<tr><td><code>MarketSkillEffect</code></td><td>市场技能效果</td></tr>
+<tr><td><code>SkillSpecAPI</code></td><td>技能规格</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>10.3 其他</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>FullName</code></td><td>姓名（含 <code>Gender</code> 枚举：MALE、FEMALE）</td></tr>
+<tr><td><code>OfficerDataAPI</code></td><td>军官数据</td></tr>
+<tr><td><code>PersonalityAPI</code></td><td>性格</td></tr>
+<tr><td><code>ImportantPeopleAPI</code></td><td>重要人物管理</td></tr>
+<tr><td><code>AbilityPlugin</code></td><td>能力插件（如紧急燃烧、传感器脉冲）</td></tr>
+<tr><td><code>AdminData</code></td><td>管理员数据</td></tr>
+<tr><td><code>MutableCharacterStatsAPI</code></td><td>角色可变属性</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-11"><span class="section-number">11.</span>加载/规格包 <code>com.fs.starfarer.api.loading</code></h2>
+
+<p>此包包含各类游戏数据的规格（Spec）接口，对应 CSV 文件定义的数据。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口</th><th>对应数据</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>WeaponSpecAPI</code></td><td>weapons.csv</td><td>武器规格</td></tr>
+<tr><td><code>ProjectileSpecAPI</code></td><td>projectiles.csv</td><td>弹丸规格</td></tr>
+<tr><td><code>MissileSpecAPI</code></td><td>missiles.csv</td><td>导弹规格</td></tr>
+<tr><td><code>ShipHullSpecAPI</code></td><td>ship_data.csv</td><td>船体规格</td></tr>
+<tr><td><code>ShipSystemSpecAPI</code></td><td>ship_systems.csv</td><td>舰船系统规格</td></tr>
+<tr><td><code>FighterWingSpecAPI</code></td><td>fighter_wings.csv</td><td>战机联队规格</td></tr>
+<tr><td><code>HullModSpecAPI</code></td><td>hullmods.csv</td><td>改装规格</td></tr>
+<tr><td><code>AbilitySpecAPI</code></td><td>abilities.csv</td><td>能力规格</td></tr>
+<tr><td><code>IndustrySpecAPI</code></td><td>industries.csv</td><td>产业规格</td></tr>
+<tr><td><code>CommoditySpecAPI</code></td><td>commodities.csv</td><td>商品规格</td></tr>
+<tr><td><code>SpecialItemSpecAPI</code></td><td>special_items.csv</td><td>特殊物品规格</td></tr>
+<tr><td><code>SkillSpecAPI</code></td><td>skills.csv</td><td>技能规格</td></tr>
+<tr><td><code>MarketConditionSpecAPI</code></td><td>conditions.csv</td><td>市场条件规格</td></tr>
+<tr><td><code>TerrainSpecAPI</code></td><td>terrain.csv</td><td>地形规格</td></tr>
+<tr><td><code>EventSpecAPI</code></td><td>events.json</td><td>事件规格</td></tr>
+<tr><td><code>Description</code></td><td>descriptions.csv</td><td>描述（含 <code>Type</code> 枚举）</td></tr>
+<tr><td><code>WeaponSlotAPI</code></td><td>—</td><td>武器槽位</td></tr>
+<tr><td><code>DamagingExplosionSpec</code></td><td>—</td><td>有伤害爆炸规格</td></tr>
+<tr><td><code>VariantSource</code></td><td>—</td><td>变体来源枚举</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-12"><span class="section-number">12.</span>输入包 <code>com.fs.starfarer.api.input</code></h2>
+
+<h3>12.1 InputEventAPI —— 输入事件</h3>
+<p>代表一个输入事件（鼠标或键盘）。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>getEventType()</code> / <code>getEventClass()</code></td><td>事件类型/类别</td></tr>
+<tr><td><code>isMouseEvent()</code> / <code>isKeyboardEvent()</code></td><td>是否鼠标/键盘事件</td></tr>
+<tr><td><code>isLMBDownEvent()</code> / <code>isLMBUpEvent()</code> / <code>isLMBEvent()</code></td><td>左键按下/抬起/事件</td></tr>
+<tr><td><code>isRMBDownEvent()</code> / <code>isRMBUpEvent()</code> / <code>isRMBEvent()</code></td><td>右键</td></tr>
+<tr><td><code>isMouseDownEvent()</code> / <code>isMouseUpEvent()</code></td><td>鼠标按下/抬起</td></tr>
+<tr><td><code>isMouseMoveEvent()</code> / <code>isMouseScrollEvent()</code></td><td>移动/滚轮</td></tr>
+<tr><td><code>isKeyDownEvent()</code> / <code>isKeyUpEvent()</code></td><td>键盘按下/抬起</td></tr>
+<tr><td><code>getEventChar()</code></td><td>输入字符</td></tr>
+<tr><td><code>getX()</code> / <code>getY()</code> / <code>getDX()</code> / <code>getDY()</code></td><td>坐标/增量</td></tr>
+<tr><td><code>isConsumed()</code> / <code>consume()</code></td><td>是否已消费/消费此事件</td></tr>
+<tr><td><code>isAltDown()</code> / <code>isCtrlDown()</code> / <code>isShiftDown()</code></td><td>修饰键状态</td></tr>
+<tr><td><code>isDoubleClick()</code></td><td>是否双击</td></tr>
+<tr><td><code>isControlDownEvent(name)</code> / <code>isControlUpEvent(name)</code></td><td>控制键按下/抬起</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>12.2 枚举</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>枚举</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>InputEventClass</code></td><td>事件类别（MOUSE、KEYBOARD）</td></tr>
+<tr><td><code>InputEventType</code></td><td>事件类型（DOWN、UP 等）</td></tr>
+<tr><td><code>InputEventMouseButton</code></td><td>鼠标按钮</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-13"><span class="section-number">13.</span>UI 包 <code>com.fs.starfarer.api.ui</code></h2>
+
+<h3>13.1 核心 UI 组件</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>UIComponentAPI</code></td><td>UI 组件基接口</td></tr>
+<tr><td><code>UIPanelAPI</code></td><td>UI 面板</td></tr>
+<tr><td><code>CustomPanelAPI</code></td><td>自定义面板</td></tr>
+<tr><td><code>TooltipMakerAPI</code></td><td>工具提示生成器（最常用，创建富文本、表格、图标）</td></tr>
+<tr><td><code>ButtonAPI</code></td><td>按钮（含 <code>UICheckboxSize</code> 枚举）</td></tr>
+<tr><td><code>LabelAPI</code></td><td>文本标签</td></tr>
+<tr><td><code>TextFieldAPI</code></td><td>文本输入框</td></tr>
+<tr><td><code>PositionAPI</code></td><td>组件位置</td></tr>
+<tr><td><code>ScrollPanelAPI</code></td><td>滚动面板</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-14"><span class="section-number">14.</span>插件包 <code>com.fs.starfarer.api.plugins</code></h2>
+
+<h3>14.1 ShipSystemStatsScript —— 舰船系统属性脚本</h3>
+<p>自定义舰船战斗系统（如相位、加速等）的接口。</p>
+
+<p><strong>内部枚举 <code>State</code></strong>：<code>IN</code>（进入）、<code>ACTIVE</code>（激活）、<code>OUT</code>（退出）、<code>COOLDOWN</code>（冷却）、<code>IDLE</code>（空闲）</p>
+
+<p><strong>内部类 <code>StatusData</code></strong>：状态显示数据（文本 + 是否为 debuff）</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>apply(stats, id, state, effectLevel)</code></td><td>应用效果</td></tr>
+<tr><td><code>unapply(stats, id)</code></td><td>移除效果</td></tr>
+<tr><td><code>getStatusData(index, state, effectLevel)</code></td><td>状态显示数据</td></tr>
+<tr><td><code>getActiveOverride(ship)</code> / <code>getInOverride(ship)</code> / <code>getOutOverride(ship)</code></td><td>覆盖持续时间</td></tr>
+<tr><td><code>getUsesOverride(ship)</code> / <code>getRegenOverride(ship)</code></td><td>覆盖使用次数/恢复</td></tr>
+<tr><td><code>getDisplayNameOverride(state, effectLevel)</code></td><td>覆盖显示名</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>14.2 其他插件</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>接口</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>ShipSystemStatsScriptAdvanced</code></td><td>高级舰船系统脚本</td></tr>
+<tr><td><code>AutofitPlugin</code></td><td>自动装配插件（基类 <code>BaseAutofitPlugin</code>、<code>CoreAutofitPlugin</code>）</td></tr>
+<tr><td><code>LevelupPlugin</code></td><td>升级插件</td></tr>
+<tr><td><code>OfficerLevelupPlugin</code></td><td>军官升级插件</td></tr>
+<tr><td><code>CreateFleetPlugin</code></td><td>创建舰队插件</td></tr>
+<tr><td><code>FactionPersonalityPickerPlugin</code></td><td>派系性格选择</td></tr>
+<tr><td><code>SurveyPlugin</code></td><td>调查插件</td></tr>
+<tr><td><code>SimulatorPlugin</code></td><td>模拟器插件</td></tr>
+<tr><td><code>DModAdderPlugin</code></td><td>D-mod 添加插件</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-15"><span class="section-number">15.</span>实现包 <code>com.fs.starfarer.api.impl</code> <span class="badge badge-impl">impl</span></h2>
+
+<p>此包提供大量<strong>可继承的基类和参考实现</strong>。模组开发中常继承这些类。</p>
+
+<h3>15.1 战役实现 <code>impl.campaign</code></h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>CoreCampaignPluginImpl</code></td><td>核心战役插件实现</td></tr>
+<tr><td><code>CoreScript</code></td><td>核心脚本</td></tr>
+<tr><td><code>BaseCustomEntityPlugin</code></td><td>自定义实体插件基类</td></tr>
+<tr><td><code>BaseGenericPlugin</code></td><td>通用插件基类</td></tr>
+<tr><td><code>BattleAutoresolverPluginImpl</code></td><td>自动战斗解析器</td></tr>
+<tr><td><code>FleetEncounterContext</code></td><td>舰队遭遇上下文</td></tr>
+<tr><td><code>CoreReputationPlugin</code></td><td>核心声望插件</td></tr>
+<tr><td><code>DModManager</code></td><td>D-mod 管理器</td></tr>
+<tr><td><code>OfficerLevelupPluginImpl</code></td><td>军官升级实现</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>实体插件</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>CommRelayEntityPlugin</code></td><td>通讯中继</td></tr>
+<tr><td><code>SensorArrayEntityPlugin</code></td><td>传感器阵列</td></tr>
+<tr><td><code>NavBuoyEntityPlugin</code></td><td>导航浮标</td></tr>
+<tr><td><code>GateEntityPlugin</code></td><td>星门</td></tr>
+<tr><td><code>CryosleeperEntityPlugin</code></td><td>冷冻休眠舱</td></tr>
+<tr><td><code>DerelictShipEntityPlugin</code></td><td>遗弃舰船</td></tr>
+<tr><td><code>WarningBeaconEntityPlugin</code></td><td>警告信标</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>15.2 能力实现 <code>impl.campaign.abilities</code></h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>BaseAbilityPlugin</code></td><td>能力插件基类</td></tr>
+<tr><td><code>BaseToggleAbility</code></td><td>切换型能力基类</td></tr>
+<tr><td><code>BaseDurationAbility</code></td><td>持续型能力基类</td></tr>
+<tr><td><code>TransponderAbility</code></td><td>应答机</td></tr>
+<tr><td><code>GoDarkAbility</code></td><td>隐匿</td></tr>
+<tr><td><code>ScavengeAbility</code></td><td>搜刮</td></tr>
+<tr><td><code>SensorBurstAbility</code></td><td>传感器脉冲</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>15.3 经济实现 <code>impl.campaign.econ</code></h3>
+<h4>产业实现</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>BaseIndustry</code></td><td>产业基类（<strong>自定义产业继承此类</strong>）</td></tr>
+<tr><td><code>Spaceport</code> / <code>OrbitalStation</code></td><td>空间港/轨道站</td></tr>
+<tr><td><code>Farming</code> / <code>Mining</code></td><td>农业/采矿</td></tr>
+<tr><td><code>Refining</code> / <code>FuelProduction</code></td><td>精炼/燃料生产</td></tr>
+<tr><td><code>HeavyIndustry</code> / <code>LightIndustry</code></td><td>重工业/轻工业</td></tr>
+<tr><td><code>MilitaryBase</code></td><td>军事基地</td></tr>
+<tr><td><code>TechMining</code></td><td>科技采矿</td></tr>
+<tr><td><code>GroundDefenses</code></td><td>地面防御</td></tr>
+<tr><td><code>ItemEffectsRepo</code></td><td>物品效果仓库（产业安装物品的效果）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>15.4 改装实现 <code>impl.hullmods</code></h3>
+<p>包含所有官方舰船改装的实现，可作为自定义改装的参考。例如：<code>AblativeArmor</code>、<code>HeavyBallisticsIntegration</code>、<code>ExpandedCargoHolds</code>、<code>MilitarizedSubsystems</code>、<code>EfficiencyOverhaul</code>、<code>PhaseField</code>、<code>NeuralInterface</code> / <code>NeuralIntegrator</code>、<code>Automated</code>、<code>ECMPackage</code> 等。</p>
+
+<h3>15.5 图鉴实现 <code>impl.codex</code></h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>CodexEntryPlugin</code></td><td>图鉴条目插件</td></tr>
+<tr><td><code>CodexEntryV2</code></td><td>图鉴条目 V2</td></tr>
+<tr><td><code>CodexDataV2</code></td><td>图鉴数据</td></tr>
+<tr><td><code>CodexUnlocker</code></td><td>图鉴解锁器</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-16"><span class="section-number">16.</span>工具包 <code>com.fs.starfarer.api.util</code> <span class="badge badge-util">util</span></h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>IntervalUtil</code></td><td>间隔计时器（随机/固定间隔触发）</td></tr>
+<tr><td><code>FaderUtil</code></td><td>淡入淡出工具</td></tr>
+<tr><td><code>FlickerUtil</code> / <code>FlickerUtilV2</code></td><td>闪烁工具</td></tr>
+<tr><td><code>JitterUtil</code></td><td>抖动工具</td></tr>
+<tr><td><code>ColorShifterUtil</code></td><td>颜色渐变工具</td></tr>
+<tr><td><code>DelayedActionScript</code></td><td>延迟动作脚本</td></tr>
+<tr><td><code>CountingMap</code></td><td>计数 Map</td></tr>
+<tr><td><code>Highlights</code></td><td>文本高亮</td></tr>
+<tr><td><code>AutoReducingValue</code></td><td>自动递减值</td></tr>
+<tr><td><code>WeightedRandomPicker</code></td><td>加权随机选择器</td></tr>
+<tr><td><code>Misc</code>（在 impl 包）</td><td>杂项工具（颜色、距离、格式化等）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-17"><span class="section-number">17.</span>任务包 <code>com.fs.starfarer.api.mission</code></h2>
+<p>用于自定义战斗任务模式。</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>类/接口</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>MissionDefinitionPlugin</code></td><td>任务定义插件</td></tr>
+<tr><td><code>MissionDefinitionAPI</code></td><td>任务定义 API（设置双方舰队、地图等）</td></tr>
+<tr><td><code>FleetSide</code></td><td>舰队方枚举（PLAYER、ENEMY）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="section-18"><span class="section-number">18.</span>模组开发流程速查</h2>
+
+<h3>18.1 最小模组结构</h3>
+<pre><code>MyMod/
+├── mod_info.json          # 模组元数据（含 modPlugin 字段）
+├── data/                  # 数据文件
+│   └── config/
+├── graphics/              # 图片资源
+├── jars/
+│   └── MyMod.jar          # 编译后的代码
+└── src/                   # 源代码
+    └── org/myname/mymod/
+        └── MyModPlugin.java</code></pre>
+
+<h3>18.2 mod_info.json 关键字段</h3>
+<pre><code>{
+  "id": "MyMod",
+  "name": "我的模组",
+  "author": "作者",
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  },
+  "utility": false,
+  "description": "模组描述",
+  "gameVersion": "0.98a-RC8",
+  "jars": ["jars/MyMod.jar"],
+  "modPlugin": "org.myname.mymod.MyModPlugin",
+  "dependencies": []
+}</code></pre>
+
+<div class="callout callout-info">
+  <div class="callout-title">💡 字段说明</div>
+  <p><strong>id</strong>：唯一标识（英文，不加空格）</p>
+  <p><strong>version</strong>：可为对象 <code>{major, minor, patch}</code> 或字符串 <code>"1.0.0"</code></p>
+  <p><strong>utility</strong>：是否为工具类模组（不影响存档，可随时启停）</p>
+  <p><strong>modPlugin</strong>：模组插件类的全限定名，推荐使用 <code>org.作者名.模组名.XxxPlugin</code> 格式</p>
+  <p><strong>dependencies</strong>：依赖的其他模组，格式为 <code>[{"id": "lw_lazylib", "name": "LazyLib"}]</code></p>
+</div>
+
+<h3>18.3 模组插件模板</h3>
+<pre><code>package org.myname.mymod;
+
+import com.fs.starfarer.api.BaseModPlugin;
+import com.fs.starfarer.api.Global;
+
+public class MyModPlugin extends BaseModPlugin {
+
+    @Override
+    public void onApplicationLoad() throws Exception {
+        // 加载模组数据
+        // Global.getSettings().loadJSON("data/config/my_config.json");
+    }
+
+    @Override
+    public void onNewGame() {
+        // 新游戏时生成内容
+    }
+
+    @Override
+    public void onGameLoad(boolean newGame) {
+        // 注册监听器、脚本
+        // Global.getSector().addListener(new MyListener());
+        // Global.getSector().addScript(new MyScript());
+    }
+}</code></pre>
+
+<h3>18.4 常用入口对照</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>需求</th><th>入口</th></tr></thead>
+<tbody>
+<tr><td>读取配置/数据</td><td><code>Global.getSettings()</code></td></tr>
+<tr><td>操作星区</td><td><code>Global.getSector()</code></td></tr>
+<tr><td>操作战斗</td><td><code>Global.getCombatEngine()</code></td></tr>
+<tr><td>创建对象</td><td><code>Global.getFactory()</code></td></tr>
+<tr><td>播放声音</td><td><code>Global.getSoundPlayer()</code></td></tr>
+<tr><td>获取玩家舰队</td><td><code>Global.getSector().getPlayerFleet()</code></td></tr>
+<tr><td>获取玩家舰船</td><td><code>Global.getCombatEngine().getPlayerShip()</code></td></tr>
+<tr><td>添加每帧脚本</td><td><code>Global.getSector().addScript(script)</code></td></tr>
+<tr><td>添加监听器</td><td><code>Global.getSector().addListener(listener)</code> 或 <code>getListenerManager().addListener(listener)</code></td></tr>
+<tr><td>添加战斗插件</td><td><code>Global.getCombatEngine().addPlugin(plugin)</code></td></tr>
+<tr><td>全局记忆</td><td><code>Global.getSector().getMemory()</code></td></tr>
+<tr><td>情报</td><td><code>Global.getSector().getIntelManager()</code></td></tr>
+<tr><td>经济</td><td><code>Global.getSector().getEconomy()</code></td></tr>
+<tr><td>日志</td><td><code>Global.getLogger(MyClass.class)</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>18.5 监听器 vs 事件监听器 vs 脚本</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>机制</th><th>特点</th><th>注册方式</th></tr></thead>
+<tbody>
+<tr><td><code>CampaignEventListener</code></td><td>广播式，接收所有事件</td><td><code>SectorAPI.addListener()</code></td></tr>
+<tr><td><code>listeners</code> 包接口</td><td>精准式，只接收特定事件</td><td><code>ListenerManagerAPI.addListener()</code></td></tr>
+<tr><td><code>EveryFrameScript</code></td><td>每帧执行</td><td><code>SectorAPI.addScript()</code></td></tr>
+<tr><td>战斗 <code>EveryFrameCombatPlugin</code></td><td>战斗中每帧执行</td><td><code>CombatEngineAPI.addPlugin()</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>18.6 持久化注意事项</h3>
+<div class="callout callout-warning">
+  <div class="callout-title">⚠️ 存档序列化</div>
+  <p><strong>存档中的类</strong>：非 transient 的 <code>CampaignPlugin</code>、通过 <code>addScript</code> 添加的脚本、监听器等会被序列化到存档。这些类需要能被 XStream 序列化，可在 <code>ModPlugin.configureXStream()</code> 中配置别名。</p>
+</div>
+
+<div class="callout callout-success">
+  <div class="callout-title">✅ Transient 推荐</div>
+  <p>推荐监听器和脚本为 transient（在 <code>onGameLoad</code> 中重新注册），便于增删模组。</p>
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">💡 跨存档数据</div>
+  <p>使用 <code>SectorAPI.getPersistentData()</code> 或 <code>SettingsAPI.writeTextFileToCommon()</code>。</p>
+</div>
+
+<h3 id="section-18-7">18.7 反射调用未公开 API</h3>
+
+<div class="callout callout-warning">
+  <div class="callout-title">⚠️ 适用场景</div>
+  <p>SSTLib 中许多内部类和方法<strong>未公开</strong>（如 <code>AppDriver</code>、<code>CampaignState</code>、UI 内部面板等），无法直接 import。需要通过<strong>反射</strong>按名称调用。</p>
+  <p>典型情况：访问游戏内部 UI 面板、获取未公开的当前状态对象、调用 obfuscated 方法名。</p>
+</div>
+
+<h4>核心思路（参考 LunaLib）</h4>
+<p>LunaLib 提供 <code>ReflectionUtils</code> 工具类，封装了基于 <code>MethodHandles</code> 的反射调用，并带缓存。核心 API：</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>方法</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>invoke(methodName, instance, vararg args)</code></td><td>按名称调用实例方法</td></tr>
+<tr><td><code>get(fieldName, instance)</code></td><td>按名称读取字段</td></tr>
+<tr><td><code>set(fieldName, instance, newValue)</code></td><td>按名称写入字段</td></tr>
+<tr><td><code>getField(fieldName, clazz)</code></td><td>获取字段反射对象（可设父类递归）</td></tr>
+<tr><td><code>getMethod(methodName, clazz)</code></td><td>获取方法反射对象</td></tr>
+<tr><td><code>instantiate(clazz, vararg args)</code></td><td>调用构造器创建实例</td></tr>
+<tr><td><code>hasMethodOfName(name, instance)</code></td><td>检查是否含某方法（带缓存，用于 UI 爬取）</td></tr>
+<tr><td><code>hasVariableOfName(name, instance)</code></td><td>检查是否含某字段</td></tr>
+<tr><td><code>getFirstDeclaredField(instance)</code></td><td>获取第一个声明字段（适用于单字段类）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>典型用法</h4>
+
+<p><strong>1. 获取未公开的游戏状态对象</strong></p>
+<pre><code>// AppDriver 和 CampaignState 都是未公开类，需用反射
+import com.fs.state.AppDriver;
+import com.fs.starfarer.campaign.CampaignState;
+import lunalib.backend.util.ReflectionUtils;
+
+var state = AppDriver.getInstance().currentState;
+if (state instanceof CampaignState) {
+    // getCore() 是未公开方法
+    var core = ReflectionUtils.invoke("getCore", state);
+    // getEncounterDialog() 也是未公开方法
+    var dialog = ReflectionUtils.invoke("getEncounterDialog", state);
+}</code></pre>
+
+<p><strong>2. 访问内部 UI 面板（UI 爬取）</strong></p>
+<pre><code>// 从核心 UI 获取 Refit 面板，再逐层爬取子面板
+var core = ReflectionUtils.invoke("getCore", state);
+if (core instanceof UIPanelAPI) {
+    // getCurrentTab 是未公开方法
+    var refitTab = ReflectionUtils.invoke("getCurrentTab", core) as UIPanelAPI?;
+
+    // 通过方法名识别目标子面板
+    var child = refitTab.getChildrenCopy().find {
+        ReflectionUtils.hasMethodOfName("syncWithCurrentVariant", it)
+    };
+
+    if (child instanceof UIPanelAPI) {
+        var member = ReflectionUtils.invoke("getMember", child);
+        var shipDisplay = ReflectionUtils.invoke("getShipDisplay", child);
+        var variant = ReflectionUtils.invoke("getCurrentVariant", shipDisplay);
+    }
+}</code></pre>
+
+<p><strong>3. 调用未公开方法（带容错）</strong></p>
+<pre><code>// 游戏版本不同方法签名可能变化，需 try-catch 回退
+try {
+    ReflectionUtils.invoke("syncWithCurrentVariant", child, true);
+} catch (Throwable e) {
+    try {
+        ReflectionUtils.invoke("syncWithCurrentVariant", child);
+    } catch (Throwable e2) {
+        Global.getLogger(MyClass.class).error("sync failed", e2);
+    }
+}</code></pre>
+
+<p><strong>4. 读取/修改私有字段</strong></p>
+<pre><code>// 读取标题屏的 dialogType 字段判断是否在对话框中
+var titlescreen = (TitleScreenState) AppDriver.getInstance().currentState;
+var dialogActive = ReflectionUtils.get("dialogType", titlescreen);
+
+// 修改私有字段
+ReflectionUtils.set("someField", instance, newValue);</code></pre>
+
+<p><strong>5. 扩展 UI 接口（Kotlin 扩展函数）</strong></p>
+<pre><code>// UIPanelAPI 本身没有 getChildrenCopy，用反射扩展
+private fun UIPanelAPI.getChildrenCopy(): List&lt;UIComponentAPI&gt; {
+    return ReflectionUtils.invoke("getChildrenCopy", this) as List&lt;UIComponentAPI&gt;;
+}</code></pre>
+
+<h4>实现要点（参考 LunaLib ReflectionUtils.kt）</h4>
+
+<div class="callout callout-info">
+  <div class="callout-title">💡 关键设计</div>
+  <p><strong>1. 用 <code>MethodHandles</code> 而非 <code>Method.invoke</code></strong>：性能更高，且能绕过部分访问限制。</p>
+  <p><strong>2. 反射对象本身也用反射获取</strong>：通过 <code>Class.forName("java.lang.reflect.Field")</code> + <code>MethodHandles.lookup().findVirtual(...)</code> 拿到 <code>Field.set</code> / <code>Field.get</code> 的句柄，避免直接 import 反射类。</p>
+  <p><strong>3. 缓存反射结果</strong>：用 <code>HashMap</code> 缓存 <code>ReflectedField</code> / <code>ReflectedMethod</code>，键为 <code>(类, 名称, 类型)</code> 三元组。反射查找一次后后续调用走缓存。</p>
+  <p><strong>4. 同时搜索 public 和 declared</strong>：<code>clazz.fields + clazz.declaredFields</code>，<code>clazz.methods + clazz.declaredMethods</code>，覆盖私有成员。</p>
+  <p><strong>5. UI 爬取时用名称缓存</strong>：<code>hasMethodOfName</code> / <code>hasVariableOfName</code> 把每个类的成员名集合缓存下来，避免每帧重复反射。</p>
+</div>
+
+<h4>🔑 绕过游戏安全限制（关键技术）</h4>
+
+<div class="callout callout-danger">
+  <div class="callout-title">⚠️ 安全限制</div>
+  <p>游戏的脚本类加载器会抛出 <code>SecurityException: File access and reflection are not allowed to scripts.</code> 阻止直接使用 <code>java.lang.reflect.Method</code> 和 <code>java.lang.reflect.Field</code>。</p>
+  <p><strong>关键：限制发生在类加载时</strong>，任何代码中<strong>声明</strong>这些类型（作为变量、参数、返回值）都会触发 SecurityException，即使从未调用。</p>
+</div>
+
+<div class="callout callout-success">
+  <div class="callout-title">✅ LunaLib 的解决方案</div>
+  <p><strong>完全不引用 java.lang.reflect.Method 或 Field 类型</strong>，使用 <code>Class.forName()</code> + <code>MethodHandles</code>：</p>
+</div>
+
+<pre><code>// 1. 用 Class.forName 获取反射类的 Class 对象，而不是直接 import
+Class<?> fieldClass = Class.forName("java.lang.reflect.Field", false, Class.class.getClassLoader());
+Class<?> methodClass = Class.forName("java.lang.reflect.Method", false, Class.class.getClassLoader());
+
+// 2. 创建 MethodHandle 用于调用 Field/Method 的方法
+MethodHandle setFieldHandle = MethodHandles.lookup().findVirtual(fieldClass, "set",
+        MethodType.methodType(Void.TYPE, Object.class, Object.class));
+MethodHandle getFieldHandle = MethodHandles.lookup().findVirtual(fieldClass, "get",
+        MethodType.methodType(Object.class, Object.class));
+MethodHandle invokeMethodHandle = MethodHandles.lookup().findVirtual(methodClass, "invoke",
+        MethodType.methodType(Object.class, Object.class, Object[].class));
+
+// 3. 所有反射对象当作 Object 处理，通过 MethodHandle 调用
+Object field = clazz.getDeclaredFields()[0];  // 返回 Object，不是 Field
+setFieldHandle.invoke(field, instance, value); // 通过 MethodHandle 调用 Field.set</code></pre>
+
+<div class="callout callout-danger">
+  <div class="callout-title">❌ 常见错误写法（会触发 SecurityException）</div>
+  <p>以下写法<strong>直接声明</strong>了 <code>java.lang.reflect.Method</code> 或 <code>Field</code> 类型，类加载时即被脚本类加载器拦截：</p>
+</div>
+
+<pre><code>// ❌ 错误：直接 import 反射类
+import java.lang.reflect.Method;  // 类加载即抛 SecurityException
+import java.lang.reflect.Field;
+
+// ❌ 错误：声明 Method/Field 类型的变量
+Method targetMethod = clazz.getMethod("getCore");  // 触发 SecurityException
+Field f = clazz.getDeclaredField("core");           // 触发 SecurityException
+
+// ❌ 错误：使用 IMPL_LOOKUP（IMPL_LOOKUP 字段本身需要反射获取，同样被拦截）
+Field lookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
+
+// ❌ 错误：直接调用 getMethods() 返回 Method[]（类型引用触发拦截）
+Method[] methods = clazz.getMethods();</code></pre>
+
+<p><strong>Java 版 ReflectionUtils 完整模板（ChineseInputFix 实际实现）</strong></p>
+
+<div class="callout callout-success">
+  <div class="callout-title">✅ 正确写法：完全不引用 Method/Field 类型</div>
+  <p>核心思想：用 <code>Class.forName()</code> 获取反射类的 Class 对象，用 <code>MethodHandles.lookup().findVirtual()</code> 创建 MethodHandle，所有反射对象一律当作 <code>Object</code> 处理。</p>
+</div>
+
+<pre><code>package org.myname.mymod;
+
+import com.fs.starfarer.api.Global;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.util.*;
+
+public class ReflectionUtils {
+
+    // 反射类的 Class 对象（用 Class.forName 获取，不直接 import）
+    private static final Class&lt;?&gt; methodClass;
+    private static final Class&lt;?&gt; fieldClass;
+
+    // MethodHandle 用于调用 Method/Field 的方法（避免直接引用类型）
+    private static final MethodHandle invokeMethodHandle;
+    private static final MethodHandle getMethodNameHandle;
+    private static final MethodHandle getMethodParametersHandle;
+    private static final MethodHandle setFieldAccessibleHandle;
+    private static final MethodHandle getFieldHandle;
+    private static final MethodHandle getFieldNameHandle;
+
+    // 缓存：类 -&gt; (方法签名 -&gt; Method 对象)
+    private static final Map&lt;Class&lt;?&gt;, Map&lt;String, Object&gt;&gt; methodCache = new HashMap&lt;&gt;();
+    private static final Map&lt;Class&lt;?&gt;, Map&lt;String, Object&gt;&gt; fieldCache = new HashMap&lt;&gt;();
+
+    static {
+        try {
+            // 1. 用 Class.forName 获取反射类的 Class 对象
+            ClassLoader jdkLoader = Class.class.getClassLoader();
+            methodClass = Class.forName("java.lang.reflect.Method", false, jdkLoader);
+            fieldClass = Class.forName("java.lang.reflect.Field", false, jdkLoader);
+
+            // 2. 创建 MethodHandle 用于调用 Method/Field 的方法
+            invokeMethodHandle = MethodHandles.lookup().findVirtual(methodClass, "invoke",
+                    MethodType.methodType(Object.class, Object.class, Object[].class));
+            getMethodNameHandle = MethodHandles.lookup().findVirtual(methodClass, "getName",
+                    MethodType.methodType(String.class));
+            getMethodParametersHandle = MethodHandles.lookup().findVirtual(methodClass, "getParameterTypes",
+                    MethodType.methodType(Class[].class));
+
+            setFieldAccessibleHandle = MethodHandles.lookup().findVirtual(fieldClass, "setAccessible",
+                    MethodType.methodType(void.class, boolean.class));
+            getFieldHandle = MethodHandles.lookup().findVirtual(fieldClass, "get",
+                    MethodType.methodType(Object.class, Object.class));
+            getFieldNameHandle = MethodHandles.lookup().findVirtual(fieldClass, "getName",
+                    MethodType.methodType(String.class));
+        } catch (Throwable e) {
+            throw new RuntimeException("ReflectionUtils 初始化失败", e);
+        }
+    }
+
+    // 3. 所有反射对象当作 Object 处理，通过 MethodHandle 调用
+    public static Object invoke(Object obj, String methodName, Object... args) {
+        if (obj == null || methodName == null) return null;
+        try {
+            Class&lt;?&gt; clazz = obj.getClass();
+            Object method = findMethod(clazz, methodName, args.length);
+            if (method != null) {
+                return invokeMethodHandle.invoke(method, obj, args);
+            }
+        } catch (Throwable e) {
+        }
+        return null;
+    }
+
+    public static Object get(Object obj, String fieldName) {
+        if (obj == null || fieldName == null) return null;
+        try {
+            Class&lt;?&gt; clazz = obj.getClass();
+            Object field = findField(clazz, fieldName);
+            if (field != null) {
+                return getFieldHandle.invoke(field, obj);
+            }
+        } catch (Throwable e) {
+        }
+        return null;
+    }
+
+    // 4. 查找方法：返回 Object，不是 Method
+    private static Object findMethod(Class&lt;?&gt; clazz, String methodName, int paramCount) {
+        Map&lt;String, Object&gt; cache = methodCache.computeIfAbsent(clazz, k -&gt; new HashMap&lt;&gt;());
+        String key = methodName + ":" + paramCount;
+
+        return cache.computeIfAbsent(key, k -&gt; {
+            try {
+                // getMethods() 返回 Object[]，不是 Method[]
+                Set&lt;Object&gt; methods = new HashSet&lt;&gt;();
+                methods.addAll(Arrays.asList((Object[]) clazz.getMethods()));
+                methods.addAll(Arrays.asList((Object[]) clazz.getDeclaredMethods()));
+
+                for (Object method : methods) {
+                    String name = (String) getMethodNameHandle.invoke(method);
+                    if (!name.equals(methodName)) continue;
+                    Class&lt;?&gt;[] params = (Class&lt;?&gt;[]) getMethodParametersHandle.invoke(method);
+                    if (params.length != paramCount) continue;
+                    return method;  // 返回 Object
+                }
+            } catch (Throwable e) {
+            }
+            return null;
+        });
+    }
+
+    // 5. 查找字段：返回 Object，不是 Field
+    private static Object findField(Class&lt;?&gt; clazz, String fieldName) {
+        Map&lt;String, Object&gt; cache = fieldCache.computeIfAbsent(clazz, k -&gt; new HashMap&lt;&gt;());
+        return cache.computeIfAbsent(fieldName, k -&gt; {
+            try {
+                for (Object field : (Object[]) clazz.getDeclaredFields()) {
+                    String name = (String) getFieldNameHandle.invoke(field);
+                    if (name.equals(fieldName)) {
+                        setFieldAccessibleHandle.invoke(field, true);
+                        return field;  // 返回 Object
+                    }
+                }
+            } catch (Throwable e) {
+            }
+            return null;
+        });
+    }
+}</code></pre>
+
+<div class="callout callout-info">
+  <div class="callout-title">💡 关键对比：LunaLib (Kotlin) vs Java 实现</div>
+  <p>两者原理相同，只是语法差异：</p>
+  <table>
+    <thead><tr><th>技术点</th><th>LunaLib (Kotlin)</th><th>Java 实现</th></tr></thead>
+    <tbody>
+      <tr><td>加载反射类</td><td><code>Class.forName("...", false, Class::class.java.classLoader)</code></td><td><code>Class.forName("...", false, Class.class.getClassLoader())</code></td></tr>
+      <tr><td>方法调用</td><td><code>MethodHandles</code> + <code>invokeMethodHandle</code></td><td><code>MethodHandles</code> + <code>invokeMethodHandle</code></td></tr>
+      <tr><td>类型隐藏</td><td><code>Any</code> 替代 <code>Method/Field</code></td><td><code>Object</code> 替代 <code>Method/Field</code></td></tr>
+      <tr><td>缓存</td><td><code>HashMap</code> 缓存方法/字段</td><td><code>HashMap</code> 缓存方法/字段</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="callout callout-warning">
+  <div class="callout-title">⚠️ UI 遍历的额外陷阱</div>
+  <p><strong>不要直接调用 <code>getMethods()</code> 遍历方法名</strong>：虽然 <code>getMethods()</code> 本身返回 <code>Object[]</code> 不会触发 SecurityException，但在某些游戏版本中仍可能被拦截。</p>
+  <p><strong>解决方案</strong>：使用<strong>预定义的 getter 方法名称列表</strong>，通过 <code>ReflectionUtils.invoke(obj, methodName)</code> 逐个尝试调用，避免枚举所有方法。</p>
+</div>
+
+<pre><code>// ❌ 错误：遍历 getMethods() 可能触发 SecurityException
+for (Object m : (Object[]) clazz.getMethods()) {
+    String name = (String) getMethodNameHandle.invoke(m);
+    // ...
+}
+
+// ✅ 正确：预定义方法名列表，逐个尝试
+String[] entryMethods = {
+    "getCurrentDialog", "getCore", "getCurrentPanel",
+    "getInteractionDialog", "getDialog", "getCurrentCore",
+    "getRootPanel", "getCurrentInteractionDialog"
+};
+for (String methodName : entryMethods) {
+    try {
+        Object result = ReflectionUtils.invoke(campaignUI, methodName);
+        if (result != null &amp;&amp; isValidUIObject(result)) {
+            // 处理 result
+        }
+    } catch (Exception e) {
+    }
+}</code></pre>
+
+<div class="callout callout-warning">
+  <div class="callout-title">⚠️ 注意事项</div>
+  <p><strong>版本兼容</strong>：未公开方法名可能随游戏版本变化（尤其 obfuscated 名），需做容错。</p>
+  <p><strong>性能</strong>：反射调用比直接调用慢，避免在每帧高频路径使用，务必带缓存。</p>
+  <p><strong>稳定性</strong>：反射破坏封装，游戏更新可能导致字段/方法消失而报错。</p>
+  <p><strong>优先公开 API</strong>：能用 <code>Global</code> / <code>SectorAPI</code> 等公开接口实现的，不要用反射。</p>
+</div>
+
+<h4>参考实现</h4>
+<ul>
+<li>LunaLib：<code>lunalib/backend/util/ReflectionUtils.kt</code></li>
+<li>ChineseInputFix：<code>org/chesand/ChineseInputFix/ReflectionUtils.java</code>（Java 版，结构类似）</li>
+</ul>
+
+<h3 id="section-18-8">18.8 调度器模式：在主菜单注册监听器</h3>
+
+<div class="callout callout-warning">
+  <div class="callout-title">⚠️ 适用场景</div>
+  <p>SSTLib 生命周期回调存在<strong>时间差问题</strong>：</p>
+  <p>· <code>onApplicationLoad</code> 在游戏最早期触发，此时 <code>Global.getSector()</code> 为 <code>null</code>，<code>Global.getCurrentState()</code> 还不是 <code>TITLE</code>/<code>CAMPAIGN</code>，直接注册监听器会 NPE。</p>
+  <p>· <code>onGameLoad</code> 只在<strong>读档时</strong>触发，<strong>主菜单阶段不会调用</strong>。若需要在主菜单就挂上监听器（如全局输入修复、主菜单 UI 注入），这两者都不够用。</p>
+</div>
+
+<h4>核心思路</h4>
+<p>用 <code>ScheduledExecutorService</code> 在后台轮询 <code>Global.getCurrentState()</code>，一旦进入目标状态（<code>TITLE</code>/<code>CAMPAIGN</code>/<code>COMBAT</code>）就注册监听器并 <code>shutdown()</code> 调度器——<strong>不依赖读档</strong>，主菜单即可挂载。</p>
+
+<div class="callout callout-info">
+  <div class="callout-title">💡 关键点</div>
+  <p><strong>轮询条件</strong>：<code>Global.getCurrentState() == GameState.TITLE</code>（主菜单）或 <code>CAMPAIGN</code>（战役），表明游戏核心已就绪。</p>
+  <p><strong>一次性</strong>：注册成功后立即 <code>scheduler.shutdown()</code>，避免重复注册和线程泄漏。</p>
+  <p><strong>容错</strong>：catch 异常也要 shutdown，防止调度器空转。</p>
+</div>
+
+<h4>完整模板</h4>
+<pre><code>package org.myname.mymod;
+
+import com.fs.starfarer.api.BaseModPlugin;
+import com.fs.starfarer.api.GameState;
+import com.fs.starfarer.api.Global;
+import java.util.concurrent.*;
+
+public class MyModPlugin extends BaseModPlugin {
+
+    private ScheduledExecutorService scheduler;
+
+    @Override
+    public void onApplicationLoad() throws Exception {
+        super.onApplicationLoad();
+        // 应用启动即开始轮询，主菜单就绪后注册
+        startSchedulerAndRegister();
+    }
+
+    @Override
+    public void onGameLoad(boolean newGame) {
+        super.onGameLoad(newGame);
+        // 读档兜底：若调度器仍未注册成功（如主菜单未触发），此处补注册
+        startSchedulerAndRegister();
+    }
+
+    /**
+     * 启动调度器，等待游戏进入 TITLE/CAMPAIGN 后注册监听器
+     */
+    private void startSchedulerAndRegister() {
+        // 避免重复启动：若已有调度器在跑，先关掉
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                GameState state = Global.getCurrentState();
+                if (state == GameState.TITLE || state == GameState.CAMPAIGN || state == GameState.COMBAT) {
+                    registerListeners();
+                    scheduler.shutdown();
+                }
+            } catch (Exception e) {
+                Global.getLogger(MyModPlugin.class).error("注册监听器出错", e);
+                scheduler.shutdown();
+            }
+        }, 0, 100, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * 实际注册逻辑（此时游戏核心已就绪）
+     */
+    private void registerListeners() {
+        if (Global.getSector() != null) {
+            Global.getSector().addListener(new MyListener());
+            Global.getSector().addScript(new MyEveryFrameScript());
+        }
+        // 注意：Global.getCombatEngine() 仅在战斗中非 null，不要在主菜单用它注册
+    }
+}</code></pre>
+
+<h4>状态判断对照</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>GameState</th><th>含义</th><th>可用对象</th></tr></thead>
+<tbody>
+<tr><td><code>TITLE</code></td><td>主菜单 / 标题屏</td><td><code>Global.getSector()</code> 可能为 null；需用反射访问主菜单 UI</td></tr>
+<tr><td><code>CAMPAIGN</code></td><td>战役（星图）</td><td><code>Global.getSector()</code> 非 null，可注册监听器/脚本</td></tr>
+<tr><td><code>COMBAT</code></td><td>战斗</td><td><code>Global.getCombatEngine()</code> 非 null，可注册战斗插件</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout callout-warning">
+  <div class="callout-title">⚠️ 常见陷阱</div>
+  <p><strong>1. 调度器字段复用导致泄漏</strong>：<code>waitLoadFinished()</code> 和 <code>startSectorCheckThread()</code> 共用同一个 <code>scheduler</code> 字段时，后者会覆盖前者引用，前者若未主动 shutdown 会一直空转。解决：启动新调度器前 <code>if (scheduler != null) scheduler.shutdownNow();</code>。</p>
+  <p><strong>2. 重复注册</strong>：<code>onApplicationLoad</code> 启动调度器后，<code>onGameLoad</code> 又启动一次，可能注册两份监听器。解决：用标志位或先 shutdown 旧调度器。</p>
+  <p><strong>3. 主菜单用战斗引擎</strong>：<code>Global.getCombatEngine().addPlugin(...)</code> 在 <code>TITLE</code> 阶段 <code>getCombatEngine()</code> 为 null，会 NPE。主菜单阶段应走 <code>Global.getSector().addListener()</code> 或反射挂到主菜单 UI。</p>
+  <p><strong>4. 线程安全</strong>：调度器在后台线程执行，访问游戏对象时注意 SSTLib 并非完全线程安全，注册动作最好尽快完成并退出。</p>
+</div>
+
+<h4>参考实现</h4>
+<ul>
+<li>ChineseInputFix：<code>org/chesand/ChineseInputFix/ChineseInputFix.java</code>（<code>waitLoadFinished</code> + <code>startSectorCheckThread</code> 双调度器）</li>
+</ul>
+
+<hr style="margin: 48px 0 24px; border: none; border-top: 1px solid var(--border);">
+<p style="color: var(--text-muted); font-size: 13px; text-align: center;">
+  本指南基于 <code>starfarer.api</code> 源码注释整理 · 涵盖主要接口和类的作用、位置及内部类<br>
+  部分大型接口仅列出关键方法，完整方法列表请参阅对应源文件
+</p>
+
+</main>
+
+<!-- 返回顶部 -->
+<button class="back-to-top" id="backToTop" title="返回顶部">↑</button>
+
+<script>
+// ========== 主题切换 ==========
+const themeToggle = document.getElementById('themeToggle');
+const body = document.body;
+
+// 读取保存的主题
+const savedTheme = localStorage.getItem('sstlib-theme');
+if (savedTheme) {
+  body.setAttribute('data-theme', savedTheme);
+  themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+}
+
+themeToggle.addEventListener('click', () => {
+  const current = body.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  body.setAttribute('data-theme', next);
+  themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem('sstlib-theme', next);
+});
+
+// ========== 侧边栏折叠 ==========
+const sidebar = document.getElementById('sidebar');
+const content = document.getElementById('content');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const menuToggle = document.getElementById('menuToggle');
+
+sidebarToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+  content.classList.toggle('expanded');
+  sidebarToggle.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+});
+
+menuToggle.addEventListener('click', () => {
+  sidebar.classList.toggle('show');
+});
+
+// 点击内容区关闭移动端菜单
+content.addEventListener('click', () => {
+  if (window.innerWidth <= 768) {
+    sidebar.classList.remove('show');
+  }
+});
+
+// ========== 导航分组折叠 ==========
+document.querySelectorAll('.nav-section-title').forEach(title => {
+  title.addEventListener('click', () => {
+    title.parentElement.classList.toggle('collapsed');
+  });
+});
+
+// ========== 子章节展开/折叠 ==========
+document.querySelectorAll('.sub-chevron').forEach(ch => {
+  ch.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    ch.closest('.nav-item-group').classList.toggle('collapsed');
+  });
+});
+
+// 点击子项时自动展开父级（避免跳转到不可见的目标）
+document.querySelectorAll('.nav-sub-items .nav-item.sub').forEach(item => {
+  item.addEventListener('click', () => {
+    const group = item.closest('.nav-item-group');
+    if (group) group.classList.remove('collapsed');
+  });
+});
+
+// ========== 滚动高亮导航 ==========
+const navItems = document.querySelectorAll('.nav-item');
+const sections = document.querySelectorAll('h2[id], h3[id]');
+
+function updateActiveNav() {
+  let current = '';
+  const scrollY = window.scrollY + 100;
+
+  sections.forEach(section => {
+    if (section.offsetTop <= scrollY) {
+      current = section.id;
+    }
+  });
+
+  navItems.forEach(item => {
+    item.classList.remove('active');
+    if (item.getAttribute('href') === '#' + current) {
+      item.classList.add('active');
+      // 若是子项，自动展开父级以保证可见
+      if (item.classList.contains('sub')) {
+        const group = item.closest('.nav-item-group');
+        if (group) group.classList.remove('collapsed');
+      }
+    }
+  });
+}
+
+// ========== 返回顶部 ==========
+const backToTop = document.getElementById('backToTop');
+
+window.addEventListener('scroll', () => {
+  updateActiveNav();
+  if (window.scrollY > 400) {
+    backToTop.classList.add('visible');
+  } else {
+    backToTop.classList.remove('visible');
+  }
+});
+
+backToTop.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ========== 搜索功能 ==========
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+
+// 构建搜索索引
+const searchIndex = [];
+const allElements = document.querySelectorAll('h2, h3, h4, p, li, td, pre code');
+
+allElements.forEach(el => {
+  const text = el.textContent.trim();
+  if (text.length > 5) {
+    let title = '';
+    if (el.tagName === 'H2' || el.tagName === 'H3' || el.tagName === 'H4') {
+      title = el.textContent.trim();
+    } else {
+      const heading = el.closest('h2, h3, h4');
+      if (heading) title = heading.textContent.trim();
+      else title = text.substring(0, 50);
+    }
+    searchIndex.push({
+      element: el,
+      title: title,
+      text: text
+    });
+  }
+});
+
+function performSearch(query) {
+  if (!query || query.length < 2) {
+    searchResults.classList.remove('active');
+    return;
+  }
+
+  const lowerQuery = query.toLowerCase();
+  const results = [];
+
+  for (const item of searchIndex) {
+    const lowerText = item.text.toLowerCase();
+    const lowerTitle = item.title.toLowerCase();
+    const textIdx = lowerText.indexOf(lowerQuery);
+    const titleIdx = lowerTitle.indexOf(lowerQuery);
+
+    if (textIdx !== -1 || titleIdx !== -1) {
+      let score = 0;
+      if (titleIdx !== -1) score += 100;
+      if (textIdx !== -1) score += 10;
+      if (lowerText.startsWith(lowerQuery)) score += 50;
+
+      let preview = '';
+      if (textIdx !== -1) {
+        const start = Math.max(0, textIdx - 30);
+        const end = Math.min(item.text.length, textIdx + query.length + 50);
+        preview = (start > 0 ? '...' : '') + item.text.substring(start, end) + (end < item.text.length ? '...' : '');
+      } else {
+        preview = item.text.substring(0, 80) + '...';
+      }
+
+      results.push({
+        title: item.title,
+        preview: preview,
+        element: item.element,
+        score: score
+      });
+    }
+  }
+
+  results.sort((a, b) => b.score - a.score);
+
+  searchResults.innerHTML = '';
+  const topResults = results.slice(0, 12);
+
+  if (topResults.length === 0) {
+    searchResults.innerHTML = '<div class="search-result-item"><div class="search-result-title">无匹配结果</div><div class="search-result-preview">试试其他关键词</div></div>';
+  } else {
+    topResults.forEach(result => {
+      const item = document.createElement('div');
+      item.className = 'search-result-item';
+
+      const titleEl = document.createElement('div');
+      titleEl.className = 'search-result-title';
+      titleEl.innerHTML = highlightMatch(result.title, query);
+
+      const previewEl = document.createElement('div');
+      previewEl.className = 'search-result-preview';
+      previewEl.innerHTML = highlightMatch(result.preview, query);
+
+      item.appendChild(titleEl);
+      item.appendChild(previewEl);
+
+      item.addEventListener('click', () => {
+        result.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        result.element.style.transition = 'background-color 0.5s';
+        const origBg = result.element.style.backgroundColor;
+        result.element.style.backgroundColor = 'var(--accent-bg)';
+        setTimeout(() => {
+          result.element.style.backgroundColor = origBg;
+        }, 2000);
+        searchResults.classList.remove('active');
+        searchInput.blur();
+      });
+
+      searchResults.appendChild(item);
+    });
+  }
+
+  searchResults.classList.add('active');
+}
+
+function highlightMatch(text, query) {
+  const regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  return text.replace(regex, '<span class="search-result-highlight">$1</span>');
+}
+
+let searchTimeout;
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    performSearch(searchInput.value.trim());
+  }, 200);
+});
+
+searchInput.addEventListener('focus', () => {
+  if (searchInput.value.trim().length >= 2) {
+    performSearch(searchInput.value.trim());
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-container')) {
+    searchResults.classList.remove('active');
+  }
+});
+
+// 键盘快捷键
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    searchInput.focus();
+  }
+  if (e.key === 'Escape') {
+    searchResults.classList.remove('active');
+    searchInput.blur();
+  }
+});
+
+// 初始高亮
+updateActiveNav();
+</script>
+
+</body>
+</html>

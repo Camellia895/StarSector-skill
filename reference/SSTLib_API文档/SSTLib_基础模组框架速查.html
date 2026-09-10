@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSTLib 基础模组框架速查 - 远行星号模组开发</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --bg-hover: #30363d;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent-hover: #79c0ff;
+    --accent-bg: rgba(56, 139, 253, 0.15);
+    --code-bg: #1e242c;
+    --code-text: #e6edf3;
+    --table-header: #21262d;
+    --table-stripe: #161b22;
+    --shadow: rgba(0, 0, 0, 0.4);
+    --success: #3fb950;
+    --warning: #d29922;
+    --danger: #f85149;
+    --link: #58a6ff;
+    --purple: #bc8cff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --pink: #ff7b72;
+  }
+
+  [data-theme="light"] {
+    --bg: #ffffff;
+    --bg-secondary: #f6f8fa;
+    --bg-tertiary: #eaeef2;
+    --bg-hover: #d8dee4;
+    --text: #1f2328;
+    --text-secondary: #59636e;
+    --text-muted: #818b98;
+    --border: #d0d7de;
+    --accent: #0969da;
+    --accent-hover: #0550ae;
+    --accent-bg: rgba(9, 105, 218, 0.1);
+    --code-bg: #eff1f3;
+    --code-text: #1f2328;
+    --table-header: #eaeef2;
+    --table-stripe: #f6f8fa;
+    --shadow: rgba(140, 149, 159, 0.2);
+    --link: #0969da;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.6; font-size: 14px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 56px;
+    background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; z-index: 100;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .topbar-title { font-weight: 600; font-size: 16px; color: var(--text); margin-right: 20px; white-space: nowrap; }
+  .topbar-title span { color: var(--accent); }
+  .topbar-actions { display: flex; gap: 8px; margin-left: auto; }
+  .icon-btn {
+    width: 34px; height: 34px; background: transparent; border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { background: var(--bg-hover); color: var(--text); border-color: var(--accent); }
+
+  .content {
+    margin-top: 56px; padding: 24px;
+    max-width: 1300px; margin-left: auto; margin-right: auto;
+  }
+
+  h1 {
+    font-size: 28px; font-weight: 700; margin-bottom: 6px; color: var(--text);
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .subtitle { color: var(--text-secondary); margin-bottom: 24px; font-size: 14px; }
+
+  h2 {
+    font-size: 20px; font-weight: 600; margin-top: 36px; margin-bottom: 12px;
+    color: var(--text); padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    scroll-margin-top: 70px; display: flex; align-items: center; gap: 8px;
+  }
+
+  h3 {
+    font-size: 16px; font-weight: 600; margin-top: 20px; margin-bottom: 8px;
+    color: var(--text); scroll-margin-top: 70px;
+  }
+
+  h4 {
+    font-size: 14px; font-weight: 600; margin-top: 14px; margin-bottom: 6px;
+    color: var(--text-secondary);
+  }
+
+  .toc-bar {
+    position: sticky; top: 56px; z-index: 50;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 8px 0; margin-bottom: 16px; overflow-x: auto;
+    display: flex; gap: 6px; white-space: nowrap;
+  }
+  .toc-bar a {
+    padding: 4px 10px; font-size: 12px; color: var(--text-secondary);
+    text-decoration: none; border-radius: 4px; transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .toc-bar a:hover { background: var(--bg-hover); color: var(--text); }
+  .toc-bar a.active { background: var(--accent-bg); color: var(--accent); }
+
+  .file-tree {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px 18px; margin: 10px 0 16px;
+    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 13px; line-height: 1.8;
+  }
+  .file-tree .folder { color: var(--accent); font-weight: 600; }
+  .file-tree .file { color: var(--text); }
+  .file-tree .req { color: var(--success); margin-left: 6px; font-size: 11px; }
+  .file-tree .opt { color: var(--text-muted); margin-left: 6px; font-size: 11px; }
+  .file-tree .comment { color: var(--text-muted); font-style: italic; }
+  .file-tree ul { list-style: none; padding-left: 20px; margin: 0; }
+  .file-tree > ul { padding-left: 0; }
+
+  table {
+    width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 13px;
+  }
+  th {
+    background: var(--table-header); text-align: left; padding: 8px 12px;
+    font-weight: 600; color: var(--text); border: 1px solid var(--border);
+  }
+  td {
+    padding: 7px 12px; border: 1px solid var(--border); color: var(--text-secondary);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--table-stripe); }
+  tr:hover td { background: var(--bg-hover); }
+  td code {
+    background: var(--code-bg); padding: 1px 4px; border-radius: 3px;
+    font-family: "JetBrains Mono", Consolas, monospace; font-size: 12px; color: var(--text);
+  }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 14px; overflow-x: auto; margin: 8px 0 14px;
+    font-family: "JetBrains Mono", Consolas, monospace; font-size: 12.5px;
+    line-height: 1.65; color: var(--code-text); position: relative;
+  }
+  pre .copy-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    color: var(--text-secondary); padding: 4px 10px; border-radius: 4px;
+    cursor: pointer; font-size: 11px; font-family: inherit;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  pre:hover .copy-btn { opacity: 1; }
+  pre .copy-btn:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+  code { font-family: "JetBrains Mono", Consolas, monospace; }
+  .k { color: #ff7b72; }   /* keyword */
+  .s { color: #a5d6ff; }   /* string */
+  .c { color: var(--text-muted); font-style: italic; } /* comment */
+  .t { color: var(--purple); }  /* type/class */
+  .m { color: #d2a8ff; }  /* method */
+  .v { color: #79c0ff; }  /* variable */
+  .n { color: #79c0ff; }  /* number */
+  .o { color: #ff7b72; }  /* operator */
+  .a { color: var(--orange); }  /* annotation */
+  .p { color: var(--text); }  /* punctuation */
+
+  .tip-box {
+    background: var(--accent-bg); border-left: 3px solid var(--accent);
+    padding: 10px 14px; margin: 10px 0 14px; border-radius: 0 6px 6px 0;
+    font-size: 13px;
+  }
+  .tip-box.warning {
+    background: rgba(210, 153, 34, 0.1); border-left-color: var(--warning);
+  }
+  .tip-box.danger {
+    background: rgba(248, 81, 73, 0.1); border-left-color: var(--danger);
+  }
+  .tip-box.success {
+    background: rgba(63, 185, 80, 0.1); border-left-color: var(--success);
+  }
+  .tip-box strong { color: var(--text); }
+
+  .grid {
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  }
+
+  .card {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px; transition: all 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card-title {
+    font-weight: 600; color: var(--accent); margin-bottom: 6px;
+    font-size: 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .card-desc { color: var(--text-secondary); font-size: 13px; margin-bottom: 8px; }
+  .card-path {
+    font-family: "JetBrains Mono", Consolas, monospace; font-size: 11px;
+    color: var(--text-muted); background: var(--code-bg);
+    padding: 3px 6px; border-radius: 3px; display: inline-block;
+  }
+
+  .back-to-top {
+    position: fixed; bottom: 24px; right: 24px; width: 40px; height: 40px;
+    background: var(--accent); color: white; border: none; border-radius: 50%;
+    cursor: pointer; font-size: 18px; display: flex; align-items: center;
+    justify-content: center; box-shadow: 0 4px 12px var(--shadow);
+    opacity: 0; transition: opacity 0.3s; z-index: 200;
+  }
+  .back-to-top.visible { opacity: 1; }
+  .back-to-top:hover { background: var(--accent-hover); }
+
+  .tag {
+    display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    font-weight: 500; margin-right: 4px;
+  }
+  .tag-required { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+  .tag-optional { background: rgba(139, 148, 158, 0.15); color: var(--text-secondary); }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">SSTLib <span>基础模组框架速查</span></div>
+  <div class="topbar-actions">
+    <button class="icon-btn" onclick="toggleTheme()" title="切换主题">🌓</button>
+    <button class="icon-btn" onclick="window.print()" title="打印">🖨️</button>
+  </div>
+</div>
+
+<div class="content">
+  <h1>🏗️ 基础模组必须文件与框架代码</h1>
+  <p class="subtitle">远行星号模组开发从零开始的完整脚手架 · 所有类型扩展点的标准模板</p>
+
+  <div class="toc-bar" id="tocBar">
+    <a href="#file-structure" class="active">文件结构</a>
+    <a href="#mod-info">mod_info.json</a>
+    <a href="#mod-plugin">ModPlugin</a>
+    <a href="#hullmod">船体改装</a>
+    <a href="#everyframe">每帧脚本</a>
+    <a href="#listener">监听器</a>
+    <a href="#industry">产业</a>
+    <a href="#ability">能力</a>
+    <a href="#ship-system">舰船系统</a>
+    <a href="#dialog">对话插件</a>
+    <a href="#campaign-plugin">战役插件</a>
+    <a href="#weapon-effect">武器特效</a>
+    <a href="#data-files">数据文件</a>
+  </div>
+
+  <!-- ===== 1. 文件结构 ===== -->
+  <h2 id="file-structure">📁 一、完整文件结构</h2>
+
+  <div class="file-tree">
+<ul>
+<li><span class="folder">📁 MyMod/</span> <span class="comment">← 模组根目录</span>
+<ul>
+  <li><span class="file">📄 mod_info.json</span><span class="req">● 必须</span> <span class="comment">模组元数据配置</span></li>
+  <li><span class="folder">📁 jars/</span>
+  <ul>
+    <li><span class="file">📄 MyMod.jar</span><span class="req">● 必须</span> <span class="comment">编译后的 Java 代码</span></li>
+  </ul></li>
+  <li><span class="folder">📁 src/</span><span class="opt">○ 源码</span>
+  <ul>
+    <li><span class="folder">📁 org/myname/mymod/</span>
+    <ul>
+      <li><span class="file">📄 MyModPlugin.java</span><span class="req">● 必须</span> <span class="comment">模组入口类</span></li>
+    </ul></li>
+  </ul></li>
+  <li><span class="folder">📁 data/</span><span class="opt">○ 数据</span>
+  <ul>
+    <li><span class="folder">📁 config/</span>
+    <ul>
+      <li><span class="file">📄 settings.json</span><span class="opt">○ 配置</span></li>
+      <li><span class="file">📄 hullmods.csv</span><span class="opt">○ 船体改装</span></li>
+      <li><span class="file">📄 industries.csv</span><span class="opt">○ 产业</span></li>
+      <li><span class="file">📄 abilities.csv</span><span class="opt">○ 能力</span></li>
+      <li><span class="file">📄 marketconditions.csv</span><span class="opt">○ 市场条件</span></li>
+    </ul></li>
+    <li><span class="folder">📁 hullmods/</span><span class="opt">○ hullmod 配置</span></li>
+    <li><span class="folder">📁 weapons/</span><span class="opt">○ 武器配置</span></li>
+    <li><span class="folder">📁 ships/</span><span class="opt">○ 舰船配置</span></li>
+    <li><span class="folder">📁 campaigns/</span><span class="opt">○ 战役脚本</span></li>
+  </ul></li>
+  <li><span class="folder">📁 graphics/</span><span class="opt">○ 图片资源</span>
+  <ul>
+    <li><span class="folder">📁 hullmods/</span></li>
+    <li><span class="folder">📁 weapons/</span></li>
+    <li><span class="folder">📁 ships/</span></li>
+    <li><span class="folder">📁 ui/</span></li>
+  </ul></li>
+  <li><span class="folder">📁 sounds/</span><span class="opt">○ 声音资源</span></li>
+</ul></li>
+</ul>
+  </div>
+
+  <div class="tip-box">
+    <strong>💡 最小模组：</strong>只需要 <code>mod_info.json</code> + <code>jars/MyMod.jar</code> + 入口类即可运行。
+    数据文件和资源按需添加。
+  </div>
+
+  <!-- ===== 2. mod_info.json ===== -->
+  <h2 id="mod-info">📋 二、mod_info.json 配置</h2>
+
+  <h3>完整字段说明</h3>
+  <table>
+    <tr><th>字段</th><th>类型</th><th>必须</th><th>说明</th></tr>
+    <tr><td><code>id</code></td><td>String</td><td>✅</td><td>模组唯一 ID，英文无空格</td></tr>
+    <tr><td><code>name</code></td><td>String</td><td>✅</td><td>模组显示名称</td></tr>
+    <tr><td><code>author</code></td><td>String</td><td>❌</td><td>作者名</td></tr>
+    <tr><td><code>version</code></td><td>String/Object</td><td>✅</td><td>版本号，字符串或 {major,minor,patch}</td></tr>
+    <tr><td><code>description</code></td><td>String</td><td>❌</td><td>模组描述</td></tr>
+    <tr><td><code>gameVersion</code></td><td>String</td><td>✅</td><td>兼容的游戏版本，如 "0.97a"</td></tr>
+    <tr><td><code>utility</code></td><td>boolean</td><td>❌</td><td>是否为工具类模组（不影响存档）</td></tr>
+    <tr><td><code>jars</code></td><td>String[]</td><td>✅</td><td>JAR 文件路径列表</td></tr>
+    <tr><td><code>modPlugin</code></td><td>String</td><td>✅</td><td>ModPlugin 类的全限定名</td></tr>
+    <tr><td><code>dependencies</code></td><td>Object[]</td><td>❌</td><td>依赖的其他模组</td></tr>
+    <tr><td><code>jars/jars_stellar</code></td><td>String[]</td><td>❌</td><td>仅在战役/战斗加载的 jar</td></tr>
+    <tr><td><code>configFolder</code></td><td>String</td><td>❌</td><td>配置文件夹名称</td></tr>
+  </table>
+
+  <h3>标准模板</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button>{
+  <span class="s">"id"</span>: <span class="s">"MyMod"</span>,
+  <span class="s">"name"</span>: <span class="s">"我的模组"</span>,
+  <span class="s">"author"</span>: <span class="s">"作者名"</span>,
+  <span class="s">"version"</span>: {
+    <span class="s">"major"</span>: <span class="n">1</span>,
+    <span class="s">"minor"</span>: <span class="n">0</span>,
+    <span class="s">"patch"</span>: <span class="n">0</span>
+  },
+  <span class="s">"utility"</span>: <span class="k">false</span>,
+  <span class="s">"description"</span>: <span class="s">"模组描述"</span>,
+  <span class="s">"gameVersion"</span>: <span class="s">"0.97a"</span>,
+  <span class="s">"jars"</span>: [
+    <span class="s">"jars/MyMod.jar"</span>
+  ],
+  <span class="s">"modPlugin"</span>: <span class="s">"org.myname.mymod.MyModPlugin"</span>,
+  <span class="s">"dependencies"</span>: [
+    {
+      <span class="s">"id"</span>: <span class="s">"lw_lazylib"</span>,
+      <span class="s">"name"</span>: <span class="s">"LazyLib"</span>
+    }
+  ]
+}</pre>
+
+  <!-- ===== 3. ModPlugin ===== -->
+  <h2 id="mod-plugin">🔌 三、ModPlugin 入口类</h2>
+
+  <p>所有模组的入口点。继承 <code>BaseModPlugin</code>，按需重写生命周期方法。</p>
+
+  <h3>生命周期方法速览</h3>
+  <table>
+    <tr><th>方法</th><th>调用时机</th><th>常用场景</th></tr>
+    <tr><td><code>onApplicationLoad()</code></td><td>游戏启动后</td><td>加载配置、注册全局数据</td></tr>
+    <tr><td><code>onEnabled(wasEnabledBefore)</code></td><td>模组被启用时</td><td>首次启用初始化</td></tr>
+    <tr><td><code>onNewGame()</code></td><td>新游戏创建时</td><td>生成星区内容</td></tr>
+    <tr><td><code>onNewGameAfterProcGen()</code></td><td>程序化生成后</td><td>在程序生成基础上修改</td></tr>
+    <tr><td><code>onNewGameAfterEconomyLoad()</code></td><td>经济加载后</td><td>市场相关初始化</td></tr>
+    <tr><td><code>onGameLoad(newGame)</code></td><td>读档/新游戏后</td><td>注册监听器、脚本 ✨</td></tr>
+    <tr><td><code>beforeGameSave()</code></td><td>存档保存前</td><td>准备持久化数据</td></tr>
+    <tr><td><code>afterGameSave()</code></td><td>存档保存后</td><td>恢复临时状态</td></tr>
+    <tr><td><code>onDevModeF8Reload()</code></td><td>F8 热重载</td><td>调试用</td></tr>
+    <tr><td><code>configureXStream(x)</code></td><td>存档序列化配置</td><td>注册自定义类别名</td></tr>
+  </table>
+
+  <h3>完整模板</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod;
+
+<span class="k">import</span> com.fs.starfarer.api.<span class="t">BaseModPlugin</span>;
+<span class="k">import</span> com.fs.starfarer.api.<span class="t">Global</span>;
+<span class="k">import</span> com.fs.starfarer.api.<span class="t">GameState</span>;
+<span class="k">import</span> java.util.concurrent.*;
+
+<span class="k">public class</span> <span class="t">MyModPlugin</span> <span class="k">extends</span> <span class="t">BaseModPlugin</span> {
+
+    <span class="k">private static final</span> <span class="t">String</span> <span class="v">MOD_ID</span> = <span class="s">"MyMod"</span>;
+    <span class="k">private</span> <span class="t">ScheduledExecutorService</span> <span class="v">scheduler</span>;
+
+    <span class="c">// 游戏启动时调用（最早的入口）</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">onApplicationLoad</span>() <span class="k">throws</span> Exception {
+        <span class="k">super</span>.onApplicationLoad();
+        <span class="c">// 加载模组配置文件</span>
+        <span class="c">// Global.getSettings().loadJSON("data/config/my_config.json");</span>
+
+        <span class="c">// 若需在主菜单就生效，启动调度器等待游戏就绪</span>
+        <span class="m">startScheduler</span>();
+
+        Global.<span class="m">getLogger</span>(MyModPlugin.<span class="k">class</span>).info(<span class="s">"MyMod 已加载"</span>);
+    }
+
+    <span class="c">// 新游戏创建时调用</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">onNewGame</span>() {
+        <span class="k">super</span>.onNewGame();
+        <span class="c">// 生成新游戏内容</span>
+    }
+
+    <span class="c">// 程序化生成完成后</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">onNewGameAfterProcGen</span>() {
+        <span class="k">super</span>.onNewGameAfterProcGen();
+        <span class="c">// 在程序生成的星系基础上修改</span>
+    }
+
+    <span class="c">// 经济系统加载后（此时市场可用）</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">onNewGameAfterEconomyLoad</span>() {
+        <span class="k">super</span>.onNewGameAfterEconomyLoad();
+        <span class="c">// 市场相关初始化</span>
+    }
+
+    <span class="c">// 读档完成 / 新游戏创建完成 ✨ 最常用</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">onGameLoad</span>(<span class="k">boolean</span> newGame) {
+        <span class="k">super</span>.onGameLoad(newGame);
+
+        <span class="c">// 注册 transient 监听器和脚本</span>
+        <span class="c">// Global.getSector().addTransientListener(new MyListener());</span>
+        <span class="c">// Global.getSector().addTransientScript(new MyScript());</span>
+
+        <span class="c">// 兜底：确保调度器已 shutdown</span>
+        <span class="k">if</span> (scheduler != <span class="k">null</span>) {
+            scheduler.shutdownNow();
+            scheduler = <span class="k">null</span>;
+        }
+
+        Global.<span class="m">getLogger</span>(MyModPlugin.<span class="k">class</span>).info(<span class="s">"MyMod 注册完成"</span>);
+    }
+
+    <span class="c">// 存档保存前</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">beforeGameSave</span>() {
+        <span class="k">super</span>.beforeGameSave();
+        <span class="c">// 准备持久化数据</span>
+    }
+
+    <span class="c">// 配置 XStream 序列化（如需持久化自定义类）</span>
+    <span class="c">/*
+    @Override
+    public void configureXStream(XStream x) {
+        super.configureXStream(x);
+        x.alias("MyData", MyDataClass.class);
+    }
+    */</span>
+
+    <span class="c">// 调度器：等待游戏进入 TITLE/CAMPAIGN 状态后注册</span>
+    <span class="k">private void</span> <span class="m">startScheduler</span>() {
+        <span class="k">if</span> (scheduler != <span class="k">null</span>) {
+            scheduler.shutdownNow();
+        }
+        scheduler = <span class="t">Executors</span>.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(() -> {
+            <span class="k">try</span> {
+                <span class="t">GameState</span> state = Global.<span class="m">getCurrentState</span>();
+                <span class="k">if</span> (state == <span class="t">GameState</span>.TITLE
+                        || state == <span class="t">GameState</span>.CAMPAIGN) {
+                    <span class="c">// 注册主菜单级别的监听器</span>
+                    scheduler.shutdown();
+                }
+            } <span class="k">catch</span> (Exception e) {
+                scheduler.shutdown();
+            }
+        }, <span class="n">0</span>, <span class="n">100</span>, <span class="t">TimeUnit</span>.MILLISECONDS);
+    }
+}</pre>
+
+  <div class="tip-box success">
+    <strong>💡 最佳实践：</strong>
+    <ul style="margin:4px 0 0 20px;">
+      <li>监听器和脚本用 <strong>transient</strong>（临时）方式注册，在 <code>onGameLoad()</code> 重新注册，便于增删模组</li>
+      <li>包名推荐格式：<code>org/作者名/模组名/</code></li>
+      <li>不要在 <code>onApplicationLoad()</code> 中使用 <code>Global.getSector()</code>（此时为 null）</li>
+    </ul>
+  </div>
+
+  <!-- ===== 4. 船体改装 ===== -->
+  <h2 id="hullmod">🛡️ 四、船体改装 (HullMod)</h2>
+
+  <div class="grid">
+    <div>
+      <h3>配置文件 hullmods.csv</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="c">id, name, ...</span></pre>
+    </div>
+    <div>
+      <h3>Java 类</h3>
+      <p>路径：<code>data/hullmods/MyHullMod.java</code></p>
+    </div>
+  </div>
+
+  <h3>代码模板</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod.hullmods;
+
+<span class="k">import</span> com.fs.starfarer.api.<span class="t">BaseHullMod</span>;
+<span class="k">import</span> com.fs.starfarer.api.combat.<span class="t">MutableShipStatsAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.combat.<span class="t">ShipAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.fleet.<span class="t">FleetMemberAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.impl.campaign.ids.<span class="t">HullSize</span>;
+
+<span class="k">public class</span> <span class="t">MyHullMod</span> <span class="k">extends</span> <span class="t">BaseHullMod</span> {
+
+    <span class="k">private static final</span> <span class="t">String</span> <span class="v">MOD_ID</span> = <span class="s">"my_hullmod"</span>;
+
+    <span class="c">// 舰船创建前应用效果（属性修改放这里）</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">applyEffectsBeforeShipCreation</span>(
+            <span class="t">HullSize</span> hullSize,
+            <span class="t">MutableShipStatsAPI</span> stats,
+            <span class="t">String</span> id) {
+
+        <span class="c">// 修改装甲（加法）</span>
+        stats.getArmorBonus().modifyFlat(id, <span class="n">50f</span>);
+
+        <span class="c">// 修改最大速度（百分比）</span>
+        stats.getMaxSpeed().modifyPercent(id, <span class="n">10f</span>);
+
+        <span class="c">// 修改武器伤害（倍数）</span>
+        stats.getBallisticWeaponDamageMult().modifyMult(id, <span class="n">1.2f</span>);
+    }
+
+    <span class="c">// 舰船创建后应用效果</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">applyEffectsAfterShipCreation</span>(
+            <span class="t">ShipAPI</span> ship,
+            <span class="t">String</span> id) {
+        <span class="c">// 运行时效果（如添加每帧脚本）</span>
+    }
+
+    <span class="c">// 战斗中每帧</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">advanceInCombat</span>(
+            <span class="t">ShipAPI</span> ship,
+            <span class="k">float</span> amount) {
+        <span class="c">// 战斗中每帧逻辑</span>
+    }
+
+    <span class="c">// 是否适用于该舰船</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">isApplicableToShip</span>(<span class="t">ShipAPI</span> ship) {
+        <span class="k">return true</span>;
+    }
+
+    <span class="c">// 不适用于时显示的原因</span>
+    <span class="k">@Override</span>
+    <span class="k">public</span> <span class="t">String</span> <span class="m">getUnapplicableReason</span>(<span class="t">ShipAPI</span> ship) {
+        <span class="k">return null</span>;
+    }
+
+    <span class="c">// 工具提示描述参数</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">addPostDescriptionSection</span>(
+            <span class="t">TooltipMakerAPI</span> tooltip,
+            <span class="t">HullSize</span> hullSize,
+            <span class="t">ShipAPI</span> ship,
+            <span class="k">float</span> width,
+            <span class="k">boolean</span> isForModSpec) {
+        <span class="c">// 添加额外说明</span>
+    }
+
+    <span class="c">// 描述中的动态参数</span>
+    <span class="k">@Override</span>
+    <span class="k">public</span> <span class="t">String</span> <span class="m">getDescriptionParam</span>(
+            <span class="k">int</span> index,
+            <span class="t">HullSize</span> hullSize,
+            <span class="t">ShipAPI</span> ship) {
+        <span class="k">if</span> (index == <span class="n">0</span>) <span class="k">return</span> <span class="s">"+50"</span>;
+        <span class="k">if</span> (index == <span class="n">1</span>) <span class="k">return</span> <span class="s">"+10%"</span>;
+        <span class="k">return null</span>;
+    }
+
+    <span class="c">// 是否影响战舰装弹</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">affectsOPCosts</span>() {
+        <span class="k">return false</span>;
+    }
+
+    <span class="c">// 装配时是否可拆除</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">isSMod</span>(<span class="t">FleetMemberAPI</span> member) {
+        <span class="k">return false</span>;
+    }
+}</pre>
+
+  <div class="tip-box">
+    <strong>💡 MutableStat 三种修改方式：</strong>
+    <ul style="margin:4px 0 0 20px;">
+      <li><code>modifyFlat(id, value)</code> — 绝对值加减</li>
+      <li><code>modifyPercent(id, value)</code> — 百分比（10 = +10%）</li>
+      <li><code>modifyMult(id, value)</code> — 倍数（1.2 = ×1.2）</li>
+    </ul>
+    移除：<code>unmodify(id)</code>
+  </div>
+
+  <!-- ===== 5. 每帧脚本 ===== -->
+  <h2 id="everyframe">⏱️ 五、每帧脚本 (EveryFrameScript)</h2>
+
+  <p>战役中每帧执行的脚本，通过 <code>Global.getSector().addScript()</code> 注册。</p>
+
+  <h3>代码模板</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod.scripts;
+
+<span class="k">import</span> com.fs.starfarer.api.<span class="t">EveryFrameScript</span>;
+<span class="k">import</span> com.fs.starfarer.api.<span class="t">Global</span>;
+
+<span class="k">public class</span> <span class="t">MyEveryFrameScript</span> <span class="k">implements</span> <span class="t">EveryFrameScript</span> {
+
+    <span class="k">private float</span> <span class="v">elapsed</span> = <span class="n">0f</span>;
+    <span class="k">private boolean</span> <span class="v">done</span> = <span class="k">false</span>;
+    <span class="k">private final float</span> <span class="v">interval</span>;
+
+    <span class="k">public</span> <span class="m">MyEveryFrameScript</span>(<span class="k">float</span> intervalSeconds) {
+        <span class="k">this</span>.interval = intervalSeconds;
+    }
+
+    <span class="c">// 脚本是否完成（返回 true 时自动移除）</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">isDone</span>() {
+        <span class="k">return</span> done;
+    }
+
+    <span class="c">// 游戏暂停时是否仍执行</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">runWhilePaused</span>() {
+        <span class="k">return false</span>;
+    }
+
+    <span class="c">// 每帧调用，amount 为经过的秒数</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">advance</span>(<span class="k">float</span> amount) {
+        elapsed += amount;
+
+        <span class="c">// 每隔 interval 秒执行一次</span>
+        <span class="k">if</span> (elapsed >= interval) {
+            elapsed = <span class="n">0f</span>;
+            <span class="m">doPeriodicTask</span>();
+        }
+    }
+
+    <span class="k">private void</span> <span class="m">doPeriodicTask</span>() {
+        <span class="c">// 定期执行的逻辑</span>
+        <span class="c">// Global.getSector().getPlayerFleet()...</span>
+    }
+
+    <span class="c">// 手动结束脚本</span>
+    <span class="k">public void</span> <span class="m">end</span>() {
+        done = <span class="k">true</span>;
+    }
+}</pre>
+
+  <div class="tip-box">
+    <strong>💡 注册方式：</strong>
+    <ul style="margin:4px 0 0 20px;">
+      <li><code>addScript()</code> — 持久化，存入存档</li>
+      <li><code>addTransientScript()</code> — 临时，不存档（推荐）</li>
+      <li><code>addScriptWithTimeout()</code> — 带超时自动移除</li>
+    </ul>
+  </div>
+
+  <h3>带清理功能的脚本</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">import</span> com.fs.starfarer.api.<span class="t">EveryFrameScriptWithCleanup</span>;
+
+<span class="k">public class</span> <span class="t">MyCleanupScript</span> <span class="k">implements</span> <span class="t">EveryFrameScriptWithCleanup</span> {
+
+    <span class="k">private boolean</span> <span class="v">done</span> = <span class="k">false</span>;
+
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">isDone</span>() { <span class="k">return</span> done; }
+
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">runWhilePaused</span>() { <span class="k">return false</span>; }
+
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">advance</span>(<span class="k">float</span> amount) {
+        <span class="c">// 每帧逻辑</span>
+    }
+
+    <span class="c">// 脚本结束时清理资源</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">cleanup</span>() {
+        <span class="c">// 释放资源、移除监听器等</span>
+    }
+}</pre>
+
+  <!-- ===== 6. 监听器 ===== -->
+  <h2 id="listener">👂 六、事件监听器</h2>
+
+  <h3>CampaignEventListener（广播式）</h3>
+  <p>接收所有战役事件，继承 <code>BaseCampaignEventListener</code> 按需重写。</p>
+
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod.listeners;
+
+<span class="k">import</span> com.fs.starfarer.api.campaign.<span class="t">BaseCampaignEventListener</span>;
+<span class="k">import</span> com.fs.starfarer.api.campaign.<span class="t">CampaignFleetAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.campaign.econ.<span class="t">MarketAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.characters.<span class="t">PersonAPI</span>;
+
+<span class="k">public class</span> <span class="t">MyCampaignListener</span> <span class="k">extends</span> <span class="t">BaseCampaignEventListener</span> {
+
+    <span class="c">// 构造函数：传 true 自动注册，false 手动注册</span>
+    <span class="k">public</span> <span class="m">MyCampaignListener</span>() {
+        <span class="k">super</span>(<span class="k">false</span>); <span class="c">// 不自动注册，由外部控制</span>
+    }
+
+    <span class="c">// 战斗发生时</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">reportBattleOccurred</span>(
+            <span class="t">CampaignFleetAPI</span> winner,
+            <span class="t">BattleAPI</span> battle) {
+        <span class="c">// 战斗结束处理</span>
+    }
+
+    <span class="c">// 玩家打开市场时</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">reportPlayerOpenedMarket</span>(<span class="t">MarketAPI</span> market) {
+        <span class="c">// 打开市场</span>
+    }
+
+    <span class="c">// 玩家关闭市场时</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">reportPlayerClosedMarket</span>(<span class="t">MarketAPI</span> market) {
+        <span class="c">// 关闭市场</span>
+    }
+
+    <span class="c">// 市场交易时</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">reportPlayerMarketTransaction</span>(
+            <span class="t">PlayerMarketTransaction</span> transaction) {
+        <span class="c">// 交易处理</span>
+    }
+
+    <span class="c">// 舰队跳跃时</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">reportFleetJumped</span>(
+            <span class="t">CampaignFleetAPI</span> fleet,
+            <span class="t">SectorEntityToken</span> from,
+            <span class="t">JumpPointAPI</span> to) {
+        <span class="c">// 跳跃处理</span>
+    }
+
+    <span class="c">// 声望变化时</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">reportPlayerReputationChange</span>(
+            <span class="t">FactionAPI</span> faction,
+            <span class="k">float</span> delta) {
+        <span class="c">// 声望变化</span>
+    }
+
+    <span class="c">// 玩家激活能力时</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">reportPlayerActivatedAbility</span>(
+            <span class="t">AbilityPlugin</span> ability,
+            <span class="t">Object</span> param) {
+        <span class="c">// 能力激活</span>
+    }
+
+    <span class="c">// 经济月结算</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">reportEconomyMonthEnd</span>() {
+        <span class="c">// 每月末处理</span>
+    }
+}</pre>
+
+  <h3>输入监听器（高优先级）</h3>
+  <p>拦截键盘/鼠标输入，优先级越高越早处理。</p>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">import</span> com.fs.starfarer.api.campaign.listeners.<span class="t">CampaignInputListener</span>;
+<span class="k">import</span> com.fs.starfarer.api.input.<span class="t">InputEventAPI</span>;
+<span class="k">import</span> java.util.<span class="t">List</span>;
+
+<span class="k">public class</span> <span class="t">MyInputListener</span> <span class="k">implements</span> <span class="t">CampaignInputListener</span> {
+
+    <span class="c">// 数字越大优先级越高，越早处理</span>
+    <span class="k">@Override</span>
+    <span class="k">public int</span> <span class="m">getListenerInputPriority</span>() {
+        <span class="k">return</span> <span class="n">1000</span>;
+    }
+
+    <span class="c">// 核心处理之前（最优先拦截）</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">processCampaignInputPreCore</span>(
+            <span class="t">List</span><<span class="t">InputEventAPI</span>> events) {
+        <span class="k">for</span> (<span class="t">InputEventAPI</span> event : events) {
+            <span class="k">if</span> (event.isConsumed()) <span class="k">continue</span>;
+
+            <span class="c">// 检查按键</span>
+            <span class="k">if</span> (event.isKeyboardEvent() && event.isKeyDownEvent()) {
+                <span class="c">// int keyCode = event.getEventValue();</span>
+                <span class="c">// event.consume(); // 拦截此事件</span>
+            }
+        }
+    }
+
+    <span class="c">// 舰队控制之前</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">processCampaignInputPreFleetControl</span>(
+            <span class="t">List</span><<span class="t">InputEventAPI</span>> events) {
+    }
+
+    <span class="c">// 核心处理之后</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">processCampaignInputPostCore</span>(
+            <span class="t">List</span><<span class="t">InputEventAPI</span>> events) {
+    }
+}</pre>
+
+  <!-- ===== 7. 产业 ===== -->
+  <h2 id="industry">🏭 七、自定义产业</h2>
+
+  <p>继承 <code>BaseIndustry</code>，配置在 <code>industries.csv</code> 中。</p>
+
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod.industries;
+
+<span class="k">import</span> com.fs.starfarer.api.impl.campaign.econ.impl.<span class="t">BaseIndustry</span>;
+<span class="k">import</span> com.fs.starfarer.api.campaign.econ.<span class="t">MarketAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.ui.<span class="t">TooltipMakerAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.util.<span class="t">Pair</span>;
+<span class="k">import</span> java.awt.<span class="t">Color</span>;
+
+<span class="k">public class</span> <span class="t">MyIndustry</span> <span class="k">extends</span> <span class="t">BaseIndustry</span> {
+
+    <span class="c">// 产业应用效果</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">apply</span>() {
+        <span class="k">super</span>.apply();
+        <span class="c">// 供应/需求商品</span>
+        <span class="c">// supply("commodity_id", 1);</span>
+        <span class="c">// demand("commodity_id", 1);</span>
+    }
+
+    <span class="c">// 产业移除时清理</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">unapply</span>() {
+        <span class="k">super</span>.unapply();
+    }
+
+    <span class="c">// 是否能在该市场建造</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">isAvailableToBuild</span>() {
+        <span class="k">return true</span>;
+    }
+
+    <span class="c">// 建造是否需要 AI 核心</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">requiresAICore</span>() {
+        <span class="k">return false</span>;
+    }
+
+    <span class="c">// 产业名称</span>
+    <span class="k">@Override</span>
+    <span class="k">protected</span> <span class="t">String</span> <span class="m">getBuildCostModifierId</span>() {
+        <span class="k">return null</span>;
+    }
+
+    <span class="c">// 添加到产业菜单的工具提示</span>
+    <span class="k">@Override</span>
+    <span class="k">protected void</span> <span class="m">addPostDescriptionSection</span>(
+            <span class="t">TooltipMakerAPI</span> text,
+            <span class="t">MarketAPI</span> market,
+            <span class="k">boolean</span> expanded,
+            <span class="t">Industry.TooltipMode</span> mode) {
+        <span class="k">super</span>.addPostDescriptionSection(text, market, expanded, mode);
+    }
+
+    <span class="c">// 每月收入/支出（影响市场稳定度等）</span>
+    <span class="k">@Override</span>
+    <span class="k">protected void</span> <span class="m">buildingHintsAndTips</span>(
+            <span class="t">TooltipMakerAPI</span> text,
+            <span class="t">MarketAPI</span> market) {
+    }
+
+    <span class="c">// 产业收入计算</span>
+    <span class="k">@Override</span>
+    <span class="k">protected void</span> <span class="m">addUpkeepSection</span>(
+            <span class="t">TooltipMakerAPI</span> text,
+            <span class="t">MarketAPI</span> market) {
+        <span class="k">super</span>.addUpkeepSection(text, market);
+    }
+
+    <span class="c">// 产业是否正常运作</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">isFunctional</span>() {
+        <span class="k">return</span> <span class="k">super</span>.isFunctional();
+    }
+
+    <span class="c">// 产业等级（0=无, 1=普通, 3=满）</span>
+    <span class="k">@Override</span>
+    <span class="k">public int</span> <span class="m">getMaxLevel</span>() {
+        <span class="k">return</span> <span class="n">3</span>;
+    }
+}</pre>
+
+  <!-- ===== 8. 能力 ===== -->
+  <h2 id="ability">⚡ 八、自定义能力</h2>
+
+  <p>继承 <code>BaseToggleAbility</code>（切换型）或 <code>BaseDurationAbility</code>（持续型）。</p>
+
+  <h3>切换型能力</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod.abilities;
+
+<span class="k">import</span> com.fs.starfarer.api.impl.campaign.abilities.<span class="t">BaseToggleAbility</span>;
+<span class="k">import</span> com.fs.starfarer.api.campaign.<span class="t">CampaignFleetAPI</span>;
+
+<span class="k">public class</span> <span class="t">MyToggleAbility</span> <span class="k">extends</span> <span class="t">BaseToggleAbility</span> {
+
+    <span class="c">// 激活时效果</span>
+    <span class="k">@Override</span>
+    <span class="k">protected void</span> <span class="m">activateImpl</span>() {
+        <span class="t">CampaignFleetAPI</span> fleet = <span class="m">getFleet</span>();
+        <span class="c">// 激活逻辑</span>
+    }
+
+    <span class="c">// 关闭时效果</span>
+    <span class="k">@Override</span>
+    <span class="k">protected void</span> <span class="m">deactivateImpl</span>() {
+        <span class="c">// 关闭逻辑</span>
+    }
+
+    <span class="c">// 是否能激活</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">isUsable</span>() {
+        <span class="k">return</span> <span class="k">super</span>.isUsable();
+    }
+
+    <span class="c">// 冷却时间（秒）</span>
+    <span class="k">@Override</span>
+    <span class="k">protected float</span> <span class="m">getCooldownDays</span>() {
+        <span class="k">return</span> <span class="n">0</span>;
+    }
+
+    <span class="c">// 消耗补给数</span>
+    <span class="k">@Override</span>
+    <span class="k">public float</span> <span class="m">getSupplyCost</span>() {
+        <span class="k">return</span> <span class="n">0</span>;
+    }
+
+    <span class="c">// 消耗燃料数</span>
+    <span class="k">@Override</span>
+    <span class="k">public float</span> <span class="m">getFuelCost</span>() {
+        <span class="k">return</span> <span class="n">0</span>;
+    }
+
+    <span class="c">// 能力名称</span>
+    <span class="k">@Override</span>
+    <span class="k">protected</span> <span class="t">String</span> <span class="m">getActivationText</span>() {
+        <span class="k">return</span> <span class="s">"激活能力"</span>;
+    }
+
+    <span class="k">@Override</span>
+    <span class="k">protected</span> <span class="t">String</span> <span class="m">getDeactivationText</span>() {
+        <span class="k">return</span> <span class="s">"关闭能力"</span>;
+    }
+}</pre>
+
+  <h3>持续型能力</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">import</span> com.fs.starfarer.api.impl.campaign.abilities.<span class="t">BaseDurationAbility</span>;
+
+<span class="k">public class</span> <span class="t">MyDurationAbility</span> <span class="k">extends</span> <span class="t">BaseDurationAbility</span> {
+
+    <span class="c">// 持续时间（天）</span>
+    <span class="k">@Override</span>
+    <span class="k">protected float</span> <span class="m">getDurationDays</span>() {
+        <span class="k">return</span> <span class="n">1f</span>;
+    }
+
+    <span class="c">// 激活时</span>
+    <span class="k">@Override</span>
+    <span class="k">protected void</span> <span class="m">activateImpl</span>() {
+        <span class="c">// 激活逻辑</span>
+    }
+
+    <span class="c">// 效果结束时</span>
+    <span class="k">@Override</span>
+    <span class="k">protected void</span> <span class="m">deactivateImpl</span>() {
+        <span class="c">// 结束逻辑</span>
+    }
+
+    <span class="c">// 效果期间每帧</span>
+    <span class="k">@Override</span>
+    <span class="k">protected void</span> <span class="m">advanceImpl</span>(<span class="k">float</span> amount) {
+        <span class="c">// 持续期间每帧逻辑</span>
+    }
+
+    <span class="k">@Override</span>
+    <span class="k">public float</span> <span class="m">getFuelCost</span>() { <span class="k">return</span> <span class="n">0</span>; }
+
+    <span class="k">@Override</span>
+    <span class="k">public float</span> <span class="m">getSupplyCost</span>() { <span class="k">return</span> <span class="n">0</span>; }
+}</pre>
+
+  <!-- ===== 9. 舰船系统 ===== -->
+  <h2 id="ship-system">🚀 九、舰船战斗系统</h2>
+
+  <p>实现 <code>ShipSystemStatsScript</code> 接口，推荐继承 <code>BaseShipSystemScript</code>。</p>
+
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod.shipsystems;
+
+<span class="k">import</span> com.fs.starfarer.api.impl.combat.<span class="t">BaseShipSystemScript</span>;
+<span class="k">import</span> com.fs.starfarer.api.combat.<span class="t">MutableShipStatsAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.combat.<span class="t">ShipAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.plugins.<span class="t">ShipSystemStatsScript</span>;
+
+<span class="k">public class</span> <span class="t">MyShipSystem</span> <span class="k">extends</span> <span class="t">BaseShipSystemScript</span> {
+
+    <span class="k">private static final</span> <span class="t">String</span> <span class="v">KEY</span> = <span class="s">"my_system"</span>;
+
+    <span class="c">// 应用效果</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">apply</span>(
+            <span class="t">MutableShipStatsAPI</span> stats,
+            <span class="t">String</span> id,
+            <span class="t">State</span> state,
+            <span class="k">float</span> effectLevel) {
+
+        <span class="k">if</span> (effectLevel <= <span class="n">0</span>) <span class="k">return</span>;
+
+        <span class="c">// 根据 effectLevel (0~1) 线性应用效果</span>
+        stats.getMaxSpeed().modifyPercent(id, <span class="n">50f</span> * effectLevel);
+        stats.getAcceleration().modifyPercent(id, <span class="n">100f</span> * effectLevel);
+    }
+
+    <span class="c">// 移除效果</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">unapply</span>(
+            <span class="t">MutableShipStatsAPI</span> stats,
+            <span class="t">String</span> id) {
+
+        stats.getMaxSpeed().unmodify(id);
+        stats.getAcceleration().unmodify(id);
+    }
+
+    <span class="c">// 状态显示数据</span>
+    <span class="k">@Override</span>
+    <span class="k">public</span> <span class="t">StatusData</span> <span class="m">getStatusData</span>(
+            <span class="k">int</span> index,
+            <span class="t">State</span> state,
+            <span class="k">float</span> effectLevel) {
+
+        <span class="k">if</span> (index == <span class="n">0</span>) {
+            <span class="k">return new</span> <span class="t">StatusData</span>(<span class="s">"机动提升"</span>, <span class="k">false</span>);
+        }
+        <span class="k">return null</span>;
+    }
+
+    <span class="c">// 可选：覆盖持续时间</span>
+    <span class="k">@Override</span>
+    <span class="k">public</span> <span class="t">ShipSystemStatsScript</span>.<span class="t">DurationResult</span> <span class="m">getActiveOverride</span>(
+            <span class="t">ShipAPI</span> ship) {
+        <span class="k">return null</span>; <span class="c">// 返回 null 使用默认值</span>
+    }
+}</pre>
+
+  <!-- ===== 10. 对话插件 ===== -->
+  <h2 id="dialog">💬 十、对话插件</h2>
+
+  <p>实现 <code>InteractionDialogPlugin</code> 接口，通过 <code>CampaignPlugin</code> 注册。</p>
+
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod.dialog;
+
+<span class="k">import</span> com.fs.starfarer.api.campaign.<span class="t">InteractionDialogAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.campaign.<span class="t">InteractionDialogPlugin</span>;
+<span class="k">import</span> com.fs.starfarer.api.campaign.<span class="t">VisualPanelAPI</span>;
+<span class="k">import</span> com.fs.starfarer.api.campaign.rules.<span class="t">MemoryAPI</span>;
+
+<span class="k">public class</span> <span class="t">MyDialogPlugin</span> <span class="k">implements</span> <span class="t">InteractionDialogPlugin</span> {
+
+    <span class="k">private</span> <span class="t">InteractionDialogAPI</span> <span class="v">dialog</span>;
+    <span class="k">private</span> <span class="t">MemoryAPI</span> <span class="v">memory</span>;
+
+    <span class="k">private enum</span> <span class="t">OptionId</span> {
+        <span class="v">INIT</span>,
+        <span class="v">OPTION_1</span>,
+        <span class="v">OPTION_2</span>,
+        <span class="v">LEAVE</span>
+    }
+
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">init</span>(<span class="t">InteractionDialogAPI</span> dialog) {
+        <span class="k">this</span>.dialog = dialog;
+        <span class="k">this</span>.memory = dialog.getInteractionTarget().getMemory();
+
+        <span class="c">// 显示初始文本</span>
+        dialog.getTextPanel().addPara(<span class="s">"你好，旅行者！"</span>);
+
+        <span class="c">// 添加选项</span>
+        dialog.getOptionPanel().addOption(
+            <span class="s">"选项一"</span>, OptionId.<span class="v">OPTION_1</span>);
+        dialog.getOptionPanel().addOption(
+            <span class="s">"选项二"</span>, OptionId.<span class="v">OPTION_2</span>);
+        dialog.getOptionPanel().addOption(
+            <span class="s">"离开"</span>, OptionId.<span class="v">LEAVE</span>);
+
+        <span class="c">// 显示人物头像</span>
+        <span class="c">// dialog.getVisualPanel().showPersonVisual(person);</span>
+
+        <span class="c">// 显示舰船图像</span>
+        <span class="c">// dialog.getVisualPanel().showFleetInfo(title, null, fleet, null);</span>
+    }
+
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">optionSelected</span>(
+            <span class="t">String</span> optionText,
+            <span class="t">Object</span> optionData) {
+
+        <span class="t">OptionId</span> option = (<span class="t">OptionId</span>) optionData;
+
+        <span class="k">switch</span> (option) {
+            <span class="k">case</span> <span class="v">OPTION_1</span>:
+                dialog.getTextPanel().addPara(<span class="s">"你选择了选项一。"</span>);
+                <span class="c">// 重新添加选项</span>
+                dialog.getOptionPanel().clearOptions();
+                dialog.getOptionPanel().addOption(
+                    <span class="s">"离开"</span>, OptionId.<span class="v">LEAVE</span>);
+                <span class="k">break</span>;
+
+            <span class="k">case</span> <span class="v">OPTION_2</span>:
+                dialog.getTextPanel().addPara(<span class="s">"你选择了选项二。"</span>);
+                dialog.getOptionPanel().clearOptions();
+                dialog.getOptionPanel().addOption(
+                    <span class="s">"离开"</span>, OptionId.<span class="v">LEAVE</span>);
+                <span class="k">break</span>;
+
+            <span class="k">case</span> <span class="v">LEAVE</span>:
+                dialog.dismiss();
+                <span class="k">break</span>;
+        }
+    }
+
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">optionMousedOver</span>(
+            <span class="t">String</span> optionText,
+            <span class="t">Object</span> optionData) {
+        <span class="c">// 鼠标悬停选项时（可选）</span>
+    }
+
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">advance</span>(<span class="k">float</span> amount) {
+        <span class="c">// 每帧（可选）</span>
+    }
+
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">backFromEngagement</span>(
+            <span class="t">BattleResultAPI</span> battleResult) {
+        <span class="c">// 从战斗返回时（可选）</span>
+    }
+
+    <span class="c">// 其他方法返回 null 或空实现即可</span>
+    <span class="k">@Override</span> <span class="k">public</span> <span class="t">Object</span> <span class="m">getContext</span>() { <span class="k">return null</span>; }
+    <span class="k">@Override</span> <span class="k">public</span> <span class="t">MemoryAPI</span> <span class="m">getMemory()</span> { <span class="k">return</span> memory; }
+}</pre>
+
+  <!-- ===== 11. 战役插件 ===== -->
+  <h2 id="campaign-plugin">🔧 十一、战役插件 (CampaignPlugin)</h2>
+
+  <p>注册到 Sector 的插件，用于自定义各类行为选择。推荐 transient。</p>
+
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod.plugins;
+
+<span class="k">import</span> com.fs.starfarer.api.campaign.<span class="t">CampaignPlugin</span>;
+<span class="k">import</span> com.fs.starfarer.api.campaign.<span class="t">SectorEntityToken</span>;
+<span class="k">import</span> com.fs.starfarer.api.<span class="t">PluginPick</span>;
+<span class="k">import</span> com.fs.starfarer.api.campaign.<span class="t">InteractionDialogPlugin</span>;
+
+<span class="k">public class</span> <span class="t">MyCampaignPlugin</span> <span class="k">implements</span> <span class="t">CampaignPlugin</span> {
+
+    <span class="k">private static final</span> <span class="t">String</span> <span class="v">ID</span> = <span class="s">"MyCampaignPlugin"</span>;
+
+    <span class="c">// 唯一 ID，用于注销</span>
+    <span class="k">@Override</span>
+    <span class="k">public</span> <span class="t">String</span> <span class="m">getId</span>() {
+        <span class="k">return</span> <span class="v">ID</span>;
+    }
+
+    <span class="c">// 是否为 transient（不存档，推荐 true）</span>
+    <span class="k">@Override</span>
+    <span class="k">public boolean</span> <span class="m">isTransient</span>() {
+        <span class="k">return true</span>;
+    }
+
+    <span class="c">// 为实体选择对话插件</span>
+    <span class="k">@Override</span>
+    <span class="k">public</span> <span class="t">PluginPick</span><<span class="t">InteractionDialogPlugin</span>> <span class="m">pickInteractionDialogPlugin</span>(
+            <span class="t">SectorEntityToken</span> interactionTarget) {
+
+        <span class="c">// 判断是否为目标实体</span>
+        <span class="c">// if (interactionTarget.getId().equals("my_entity")) {</span>
+        <span class="c">//     return new PluginPick<InteractionDialogPlugin>(</span>
+        <span class="c">//         new MyDialogPlugin(), PickPriority.MOD_SPECIFIC);</span>
+        <span class="c">// }</span>
+
+        <span class="k">return null</span>; <span class="c">// 返回 null 使用默认</span>
+    }
+
+    <span class="c">// 选择舰队 AI 模块（其他 pickXxx 同理）</span>
+    <span class="k">@Override</span>
+    <span class="k">public</span> <span class="t">PluginPick</span><<span class="t">TacticalAIFModule</span>> <span class="m">pickTacticalAIModule</span>(
+            <span class="t">CampaignFleetAPI</span> fleet) {
+        <span class="k">return null</span>;
+    }
+
+    <span class="c">// 更新全局事实（facts）</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">updateGlobalFacts</span>(<span class="t">MemoryAPI</span> memory) {
+        <span class="c">// memory.set("$myMod_enabled", true);</span>
+    }
+
+    <span class="c">// 更新实体事实</span>
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">updateEntityFacts</span>(
+            <span class="t">SectorEntityToken</span> entity,
+            <span class="t">MemoryAPI</span> memory) {
+    }
+
+    <span class="c">// 其他 pickXxx 方法都返回 null 即可</span>
+}</pre>
+
+  <div class="tip-box">
+    <strong>💡 PickPriority 优先级（从低到高）：</strong>
+    <code>CORE_GENERAL</code> → <code>MOD_GENERAL</code> → <code>CORE_SET</code> → <code>MOD_SET</code> → <code>CORE_SPECIFIC</code> → <code>MOD_SPECIFIC</code> → <code>HIGHEST</code>
+  </div>
+
+  <!-- ===== 12. 武器特效 ===== -->
+  <h2 id="weapon-effect">💥 十二、武器特效插件</h2>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">EveryFrameWeaponEffectPlugin</div>
+      <div class="card-desc">武器每帧效果</div>
+<pre style="margin:0;font-size:11px;"><span class="k">public class</span> <span class="t">MyWeaponEffect</span> <span class="k">implements</span> <span class="t">EveryFrameWeaponEffectPlugin</span> {
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">advance</span>(<span class="k">float</span> amount,
+            <span class="t">WeaponAPI</span> weapon, <span class="t">ShipAPI</span> ship) {
+        <span class="c">// 每帧逻辑</span>
+    }
+}</pre>
+    </div>
+
+    <div class="card">
+      <div class="card-title">OnHitEffectPlugin</div>
+      <div class="card-desc">命中时效果</div>
+<pre style="margin:0;font-size:11px;"><span class="k">public class</span> <span class="t">MyHitEffect</span> <span class="k">implements</span> <span class="t">OnHitEffectPlugin</span> {
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">onHit</span>(<span class="t">DamagingProjectileAPI</span> proj,
+            <span class="t">CombatEntityAPI</span> target, <span class="t">DamageType</span> type,
+            <span class="k">float</span> damage, <span class="k">boolean</span> isHitShield,
+            <span class="t">Vector2f</span> point, <span class="k">boolean</span> isFriendly,
+            <span class="t">CombatEngineAPI</span> engine) {
+        <span class="c">// 命中逻辑</span>
+    }
+}</pre>
+    </div>
+
+    <div class="card">
+      <div class="card-title">OnFireEffectPlugin</div>
+      <div class="card-desc">开火时效果</div>
+<pre style="margin:0;font-size:11px;"><span class="k">public class</span> <span class="t">MyFireEffect</span> <span class="k">implements</span> <span class="t">OnFireEffectPlugin</span> {
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">onFire</span>(<span class="t">DamagingProjectileAPI</span> proj,
+            <span class="t">WeaponAPI</span> weapon, <span class="t">CombatEngineAPI</span> engine) {
+        <span class="c">// 开火逻辑</span>
+    }
+}</pre>
+    </div>
+
+    <div class="card">
+      <div class="card-title">MissileAIPlugin</div>
+      <div class="card-desc">导弹 AI</div>
+<pre style="margin:0;font-size:11px;"><span class="k">public class</span> <span class="t">MyMissileAI</span> <span class="k">implements</span> <span class="t">MissileAIPlugin</span> {
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">advance</span>(<span class="k">float</span> amount) {
+        <span class="c">// 制导逻辑</span>
+    }
+    <span class="k">@Override</span>
+    <span class="k">public void</span> <span class="m">setTarget</span>(<span class="t">ShipAPI</span> target) { }
+}</pre>
+    </div>
+  </div>
+
+  <!-- ===== 13. 数据文件 ===== -->
+  <h2 id="data-files">📊 十三、常用数据文件配置</h2>
+
+  <h3>hullmods.csv</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button">id, name, uiTags, description, effect, effectGroup, baseSMod, hidden, frigate, destroyer, cruiser, capital
+my_hullmod, 我的改装, , 增加装甲和速度, "org.myname.mymod.hullmods.MyHullMod", , FALSE, FALSE, TRUE, TRUE, TRUE, TRUE</pre>
+
+  <h3>industries.csv</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button>id, name, desc, cost, basevalue, demand, demandMod, supply, supplyMod, buildable, modify, aicore, special, upgrade, buildcost
+my_industry, 我的产业, 产业描述, 5000, 1, , , , , TRUE, TRUE, FALSE, FALSE, FALSE, 5000</pre>
+
+  <h3>abilities.csv</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button">id, name, desc, icon, type, cooldown, supplyCost, fuelCost, flavor, scope, aiType
+my_ability, 我的能力, 能力描述, graphics/abilities/my_ability.png, toggle, 0, 0, 0, , player, </pre>
+
+  <h3>marketconditions.csv</h3>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button">id, name, desc, icon, economy, effect, priority
+my_condition, 我的条件, 条件描述, , , org.myname.mymod.conditions.MyCondition, 0</pre>
+
+  <div class="tip-box warning">
+    <strong>⚠️ 注意：</strong>
+    <ul style="margin:4px 0 0 20px;">
+      <li>CSV 文件用 <strong>逗号</strong> 分隔，含逗号的字段用双引号包裹</li>
+      <li>布尔值用 <code>TRUE</code> / <code>FALSE</code>（全大写）</li>
+      <li>编码使用 <strong>UTF-8</strong></li>
+      <li>路径一般为 <code>data/config/xxx.csv</code></li>
+    </ul>
+  </div>
+
+  <div class="tip-box success">
+    <strong>📚 延伸阅读：</strong>
+    详细 API 说明请参阅 <a href="SSTLib_API_指南.html" style="color:var(--accent)">SSTLib API 指南</a>，
+    快速查阅请使用 <a href="SSTLib_API_开发速查表.html" style="color:var(--accent)">API 开发速查表</a>。
+  </div>
+
+  <!-- ===== 13. 反射工具类（绕过安全限制）===== -->
+  <h2 id="reflection-utils">🔮 十三、反射工具类（绕过安全限制）</h2>
+
+  <div class="tip-box danger">
+    <strong>🔒 安全限制：</strong>游戏脚本类加载器在<strong>类加载时</strong>拦截 <code>java.lang.reflect.Method</code> / <code>Field</code>，任何代码中<strong>声明</strong>这些类型（变量、参数、返回值）都会抛出 <code>SecurityException</code>，即使从未调用。
+    <br><strong>❌ IMPL_LOOKUP 方案已弃用</strong>：获取 <code>IMPL_LOOKUP</code> 字段本身需要反射 <code>Field</code> 类型，同样被拦截。
+    <br><strong>✅ 正确方案：Class.forName + MethodHandles.lookup()</strong>，完全不引用反射类型。
+  </div>
+
+  <h3>ReflectionUtils 模板（Java 版，ChineseInputFix 实测可行）</h3>
+  <p>核心思想：用 <code>Class.forName()</code> 获取反射类的 Class 对象，用 <code>MethodHandles.lookup().findVirtual()</code> 创建 MethodHandle，所有反射对象一律当作 <code>Object</code> 处理。</p>
+<pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="k">package</span> org.myname.mymod.util;
+
+<span class="k">import</span> com.fs.starfarer.api.<span class="t">Global</span>;
+<span class="k">import</span> java.lang.invoke.<span class="t">MethodHandle</span>;
+<span class="k">import</span> java.lang.invoke.<span class="t">MethodHandles</span>;
+<span class="k">import</span> java.lang.invoke.<span class="t">MethodType</span>;
+<span class="k">import</span> java.util.*;
+
+<span class="k">public class</span> <span class="t">ReflectionUtils</span> {
+
+    <span class="c">// 反射类的 Class 对象（用 Class.forName 获取，不直接 import）</span>
+    <span class="k">private static final</span> <span class="t">Class</span><?> <span class="v">methodClass</span>;
+    <span class="k">private static final</span> <span class="t">Class</span><?> <span class="v">fieldClass</span>;
+
+    <span class="c">// MethodHandle 用于调用 Method/Field 的方法（避免直接引用类型）</span>
+    <span class="k">private static final</span> <span class="t">MethodHandle</span> <span class="v">invokeMethodHandle</span>;
+    <span class="k">private static final</span> <span class="t">MethodHandle</span> <span class="v">getMethodNameHandle</span>;
+    <span class="k">private static final</span> <span class="t">MethodHandle</span> <span class="v">getMethodParametersHandle</span>;
+    <span class="k">private static final</span> <span class="t">MethodHandle</span> <span class="v">setFieldAccessibleHandle</span>;
+    <span class="k">private static final</span> <span class="t">MethodHandle</span> <span class="v">getFieldHandle</span>;
+    <span class="k">private static final</span> <span class="t">MethodHandle</span> <span class="v">getFieldNameHandle</span>;
+
+    <span class="c">// 缓存：类 -> (方法签名 -> Method 对象)</span>
+    <span class="k">private static final</span> <span class="t">Map</span><<span class="t">Class</span><?>, <span class="t">Map</span><<span class="t">String</span>, <span class="t">Object</span>>> <span class="v">methodCache</span> = <span class="k">new</span> <span class="t">HashMap</span><>();
+    <span class="k">private static final</span> <span class="t">Map</span><<span class="t">Class</span><?>, <span class="t">Map</span><<span class="t">String</span>, <span class="t">Object</span>>> <span class="v">fieldCache</span> = <span class="k">new</span> <span class="t">HashMap</span><>();
+
+    <span class="k">static</span> {
+        <span class="k">try</span> {
+            <span class="c">// 1. 用 Class.forName 获取反射类的 Class 对象</span>
+            <span class="t">ClassLoader</span> <span class="v">jdkLoader</span> = <span class="t">Class</span>.class.getClassLoader();
+            <span class="v">methodClass</span> = <span class="t">Class</span>.forName(<span class="s">"java.lang.reflect.Method"</span>, <span class="k">false</span>, jdkLoader);
+            <span class="v">fieldClass</span> = <span class="t">Class</span>.forName(<span class="s">"java.lang.reflect.Field"</span>, <span class="k">false</span>, jdkLoader);
+
+            <span class="c">// 2. 用 MethodHandles.lookup().findVirtual() 创建 MethodHandle</span>
+            <span class="v">invokeMethodHandle</span> = <span class="t">MethodHandles</span>.lookup().findVirtual(methodClass, <span class="s">"invoke"</span>,
+                    <span class="t">MethodType</span>.methodType(<span class="t">Object</span>.class, <span class="t">Object</span>.class, <span class="t">Object</span>[].class));
+            <span class="v">getMethodNameHandle</span> = <span class="t">MethodHandles</span>.lookup().findVirtual(methodClass, <span class="s">"getName"</span>,
+                    <span class="t">MethodType</span>.methodType(<span class="t">String</span>.class));
+            <span class="v">getMethodParametersHandle</span> = <span class="t">MethodHandles</span>.lookup().findVirtual(methodClass, <span class="s">"getParameterTypes"</span>,
+                    <span class="t">MethodType</span>.methodType(<span class="t">Class</span>[].class));
+
+            <span class="v">setFieldAccessibleHandle</span> = <span class="t">MethodHandles</span>.lookup().findVirtual(fieldClass, <span class="s">"setAccessible"</span>,
+                    <span class="t">MethodType</span>.methodType(<span class="k">void</span>.class, <span class="k">boolean</span>.class));
+            <span class="v">getFieldHandle</span> = <span class="t">MethodHandles</span>.lookup().findVirtual(fieldClass, <span class="s">"get"</span>,
+                    <span class="t">MethodType</span>.methodType(<span class="t">Object</span>.class, <span class="t">Object</span>.class));
+            <span class="v">getFieldNameHandle</span> = <span class="t">MethodHandles</span>.lookup().findVirtual(fieldClass, <span class="s">"getName"</span>,
+                    <span class="t">MethodType</span>.methodType(<span class="t">String</span>.class));
+        } <span class="k">catch</span> (<span class="t">Throwable</span> e) {
+            <span class="k">throw new</span> <span class="t">RuntimeException</span>(<span class="s">"ReflectionUtils 初始化失败"</span>, e);
+        }
+    }
+
+    <span class="c">// 3. 所有反射对象当作 Object 处理，通过 MethodHandle 调用</span>
+    <span class="k">public static</span> <span class="t">Object</span> <span class="m">invoke</span>(<span class="t">Object</span> obj, <span class="t">String</span> methodName, <span class="t">Object</span>... args) {
+        <span class="k">if</span> (obj == <span class="k">null</span> || methodName == <span class="k">null</span>) <span class="k">return null</span>;
+        <span class="k">try</span> {
+            <span class="t">Class</span><?> <span class="v">clazz</span> = obj.getClass();
+            <span class="t">Object</span> <span class="v">method</span> = <span class="m">findMethod</span>(clazz, methodName, args.length);
+            <span class="k">if</span> (method != <span class="k">null</span>) {
+                <span class="k">return</span> invokeMethodHandle.invoke(method, obj, args);
+            }
+        } <span class="k">catch</span> (<span class="t">Throwable</span> e) {
+        }
+        <span class="k">return null</span>;
+    }
+
+    <span class="k">public static</span> <span class="t">Object</span> <span class="m">get</span>(<span class="t">Object</span> obj, <span class="t">String</span> fieldName) {
+        <span class="k">if</span> (obj == <span class="k">null</span> || fieldName == <span class="k">null</span>) <span class="k">return null</span>;
+        <span class="k">try</span> {
+            <span class="t">Class</span><?> <span class="v">clazz</span> = obj.getClass();
+            <span class="t">Object</span> <span class="v">field</span> = <span class="m">findField</span>(clazz, fieldName);
+            <span class="k">if</span> (field != <span class="k">null</span>) {
+                <span class="k">return</span> getFieldHandle.invoke(field, obj);
+            }
+        } <span class="k">catch</span> (<span class="t">Throwable</span> e) {
+        }
+        <span class="k">return null</span>;
+    }
+
+    <span class="c">// 4. 查找方法：返回 Object，不是 Method</span>
+    <span class="k">private static</span> <span class="t">Object</span> <span class="m">findMethod</span>(<span class="t">Class</span><?> clazz, <span class="t">String</span> methodName, <span class="k">int</span> paramCount) {
+        <span class="t">Map</span><<span class="t">String</span>, <span class="t">Object</span>> <span class="v">cache</span> = methodCache.computeIfAbsent(clazz, k -> <span class="k">new</span> <span class="t">HashMap</span><>());
+        <span class="t">String</span> <span class="v">key</span> = methodName + <span class="s">":"</span> + paramCount;
+
+        <span class="k">return</span> cache.computeIfAbsent(key, k -> {
+            <span class="k">try</span> {
+                <span class="c">// getMethods() 返回 Object[]，不是 Method[]</span>
+                <span class="t">Set</span><<span class="t">Object</span>> <span class="v">methods</span> = <span class="k">new</span> <span class="t">HashSet</span><>();
+                methods.addAll(<span class="t">Arrays</span>.asList((<span class="t">Object</span>[]) clazz.getMethods()));
+                methods.addAll(<span class="t">Arrays</span>.asList((<span class="t">Object</span>[]) clazz.getDeclaredMethods()));
+
+                <span class="k">for</span> (<span class="t">Object</span> <span class="v">method</span> : methods) {
+                    <span class="t">String</span> <span class="v">name</span> = (<span class="t">String</span>) getMethodNameHandle.invoke(method);
+                    <span class="k">if</span> (!name.equals(methodName)) <span class="k">continue</span>;
+                    <span class="t">Class</span><?>[] <span class="v">params</span> = (<span class="t">Class</span><?>[]) getMethodParametersHandle.invoke(method);
+                    <span class="k">if</span> (params.length != paramCount) <span class="k">continue</span>;
+                    <span class="k">return</span> method;  <span class="c">// 返回 Object</span>
+                }
+            } <span class="k">catch</span> (<span class="t">Throwable</span> e) {
+            }
+            <span class="k">return null</span>;
+        });
+    }
+
+    <span class="c">// 5. 查找字段：返回 Object，不是 Field</span>
+    <span class="k">private static</span> <span class="t">Object</span> <span class="m">findField</span>(<span class="t">Class</span><?> clazz, <span class="t">String</span> fieldName) {
+        <span class="t">Map</span><<span class="t">String</span>, <span class="t">Object</span>> <span class="v">cache</span> = fieldCache.computeIfAbsent(clazz, k -> <span class="k">new</span> <span class="t">HashMap</span><>());
+        <span class="k">return</span> cache.computeIfAbsent(fieldName, k -> {
+            <span class="k">try</span> {
+                <span class="k">for</span> (<span class="t">Object</span> <span class="v">field</span> : (<span class="t">Object</span>[]) clazz.getDeclaredFields()) {
+                    <span class="t">String</span> <span class="v">name</span> = (<span class="t">String</span>) getFieldNameHandle.invoke(field);
+                    <span class="k">if</span> (name.equals(fieldName)) {
+                        setFieldAccessibleHandle.invoke(field, <span class="k">true</span>);
+                        <span class="k">return</span> field;  <span class="c">// 返回 Object</span>
+                    }
+                }
+            } <span class="k">catch</span> (<span class="t">Throwable</span> e) {
+            }
+            <span class="k">return null</span>;
+        });
+    }
+}</pre>
+
+  <h3>❌ 常见错误写法（会触发 SecurityException）</h3>
+<pre><span class="c">// ❌ 直接 import 反射类</span>
+<span class="k">import</span> java.lang.reflect.<span class="t">Method</span>;  <span class="c">// 类加载即抛异常</span>
+<span class="k">import</span> java.lang.reflect.<span class="t">Field</span>;
+
+<span class="c">// ❌ 声明 Method/Field 类型变量</span>
+<span class="t">Method</span> <span class="v">m</span> = clazz.getMethod(<span class="s">"getCore"</span>);  <span class="c">// 触发异常</span>
+<span class="t">Method</span>[] <span class="v">methods</span> = clazz.getMethods();  <span class="c">// 触发异常</span>
+
+<span class="c">// ❌ 使用 IMPL_LOOKUP（获取字段本身需要反射 Field）</span>
+<span class="t">Field</span> <span class="v">f</span> = <span class="t">MethodHandles.Lookup</span>.class.getDeclaredField(<span class="s">"IMPL_LOOKUP"</span>);  <span class="c">// 触发异常</span></pre>
+
+  <h3>使用示例</h3>
+  <pre data-copy><button class="copy-btn" onclick="copyCode(this)">复制</button><span class="c">// 1. 获取未公开的内部对象</span>
+<span class="t">Object</span> <span class="v">core</span> = <span class="t">ReflectionUtils</span>.<span class="m">invoke</span>(state, <span class="s">"getCore"</span>);
+
+<span class="c">// 2. UI 遍历：预定义 getter 名称列表（不要枚举 getMethods()）</span>
+<span class="t">String</span>[] <span class="v">entryMethods</span> = {<span class="s">"getCore"</span>, <span class="s">"getCurrentDialog"</span>, <span class="s">"getCurrentPanel"</span>};
+<span class="k">for</span> (<span class="t">String</span> <span class="v">name</span> : entryMethods) {
+    <span class="t">Object</span> <span class="v">result</span> = <span class="t">ReflectionUtils</span>.<span class="m">invoke</span>(campaignUI, name);
+    <span class="k">if</span> (result != <span class="k">null</span>) { <span class="c">/* 处理 */</span> }
+}
+
+<span class="c">// 3. 读取私有字段</span>
+<span class="t">Object</span> <span class="v">value</span> = <span class="t">ReflectionUtils</span>.<span class="m">get</span>(instance, <span class="s">"privateField"</span>);</pre>
+
+  <div class="tip-box warning">
+    <strong>⚠️ 注意事项：</strong>
+    <ul style="margin:4px 0 0 20px;">
+      <li>反射结果务必缓存，避免每帧重复反射</li>
+      <li>优先使用公开 API，反射仅用于访问未公开的内部类</li>
+      <li>游戏更新可能导致字段/方法名变化，需做容错</li>
+      <li>反射调用比直接调用慢，避免高频使用</li>
+    </ul>
+  </div>
+
+</div>
+
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  // 主题切换
+  const savedTheme = localStorage.getItem('sstlib_modframe_theme');
+  if (savedTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('sstlib_modframe_theme', next);
+  }
+
+  // 返回顶部
+  const backBtn = document.getElementById('backToTop');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+      backBtn.classList.add('visible');
+    } else {
+      backBtn.classList.remove('visible');
+    }
+  });
+
+  // 复制代码
+  function copyCode(btn) {
+    const pre = btn.parentElement;
+    const text = pre.innerText.replace(/^复制$/gm, '').trim();
+    navigator.clipboard.writeText(text).then(() => {
+      const original = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    });
+  }
+
+  // TOC 高亮
+  const tocLinks = document.querySelectorAll('.toc-bar a');
+  const sections = [];
+  tocLinks.forEach(link => {
+    const id = link.getAttribute('href').substring(1);
+    const el = document.getElementById(id);
+    if (el) sections.push({ id, el, link });
+  });
+
+  function updateToc() {
+    const scrollPos = window.scrollY + 120;
+    let current = sections[0];
+    for (const s of sections) {
+      if (s.el.offsetTop <= scrollPos) current = s;
+    }
+    tocLinks.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+  window.addEventListener('scroll', updateToc);
+  updateToc();
+</script>
+
+</body>
+</html>

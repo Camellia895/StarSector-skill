@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSTLib API 开发速查表 - 远行星号模组开发</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --bg-hover: #30363d;
+    --text: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent-hover: #79c0ff;
+    --accent-bg: rgba(56, 139, 253, 0.15);
+    --code-bg: #1e242c;
+    --code-text: #e6edf3;
+    --table-header: #21262d;
+    --table-stripe: #161b22;
+    --shadow: rgba(0, 0, 0, 0.4);
+    --success: #3fb950;
+    --warning: #d29922;
+    --danger: #f85149;
+    --link: #58a6ff;
+    --purple: #bc8cff;
+    --green: #3fb950;
+    --orange: #d29922;
+  }
+
+  [data-theme="light"] {
+    --bg: #ffffff;
+    --bg-secondary: #f6f8fa;
+    --bg-tertiary: #eaeef2;
+    --bg-hover: #d8dee4;
+    --text: #1f2328;
+    --text-secondary: #59636e;
+    --text-muted: #818b98;
+    --border: #d0d7de;
+    --accent: #0969da;
+    --accent-hover: #0550ae;
+    --accent-bg: rgba(9, 105, 218, 0.1);
+    --code-bg: #eff1f3;
+    --code-text: #1f2328;
+    --table-header: #eaeef2;
+    --table-stripe: #f6f8fa;
+    --shadow: rgba(140, 149, 159, 0.2);
+    --link: #0969da;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 14px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 56px;
+    background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; z-index: 100;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .topbar-title { font-weight: 600; font-size: 16px; color: var(--text); margin-right: 20px; white-space: nowrap; }
+  .topbar-title span { color: var(--accent); }
+  .topbar-actions { display: flex; gap: 8px; margin-left: auto; }
+  .icon-btn {
+    width: 34px; height: 34px; background: transparent; border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { background: var(--bg-hover); color: var(--text); border-color: var(--accent); }
+
+  .content {
+    margin-top: 56px; padding: 24px;
+    max-width: 1400px; margin-left: auto; margin-right: auto;
+  }
+
+  h1 {
+    font-size: 28px; font-weight: 700; margin-bottom: 6px; color: var(--text);
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .subtitle { color: var(--text-secondary); margin-bottom: 24px; font-size: 14px; }
+
+  h2 {
+    font-size: 20px; font-weight: 600; margin-top: 36px; margin-bottom: 12px;
+    color: var(--text); padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    scroll-margin-top: 70px; display: flex; align-items: center; gap: 8px;
+  }
+  h2 .section-icon { font-size: 18px; }
+
+  h3 {
+    font-size: 16px; font-weight: 600; margin-top: 20px; margin-bottom: 8px;
+    color: var(--text); scroll-margin-top: 70px;
+  }
+
+  .grid {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+  .grid-2 {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  }
+
+  .card {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px; transition: all 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card-title {
+    font-weight: 600; color: var(--accent); margin-bottom: 8px;
+    font-size: 14px; display: flex; align-items: center; gap: 6px;
+  }
+  .card-title .badge {
+    font-size: 11px; padding: 1px 6px; border-radius: 4px;
+    background: var(--accent-bg); color: var(--accent); font-weight: 500;
+  }
+  .card-list { list-style: none; padding: 0; margin: 0; }
+  .card-list li {
+    padding: 3px 0; color: var(--text-secondary); font-size: 13px;
+    display: flex; justify-content: space-between; gap: 10px;
+  }
+  .card-list li code {
+    color: var(--text); font-family: "JetBrains Mono", Consolas, monospace;
+    font-size: 12px; background: var(--code-bg); padding: 1px 5px; border-radius: 3px;
+  }
+
+  table {
+    width: 100%; border-collapse: collapse; margin: 10px 0 16px;
+    font-size: 13px;
+  }
+  th {
+    background: var(--table-header); text-align: left; padding: 8px 12px;
+    font-weight: 600; color: var(--text); border: 1px solid var(--border);
+    position: sticky; top: 56px; z-index: 10;
+  }
+  td {
+    padding: 7px 12px; border: 1px solid var(--border); color: var(--text-secondary);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--table-stripe); }
+  tr:hover td { background: var(--bg-hover); }
+  td:first-child { color: var(--accent); font-family: "JetBrains Mono", Consolas, monospace; font-size: 12px; white-space: nowrap; }
+  td code {
+    background: var(--code-bg); padding: 1px 4px; border-radius: 3px;
+    font-family: "JetBrains Mono", Consolas, monospace; font-size: 12px; color: var(--text);
+  }
+
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 14px; overflow-x: auto; margin: 8px 0 14px;
+    font-family: "JetBrains Mono", Consolas, monospace; font-size: 12.5px;
+    line-height: 1.6; color: var(--code-text);
+  }
+  code { font-family: "JetBrains Mono", Consolas, monospace; }
+  .code-keyword { color: #ff7b72; }
+  .code-string { color: #a5d6ff; }
+  .code-comment { color: var(--text-muted); font-style: italic; }
+  .code-class { color: var(--purple); }
+  .code-method { color: #d2a8ff; }
+  .code-var { color: #79c0ff; }
+
+  .tip-box {
+    background: var(--accent-bg); border-left: 3px solid var(--accent);
+    padding: 10px 14px; margin: 10px 0 14px; border-radius: 0 6px 6px 0;
+    font-size: 13px;
+  }
+  .tip-box.warning {
+    background: rgba(210, 153, 34, 0.1); border-left-color: var(--warning);
+  }
+  .tip-box.danger {
+    background: rgba(248, 81, 73, 0.1); border-left-color: var(--danger);
+  }
+  .tip-box.success {
+    background: rgba(63, 185, 80, 0.1); border-left-color: var(--success);
+  }
+  .tip-box strong { color: var(--text); }
+
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .two-col { grid-template-columns: 1fr; }
+    .grid, .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .tag {
+    display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px;
+    font-weight: 500; margin-right: 4px;
+  }
+  .tag-core { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
+  .tag-campaign { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+  .tag-combat { background: rgba(248, 81, 73, 0.15); color: var(--danger); }
+  .tag-ui { background: rgba(188, 140, 255, 0.15); color: var(--purple); }
+  .tag-util { background: rgba(210, 153, 34, 0.15); color: var(--warning); }
+
+  .shortcut-list { columns: 2; column-gap: 16px; }
+  .shortcut-list li { break-inside: avoid; padding: 3px 0; }
+
+  .back-to-top {
+    position: fixed; bottom: 24px; right: 24px; width: 40px; height: 40px;
+    background: var(--accent); color: white; border: none; border-radius: 50%;
+    cursor: pointer; font-size: 18px; display: flex; align-items: center;
+    justify-content: center; box-shadow: 0 4px 12px var(--shadow);
+    opacity: 0; transition: opacity 0.3s; z-index: 200;
+  }
+  .back-to-top.visible { opacity: 1; }
+  .back-to-top:hover { background: var(--accent-hover); }
+
+  .toc-bar {
+    position: sticky; top: 56px; z-index: 50;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 8px 0; margin-bottom: 16px; overflow-x: auto;
+    display: flex; gap: 6px; white-space: nowrap;
+  }
+  .toc-bar a {
+    padding: 4px 10px; font-size: 12px; color: var(--text-secondary);
+    text-decoration: none; border-radius: 4px; transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .toc-bar a:hover { background: var(--bg-hover); color: var(--text); }
+  .toc-bar a.active { background: var(--accent-bg); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">SSTLib <span>API 开发速查表</span></div>
+  <div class="topbar-actions">
+    <button class="icon-btn" onclick="toggleTheme()" title="切换主题">🌓</button>
+    <button class="icon-btn" onclick="window.print()" title="打印">🖨️</button>
+  </div>
+</div>
+
+<div class="content">
+  <h1>⚡ SSTLib API 开发速查表</h1>
+  <p class="subtitle">远行星号模组开发常用 API 一站式速查 · 按场景分类 · 含代码模板</p>
+
+  <div class="toc-bar" id="tocBar">
+    <a href="#core-entry" class="active">核心入口</a>
+    <a href="#campaign-quick">战役速查</a>
+    <a href="#combat-quick">战斗速查</a>
+    <a href="#ui-quick">UI 速查</a>
+    <a href="#listener-quick">监听器速查</a>
+    <a href="#data-persist">数据持久化</a>
+    <a href="#reflection">反射开发</a>
+    <a href="#code-templates">代码模板</a>
+    <a href="#common-tasks">常见任务</a>
+    <a href="#best-practice">最佳实践</a>
+  </div>
+
+  <!-- ===== 1. 核心入口 ===== -->
+  <h2 id="core-entry"><span class="section-icon">🎯</span> 核心入口速查</h2>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">Global 全局入口 <span class="badge">根包</span></div>
+      <ul class="card-list">
+        <li><code>getSettings()</code><span>配置/资源</span></li>
+        <li><code>getSector()</code><span>战役星区</span></li>
+        <li><code>getCombatEngine()</code><span>战斗引擎</span></li>
+        <li><code>getFactory()</code><span>对象工厂</span></li>
+        <li><code>getSoundPlayer()</code><span>声音播放</span></li>
+        <li><code>getCurrentState()</code><span>游戏状态</span></li>
+        <li><code>getLogger(Class)</code><span>日志输出</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">SettingsAPI 配置 <span class="badge">根包</span></div>
+      <ul class="card-list">
+        <li><code>loadJSON(path)</code><span>加载 JSON</span></li>
+        <li><code>loadCSV(path)</code><span>加载 CSV</span></li>
+        <li><code>getMergedJSONForMod()</code><span>合并多模组 JSON</span></li>
+        <li><code>getMergedSpreadsheetDataForMod()</code><span>合并 CSV</span></li>
+        <li><code>getWeaponSpec(id)</code><span>武器规格</span></li>
+        <li><code>getHullSpec(id)</code><span>船体规格</span></li>
+        <li><code>getHullModSpec(id)</code><span>改装规格</span></li>
+        <li><code>getSprite(cat, key)</code><span>获取精灵图</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">FactoryAPI 工厂 <span class="badge">仅战役</span></div>
+      <ul class="card-list">
+        <li><code>createFleetMember()</code><span>舰队成员</span></li>
+        <li><code>createCargo()</code><span>货舱</span></li>
+        <li><code>createMarket()</code><span>市场</span></li>
+        <li><code>createEmptyFleet()</code><span>空舰队</span></li>
+        <li><code>createPerson()</code><span>人物</span></li>
+        <li><code>createBattle()</code><span>战斗</span></li>
+        <li><code>createMemory()</code><span>内存对象</span></li>
+        <li><code>createFleetAI()</code><span>舰队 AI</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">游戏状态 <span class="badge">GameState</span></div>
+      <ul class="card-list">
+        <li><code>TITLE</code><span>主菜单</span></li>
+        <li><code>CAMPAIGN</code><span>战役/星图</span></li>
+        <li><code>COMBAT</code><span>战斗</span></li>
+      </ul>
+      <div class="tip-box" style="margin-top:8px;">
+        <strong>⚠️ 注意：</strong><code>getSector()</code> 仅在 CAMPAIGN 非 null；<code>getCombatEngine()</code> 仅在 COMBAT 非 null。
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 2. 战役速查 ===== -->
+  <h2 id="campaign-quick"><span class="section-icon">🌌</span> 战役层速查</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>SectorAPI — 星区根对象</h3>
+      <table>
+        <tr><th>方法</th><th>作用</th></tr>
+        <tr><td>getStarSystems()</td><td>所有星系</td></tr>
+        <tr><td>getStarSystem(name)</td><td>按名获取星系</td></tr>
+        <tr><td>getFaction(id)</td><td>获取派系</td></tr>
+        <tr><td>getPlayerFleet()</td><td>玩家舰队</td></tr>
+        <tr><td>getPlayerFaction()</td><td>玩家派系</td></tr>
+        <tr><td>getEconomy()</td><td>经济系统</td></tr>
+        <tr><td>getClock()</td><td>战役时钟</td></tr>
+        <tr><td>getIntelManager()</td><td>情报管理器</td></tr>
+        <tr><td>getListenerManager()</td><td>监听器管理器</td></tr>
+        <tr><td>addScript(script)</td><td>添加持久化脚本</td></tr>
+        <tr><td>addTransientScript(s)</td><td>添加临时脚本</td></tr>
+        <tr><td>addListener(l)</td><td>添加持久化监听器</td></tr>
+        <tr><td>addTransientListener(l)</td><td>添加临时监听器</td></tr>
+        <tr><td>getMemory()</td><td>全局记忆</td></tr>
+        <tr><td>getPersistentData()</td><td>持久化数据 Map</td></tr>
+        <tr><td>setPaused(b)</td><td>暂停控制</td></tr>
+      </table>
+    </div>
+
+    <div>
+      <h3>CampaignFleetAPI — 战役舰队</h3>
+      <table>
+        <tr><th>方法</th><th>作用</th></tr>
+        <tr><td>getCommander()</td><td>舰队指挥官</td></tr>
+        <tr><td>getFlagship()</td><td>旗舰</td></tr>
+        <tr><td>getFleetData()</td><td>舰队数据</td></tr>
+        <tr><td>getMembersListCopy()</td><td>舰船成员列表</td></tr>
+        <tr><td>getCargo()</td><td>货舱</td></tr>
+        <tr><td>getAI()</td><td>舰队 AI</td></tr>
+        <tr><td>getTravelSpeed()</td><td>旅行速度</td></tr>
+        <tr><td>getFleetPoints()</td><td>舰队点数</td></tr>
+        <tr><td>isPlayerFleet()</td><td>是否玩家舰队</td></tr>
+        <tr><td>setLocation(x, y)</td><td>设置位置</td></tr>
+        <tr><td>addAssignment(...)</td><td>添加任务指令</td></tr>
+        <tr><td>clearAssignments()</td><td>清除任务指令</td></tr>
+        <tr><td>despawn()</td><td>消失</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>MarketAPI — 市场</h3>
+      <table>
+        <tr><th>方法</th><th>作用</th></tr>
+        <tr><td>getFaction()</td><td>所属派系</td></tr>
+        <tr><td>getPrimaryEntity()</td><td>关联实体</td></tr>
+        <tr><td>getSize()</td><td>市场规模</td></tr>
+        <tr><td>getIndustries()</td><td>产业列表</td></tr>
+        <tr><td>getIndustry(id)</td><td>获取指定产业</td></tr>
+        <tr><td>addIndustry(id)</td><td>添加产业</td></tr>
+        <tr><td>removeIndustry(id)</td><td>移除产业</td></tr>
+        <tr><td>addCondition(id)</td><td>添加市场条件</td></tr>
+        <tr><td>removeCondition(id)</td><td>移除市场条件</td></tr>
+        <tr><td>getAdmin()</td><td>行政官</td></tr>
+        <tr><td>setAdmin(person)</td><td>设置行政官</td></tr>
+        <tr><td>getStarSystem()</td><td>所在星系</td></tr>
+      </table>
+    </div>
+
+    <div>
+      <h3>CargoAPI — 货舱</h3>
+      <table>
+        <tr><th>方法</th><th>作用</th></tr>
+        <tr><td>getSupplies()</td><td>补给数量</td></tr>
+        <tr><td>getFuel()</td><td>燃料数量</td></tr>
+        <tr><td>addSupplies(qty)</td><td>添加补给</td></tr>
+        <tr><td>addFuel(qty)</td><td>添加燃料</td></tr>
+        <tr><td>addWeapons(id, n)</td><td>添加武器</td></tr>
+        <tr><td>removeWeapons(id, n)</td><td>移除武器</td></tr>
+        <tr><td>getNumWeapons(id)</td><td>武器数量</td></tr>
+        <tr><td>addCrew(qty)</td><td>添加船员</td></tr>
+        <tr><td>getCrew()</td><td>船员数量</td></tr>
+        <tr><td>getStacksCopy()</td><td>所有物品堆叠</td></tr>
+        <tr><td>addCargo(stack)</td><td>添加堆叠</td></tr>
+        <tr><td>removeCargo(stack)</td><td>移除堆叠</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">FactionAPI — 派系</div>
+      <ul class="card-list">
+        <li><code>getDisplayName()</code><span>派系名称</span></li>
+        <li><code>getRelationship()</code><span>与玩家关系</span></li>
+        <li><code>adjustRelationship()</code><span>调整关系</span></li>
+        <li><code>getColor()</code><span>派系颜色</span></li>
+        <li><code>getKnownShips()</code><span>已知舰船</span></li>
+        <li><code>getKnownWeapons()</code><span>已知武器</span></li>
+        <li><code>getMarketList()</code><span>拥有的市场</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">StarSystemAPI — 星系</div>
+      <ul class="card-list">
+        <li><code>getStar()</code><span>恒星</span></li>
+        <li><code>getPlanets()</code><span>行星列表</span></li>
+        <li><code>getEntities()</code><span>所有实体</span></li>
+        <li><code>getJumpPoints()</code><span>跳跃点</span></li>
+        <li><code>addEntity(entity)</code><span>添加实体</span></li>
+        <li><code>removeEntity(entity)</code><span>移除实体</span></li>
+        <li><code>getAllEntities()</code><span>所有实体含隐藏</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">InteractionDialogAPI — 对话</div>
+      <ul class="card-list">
+        <li><code>getTextPanel()</code><span>文本面板</span></li>
+        <li><code>getOptionPanel()</code><span>选项面板</span></li>
+        <li><code>getVisualPanel()</code><span>视觉面板</span></li>
+        <li><code>getInteractionTarget()</code><span>交互目标</span></li>
+        <li><code>getDialogPlugin()</code><span>对话插件</span></li>
+        <li><code>dismiss()</code><span>关闭对话</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">SectorEntityToken — 实体基类</div>
+      <ul class="card-list">
+        <li><code>getId()</code><span>实体 ID</span></li>
+        <li><code>getName()</code><span>名称</span></li>
+        <li><code>getLocation()</code><span>位置坐标</span></li>
+        <li><code>getContainingLocation()</code><span>所在位置</span></li>
+        <li><code>getOrbit()</code><span>轨道</span></li>
+        <li><code>getMemory()</code><span>实体记忆</span></li>
+        <li><code>addTag(tag)</code><span>添加标签</span></li>
+        <li><code>hasTag(tag)</code><span>是否有标签</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== 3. 战斗速查 ===== -->
+  <h2 id="combat-quick"><span class="section-icon">⚔️</span> 战斗层速查</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>CombatEngineAPI — 战斗引擎</h3>
+      <table>
+        <tr><th>方法</th><th>作用</th></tr>
+        <tr><td>getShips()</td><td>所有舰船</td></tr>
+        <tr><td>getPlayerShip()</td><td>玩家舰船</td></tr>
+        <tr><td>getMissiles()</td><td>所有导弹</span></td></tr>
+        <tr><td>getAsteroids()</td><td>小行星</td></tr>
+        <tr><td>addPlugin(p)</td><td>添加战斗插件</td></tr>
+        <tr><td>removePlugin(p)</td><td>移除战斗插件</td></tr>
+        <tr><td>applyDamage(...)</td><td>造成伤害</td></tr>
+        <tr><td>addHitParticle(...)</td><td>添加命中粒子</td></tr>
+        <tr><td>spawnExplosion(...)</td><td>生成爆炸</td></tr>
+        <tr><td>isPaused()</td><td>是否暂停</td></tr>
+        <tr><td>isCombatOver()</td><td>战斗是否结束</td></tr>
+        <tr><td>getWinningSideId()</td><td>获胜方 ID</td></tr>
+        <tr><td>isInCampaign()</td><td>是否战役中战斗</td></tr>
+        <tr><td>isSimulation()</td><td>是否模拟战</td></tr>
+        <tr><td>getMapWidth/Height()</td><td>战场尺寸</td></tr>
+      </table>
+    </div>
+
+    <div>
+      <h3>ShipAPI — 战斗舰船</h3>
+      <table>
+        <tr><th>方法</th><th>作用</th></tr>
+        <tr><td>getMutableStats()</td><td>可变属性</td></tr>
+        <tr><td>getShield()</td><td>护盾</td></tr>
+        <tr><td>getFluxTracker()</td><td>幅能追踪器</td></tr>
+        <tr><td>getHullLevel()</td><td>船体完整度</td></tr>
+        <tr><td>getHitpoints()</td><td>船体值</td></tr>
+        <tr><td>getMaxHitpoints()</td><td>最大船体值</td></tr>
+        <tr><td>getAllWeapons()</td><td>所有武器</td></tr>
+        <tr><td>getShipAI()</td><td>舰船 AI</td></tr>
+        <tr><td>giveCommand(cmd)</td><td>下达 AI 指令</td></tr>
+        <tr><td>getVelocity()</td><td>速度向量</td></tr>
+        <tr><td>getLocation()</td><td>位置坐标</td></tr>
+        <tr><td>getFacing()</td><td>朝向角度</td></tr>
+        <tr><td>getFleetMemberId()</td><td>舰队成员 ID</td></tr>
+        <tr><td>isAlive()</td><td>是否存活</td></tr>
+        <tr><td>isPhased()</td><td>是否相位中</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">MutableShipStatsAPI — 舰船属性</div>
+      <ul class="card-list">
+        <li><code>getHullBonus()</code><span>船体加成</span></li>
+        <li><code>getArmorBonus()</code><span>装甲加成</span></li>
+        <li><code>getShieldDamageTakenMult()</code><span>护盾伤害倍数</span></li>
+        <li><code>getWeaponDamageMult()</code><span>武器伤害倍数</span></li>
+        <li><code>getFluxDissipation()</code><span>幅能耗散</span></li>
+        <li><code>getMaxSpeed()</code><span>最大速度</span></li>
+        <li><code>getAcceleration()</code><span>加速度</span></li>
+      </ul>
+      <div class="tip-box success" style="margin-top:8px;">
+        <strong>💡 修改方式：</strong><code>.modifyFlat(id, val)</code> / <code>.modifyPercent(id, val)</code> / <code>.modifyMult(id, val)</code>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">WeaponAPI — 武器</div>
+      <ul class="card-list">
+        <li><code>getId()</code><span>武器 ID</span></li>
+        <li><code>getSpec()</code><span>武器规格</span></li>
+        <li><code>getShip()</code><span>所属舰船</span></li>
+        <li><code>getSlot()</code><span>武器槽位</span></li>
+        <li><code>getChargeLevel()</code><span>充能等级</span></li>
+        <li><code>getCooldownRemaining()</code><span>剩余冷却</span></li>
+        <li><code>isDisabled()</code><span>是否损坏</span></li>
+        <li><code>setForceNoFire()</code><span>强制禁射</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">MissileAPI — 导弹/弹丸</div>
+      <ul class="card-list">
+        <li><code>getWeaponSpec()</code><span>武器规格</span></li>
+        <li><code>getDamageAmount()</code><span>伤害值</span></li>
+        <li><code>getDamageType()</code><span>伤害类型</span></li>
+        <li><code>getVelocity()</code><span>速度</span></li>
+        <li><code>getMaxSpeed()</code><span>最大速度</span></li>
+        <li><code>getLifeTime()</code><span>已存活时间</span></li>
+        <li><code>isFlare()</code><span>是否热诱弹</span></li>
+        <li><code>isMine()</code><span>是否水雷</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">BaseHullMod — 船体改装</div>
+      <ul class="card-list">
+        <li><code>applyEffectsBeforeShipCreation()</code><span>舰船创建前应用</span></li>
+        <li><code>applyEffectsAfterShipCreation()</code><span>舰船创建后应用</span></li>
+        <li><code>advanceInCombat()</code><span>战斗中每帧</span></li>
+        <li><code>isApplicableToShip()</code><span>是否适用于舰船</span></li>
+        <li><code>getDescriptionParam()</code><span>描述参数</span></li>
+      </ul>
+      <div class="tip-box warning" style="margin-top:8px;">
+        <strong>⚠️</strong> 数据修改放在 <code>applyEffectsBeforeShipCreation</code> 中，使用 MutableStats 修改。
+      </div>
+    </div>
+  </div>
+
+  <h3>伤害类型 DamageType</h3>
+  <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+    <div class="card"><div class="card-title" style="color:var(--danger)">ENERGY 能量</div>护盾 100% / 装甲 50% / 船体 100%</div>
+    <div class="card"><div class="card-title" style="color:var(--orange)">KINETIC 动能</div>护盾 200% / 装甲 50% / 船体 100%</div>
+    <div class="card"><div class="card-title" style="color:var(--purple)">HIGH_EXPLOSIVE 高爆</div>护盾 50% / 装甲 200% / 船体 100%</div>
+    <div class="card"><div class="card-title" style="color:var(--success)">FRAGMENTATION 破片</div>护盾 25% / 装甲 25% / 船体 100%</div>
+  </div>
+
+  <!-- ===== 4. UI 速查 ===== -->
+  <h2 id="ui-quick"><span class="section-icon">🎨</span> UI 组件速查</h2>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">TooltipMakerAPI — 工具提示生成 <span class="badge">最常用</span></div>
+      <ul class="card-list">
+        <li><code>addPara(text)</code><span>添加段落</span></li>
+        <li><code>addTitle(title)</code><span>添加标题</span></li>
+        <li><code>addTable(...)</code><span>添加表格</span></li>
+        <li><code>addImage(...)</code><span>添加图片</span></li>
+        <li><code>addSectionHeading(t)</code><span>节标题</span></li>
+        <li><code>addCustom(creator)</code><span>自定义组件</span></li>
+        <li><code>getWidthSoFar()</code><span>当前宽度</span></li>
+        <li><code>getHeightSoFar()</code><span>当前高度</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">TextFieldAPI — 文本输入框</div>
+      <ul class="card-list">
+        <li><code>getText()</code><span>获取文本</span></li>
+        <li><code>setText(text)</code><span>设置文本</span></li>
+        <li><code>hasFocus()</code><span>是否获得焦点</span></li>
+        <li><code>setFocus(b)</code><span>设置焦点</span></li>
+        <li><code>appendCharIfPossible(c)</code><span>追加字符</span></li>
+        <li><code>isValidChar(c)</code><span>字符是否有效</span></li>
+        <li><code>setMaxLength(n)</code><span>最大长度</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">UIPanelAPI — UI 面板</div>
+      <ul class="card-list">
+        <li><code>addComponent(c)</code><span>添加组件</span></li>
+        <li><code>removeComponent(c)</code><span>移除组件</span></li>
+        <li><code>setPosition(x, y)</code><span>设置位置</span></li>
+        <li><code>setSize(w, h)</code><span>设置尺寸</span></li>
+        <li><code>getPosition()</code><span>获取位置</span></li>
+        <li><code>getChildrenCopy()</code><span>子组件列表</span></li>
+        <li><code>setVisible(b)</code><span>设置可见</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">其他常用 UI 组件</div>
+      <ul class="card-list">
+        <li><code>ButtonAPI</code><span>按钮</span></li>
+        <li><code>LabelAPI</code><span>文本标签</span></li>
+        <li><code>CustomPanelAPI</code><span>自定义面板</span></li>
+        <li><code>ScrollPanelAPI</code><span>滚动面板</span></li>
+        <li><code>PositionAPI</code><span>位置对象</span></li>
+        <li><code>IconGroupAPI</code><span>图标组</span></li>
+        <li><code>Alignment</code><span>对齐枚举</span></li>
+        <li><code>Fonts</code><span>字体常量</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== 5. 监听器速查 ===== -->
+  <h2 id="listener-quick"><span class="section-icon">👂</span> 监听器速查</h2>
+
+  <h3>战役监听器</h3>
+  <table>
+    <tr><th>接口</th><th>回调方法</th><th>触发时机</th></tr>
+    <tr><td>CampaignEventListener</td><td>reportBattleOccurred() 等</td><td>战斗/交易/跳跃等广播事件</td></tr>
+    <tr><td>CampaignInputListener</td><td>processCampaignInputPreCore()</td><td>输入处理前（高优先级拦截）</td></tr>
+    <tr><td>PlayerActivityConsumer</td><td>reportPlayerActivity()</td><td>玩家活动（超空间/星系切换）</td></tr>
+    <tr><td>FleetEventListener</td><td>reportFleetJoinedBattle() 等</td><td>舰队战斗/遭遇事件</td></tr>
+    <tr><td>BaseCampaignEventListener</td><td>（基类，含所有空实现）</td><td>继承后按需重写</td></tr>
+  </table>
+
+  <h3>战斗监听器（combat.listeners）</h3>
+  <table>
+    <tr><th>接口</th><th>回调方法</th><th>触发时机</th></tr>
+    <tr><td>DamageListener</td><td>reportDamageTaken()</td><td>受到伤害时</td></tr>
+    <tr><td>EveryFrameCombatPlugin</td><td>advance() 等</td><td>战斗每帧执行</td></tr>
+    <tr><td>ShipDestructionListener</td><td>reportShipDestroyed()</td><td>舰船被摧毁时</td></tr>
+    <tr><td>ShipHullDamageListener</td><td>reportHullDamage()</td><td>船体受到伤害</td></tr>
+    <tr><td>WeaponFiredListener</td><td>reportWeaponFired()</td><td>武器开火时</td></tr>
+    <tr><td>PhaseSpawnerPlugin</td><td>isPhaseReady() 等</td><td>相位生成插件</td></tr>
+  </table>
+
+  <div class="tip-box">
+    <strong>💡 注册方式：</strong>
+    战役监听器：<code>Global.getSector().addListener(listener)</code> 或 <code>getListenerManager().addListener(listener)</code><br>
+    战斗插件：<code>Global.getCombatEngine().addPlugin(plugin)</code><br>
+    每帧脚本：<code>Global.getSector().addScript(script)</code>
+  </div>
+
+  <!-- ===== 6. 数据持久化 ===== -->
+  <h2 id="data-persist"><span class="section-icon">💾</span> 数据持久化速查</h2>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">持久化脚本/监听器</div>
+      <ul class="card-list">
+        <li><code>addScript(s)</code><span>持久化（存入存档）</span></li>
+        <li><code>addTransientScript(s)</code><span>临时（不存档）</span></li>
+        <li><code>addListener(l)</code><span>持久化监听器</span></li>
+        <li><code>addTransientListener(l)</code><span>临时监听器</span></li>
+      </ul>
+      <div class="tip-box warning" style="margin-top:8px;">
+        <strong>⚠️ 推荐：</strong>用 transient，在 <code>onGameLoad()</code> 重新注册，便于增删模组。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">PersistentData</div>
+      <ul class="card-list">
+        <li><code>getPersistentData()</code><span>全局持久化 Map</span></li>
+        <li><code>fleet.getMemory()</code><span>舰队记忆</span></li>
+        <li><code>entity.getMemory()</code><span>实体记忆</span></li>
+        <li><code>market.getMemory()</code><span>市场记忆</span></li>
+        <li><code>sector.getMemory()</code><span>全局记忆</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">SettingsAPI 文件读写</div>
+      <ul class="card-list">
+        <li><code>writeTextFileToCommon(f, d)</code><span>写公共目录</span></li>
+        <li><code>readTextFileFromCommon(f)</code><span>读公共目录</span></li>
+        <li><code>fileExistsInCommon(f)</code><span>文件是否存在</span></li>
+        <li><code>deleteTextFileFromCommon(f)</code><span>删除文件</span></li>
+      </ul>
+      <div class="tip-box" style="margin-top:8px;">
+        <strong>💡 最大 1MB</strong>，跨存档通用。
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">MemoryAPI 记忆系统</div>
+      <ul class="card-list">
+        <li><code>set(key, value)</code><span>设置值</span></li>
+        <li><code>get(key)</code><span>获取值</span></li>
+        <li><code>getBoolean(key)</code><span>获取布尔</span></li>
+        <li><code>getInt(key)</code><span>获取整数</span></li>
+        <li><code>getFloat(key)</code><span>获取浮点数</span></li>
+        <li><code>unset(key)</code><span>删除键</span></li>
+        <li><code>contains(key)</code><span>是否包含</span></li>
+        <li><code>expandKey(key)</code><span>展开 $ 变量</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== 7. 反射开发 ===== -->
+  <h2 id="reflection"><span class="section-icon">🔮</span> 反射开发速查</h2>
+
+  <div class="tip-box warning">
+    <strong>⚠️ 适用场景：</strong>访问未公开的内部类和方法（如 UI 内部面板、AppDriver、CampaignState 等）。
+    能用公开 API 实现的不要用反射。参考 LunaLib <code>ReflectionUtils.kt</code>。
+  </div>
+
+  <div class="tip-box danger">
+    <strong>🔒 安全限制：</strong>游戏脚本类加载器在<strong>类加载时</strong>拦截 <code>java.lang.reflect.Method</code> / <code>Field</code>，任何代码中<strong>声明</strong>这些类型（变量、参数、返回值）都会抛出 <code>SecurityException</code>，即使从未调用。
+    <br><strong>❌ IMPL_LOOKUP 方案已弃用</strong>：获取 <code>IMPL_LOOKUP</code> 字段本身需要反射 <code>Field</code> 类型，同样被拦截。
+    <br><strong>✅ 正确方案：Class.forName + MethodHandles.lookup()</strong>，完全不引用反射类型。
+  </div>
+
+  <h3>核心原则（ChineseInputFix 实测可行）</h3>
+  <table>
+    <tr><th>原则</th><th>说明</th></tr>
+    <tr><td><strong>Class.forName 加载反射类</strong></td><td>用 <code>Class.forName("java.lang.reflect.Method", false, Class.class.getClassLoader())</code> 获取 Class 对象，不直接 import</td></tr>
+    <tr><td><strong>MethodHandles.lookup() 创建句柄</strong></td><td>用 <code>MethodHandles.lookup().findVirtual(methodClass, "invoke", ...)</code> 创建 MethodHandle</td></tr>
+    <tr><td><strong>所有反射对象当 Object 处理</strong></td><td>变量、参数、返回值一律用 <code>Object</code>，不用 <code>Method</code>/<code>Field</code></td></tr>
+    <tr><td>缓存结果</td><td>用 HashMap 缓存反射查找结果，键为 (类, 名称, 参数数)</td></tr>
+    <tr><td>public + declared</td><td>同时搜索 getMethods()/getDeclaredMethods()，强制转型为 <code>Object[]</code></td></tr>
+    <tr><td>预定义方法名列表</td><td>UI 遍历时不要枚举 getMethods()，用预定义的 getter 名称列表逐个 invoke 尝试</td></tr>
+  </table>
+
+  <h3>🔑 绕过安全限制关键代码（实测可行）</h3>
+  <pre><span class="code-comment">// 1. 用 Class.forName 获取反射类的 Class 对象（不直接 import）</span>
+<span class="code-class">ClassLoader</span> <span class="code-var">jdkLoader</span> = <span class="code-class">Class</span>.class.getClassLoader();
+<span class="code-class">Class&lt;?&gt;</span> <span class="code-var">methodClass</span> = <span class="code-class">Class</span>.forName(<span class="code-string">"java.lang.reflect.Method"</span>, <span class="code-keyword">false</span>, jdkLoader);
+<span class="code-class">Class&lt;?&gt;</span> <span class="code-var">fieldClass</span> = <span class="code-class">Class</span>.forName(<span class="code-string">"java.lang.reflect.Field"</span>, <span class="code-keyword">false</span>, jdkLoader);
+
+<span class="code-comment">// 2. 用 MethodHandles.lookup().findVirtual() 创建 MethodHandle</span>
+<span class="code-class">MethodHandle</span> <span class="code-var">invokeHandle</span> = <span class="code-class">MethodHandles</span>.lookup().findVirtual(methodClass, <span class="code-string">"invoke"</span>,
+        <span class="code-class">MethodType</span>.methodType(<span class="code-class">Object</span>.class, <span class="code-class">Object</span>.class, <span class="code-class">Object</span>[].class));
+<span class="code-class">MethodHandle</span> <span class="code-var">getNameHandle</span> = <span class="code-class">MethodHandles</span>.lookup().findVirtual(methodClass, <span class="code-string">"getName"</span>,
+        <span class="code-class">MethodType</span>.methodType(<span class="code-class">String</span>.class));
+
+<span class="code-comment">// 3. 查找方法：返回 Object，不是 Method</span>
+<span class="code-class">Object</span>[] <span class="code-var">methods</span> = (<span class="code-class">Object</span>[]) clazz.getMethods();  <span class="code-comment">// 强制转型，不声明 Method[]</span>
+<span class="code-keyword">for</span> (<span class="code-class">Object</span> <span class="code-var">m</span> : methods) {
+    <span class="code-class">String</span> <span class="code-var">name</span> = (<span class="code-class">String</span>) getNameHandle.invoke(m);  <span class="code-comment">// 通过 MethodHandle 调用</span>
+    <span class="code-keyword">if</span> (name.equals(<span class="code-string">"getCore"</span>)) {
+        <span class="code-class">Object</span> <span class="code-var">result</span> = invokeHandle.invoke(m, instance, args);
+    }
+}</pre>
+
+  <h3>❌ 常见错误写法（会触发 SecurityException）</h3>
+  <pre><span class="code-comment">// ❌ 直接 import 反射类</span>
+<span class="code-keyword">import</span> java.lang.reflect.Method;  <span class="code-comment">// 类加载即抛异常</span>
+
+<span class="code-comment">// ❌ 声明 Method/Field 类型变量</span>
+<span class="code-class">Method</span> <span class="code-var">m</span> = clazz.getMethod(<span class="code-string">"getCore"</span>);  <span class="code-comment">// 触发异常</span>
+<span class="code-class">Method</span>[] <span class="code-var">methods</span> = clazz.getMethods();  <span class="code-comment">// 触发异常</span>
+
+<span class="code-comment">// ❌ 使用 IMPL_LOOKUP（获取字段本身需要反射 Field）</span>
+<span class="code-class">Field</span> <span class="code-var">f</span> = <span class="code-class">MethodHandles.Lookup</span>.class.getDeclaredField(<span class="code-string">"IMPL_LOOKUP"</span>);  <span class="code-comment">// 触发异常</span></pre>
+
+  <h3>典型用法（Java 版 ReflectionUtils）</h3>
+  <pre><span class="code-comment">// 1. 调用未公开方法</span>
+<span class="code-class">Object</span> <span class="code-var">core</span> = <span class="code-method">ReflectionUtils.invoke</span>(state, <span class="code-string">"getCore"</span>);
+
+<span class="code-comment">// 2. UI 遍历：预定义 getter 名称列表（不要枚举 getMethods()）</span>
+<span class="code-class">String</span>[] <span class="code-var">entryMethods</span> = {<span class="code-string">"getCore"</span>, <span class="code-string">"getCurrentDialog"</span>, <span class="code-string">"getCurrentPanel"</span>};
+<span class="code-keyword">for</span> (<span class="code-class">String</span> <span class="code-var">name</span> : entryMethods) {
+    <span class="code-class">Object</span> <span class="code-var">result</span> = <span class="code-method">ReflectionUtils.invoke</span>(campaignUI, name);
+    <span class="code-keyword">if</span> (result != <span class="code-keyword">null</span>) { <span class="code-comment">/* 处理 */</span> }
+}
+
+<span class="code-comment">// 3. 读取/修改私有字段</span>
+<span class="code-class">Object</span> <span class="code-var">value</span> = <span class="code-method">ReflectionUtils.get</span>(instance, <span class="code-string">"fieldName"</span>);</pre>
+
+  <!-- ===== 8. 代码模板 ===== -->
+  <h2 id="code-templates"><span class="section-icon">📝</span> 代码模板速查</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>ModPlugin 模板</h3>
+<pre><span class="code-keyword">package</span> org.myname.mymod;
+
+<span class="code-keyword">import</span> com.fs.starfarer.api.<span class="code-class">BaseModPlugin</span>;
+<span class="code-keyword">import</span> com.fs.starfarer.api.<span class="code-class">Global</span>;
+
+<span class="code-keyword">public class</span> <span class="code-class">MyModPlugin</span> <span class="code-keyword">extends</span> <span class="code-class">BaseModPlugin</span> {
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">onApplicationLoad</span>() <span class="code-keyword">throws</span> Exception {
+        <span class="code-comment">// 加载模组数据</span>
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">onNewGame</span>() {
+        <span class="code-comment">// 新游戏生成内容</span>
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">onGameLoad</span>(<span class="code-keyword">boolean</span> newGame) {
+        <span class="code-comment">// 注册监听器、脚本</span>
+        Global.getSector().addTransientListener(<span class="code-keyword">new</span> <span class="code-class">MyListener</span>());
+        Global.getSector().addTransientScript(<span class="code-keyword">new</span> <span class="code-class">MyScript</span>());
+    }
+}</pre>
+    </div>
+
+    <div>
+      <h3>EveryFrameScript 模板</h3>
+<pre><span class="code-keyword">public class</span> <span class="code-class">MyScript</span> <span class="code-keyword">implements</span> <span class="code-class">EveryFrameScript</span> {
+
+    <span class="code-keyword">private float</span> <span class="code-var">elapsed</span> = 0;
+    <span class="code-keyword">private boolean</span> <span class="code-var">done</span> = <span class="code-keyword">false</span>;
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public boolean</span> <span class="code-method">isDone</span>() {
+        <span class="code-keyword">return</span> done;
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public boolean</span> <span class="code-method">runWhilePaused</span>() {
+        <span class="code-keyword">return false</span>;
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">advance</span>(<span class="code-keyword">float</span> amount) {
+        elapsed += amount;
+        <span class="code-comment">// 每秒执行一次</span>
+        <span class="code-keyword">if</span> (elapsed >= 1f) {
+            elapsed = 0;
+            <span class="code-comment">// do something</span>
+        }
+    }
+}</pre>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>BaseHullMod 模板</h3>
+<pre><span class="code-keyword">public class</span> <span class="code-class">MyHullMod</span> <span class="code-keyword">extends</span> <span class="code-class">BaseHullMod</span> {
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">applyEffectsBeforeShipCreation</span>(
+            <span class="code-class">HullSize</span> hullSize,
+            <span class="code-class">MutableShipStatsAPI</span> stats,
+            <span class="code-class">String</span> id) {
+
+        stats.getArmorBonus().modifyFlat(id, 50f);
+        stats.getMaxSpeed().modifyPercent(id, 10f);
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public boolean</span> <span class="code-method">isApplicableToShip</span>(
+            <span class="code-class">ShipAPI</span> ship) {
+        <span class="code-keyword">return true</span>;
+    }
+}</pre>
+    </div>
+
+    <div>
+      <h3>对话插件模板</h3>
+<pre><span class="code-keyword">public class</span> <span class="code-class">MyDialogPlugin</span>
+        <span class="code-keyword">implements</span> <span class="code-class">InteractionDialogPlugin</span> {
+
+    <span class="code-keyword">private</span> <span class="code-class">InteractionDialogAPI</span> <span class="code-var">dialog</span>;
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">init</span>(<span class="code-class">InteractionDialogAPI</span> dialog) {
+        <span class="code-var">this</span>.dialog = dialog;
+        dialog.getTextPanel().addPara(<span class="code-string">"你好！"</span>);
+        dialog.getOptionPanel().addOption(
+            <span class="code-string">"再见"</span>, <span class="code-string">"LEAVE"</span>);
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">optionSelected</span>(
+            <span class="code-class">String</span> optText,
+            <span class="code-class">Object</span> optData) {
+        <span class="code-keyword">if</span> (<span class="code-string">"LEAVE"</span>.equals(optData)) {
+            dialog.dismiss();
+        }
+    }
+    <span class="code-comment">// ... 其他方法空实现</span>
+}</pre>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>调度器模式（主菜单注册）</h3>
+<pre><span class="code-keyword">private</span> <span class="code-class">ScheduledExecutorService</span> <span class="code-var">scheduler</span>;
+
+<span class="code-keyword">private void</span> <span class="code-method">startScheduler</span>() {
+    <span class="code-keyword">if</span> (scheduler != <span class="code-keyword">null</span>) {
+        scheduler.shutdownNow();
+    }
+    scheduler = <span class="code-class">Executors</span>.newSingleThreadScheduledExecutor();
+    scheduler.scheduleAtFixedRate(() -> {
+        <span class="code-keyword">try</span> {
+            <span class="code-class">GameState</span> s = <span class="code-method">Global.getCurrentState</span>();
+            <span class="code-keyword">if</span> (s == <span class="code-class">GameState</span>.TITLE ||
+                s == <span class="code-class">GameState</span>.CAMPAIGN) {
+                <span class="code-method">registerListeners</span>();
+                scheduler.shutdown();
+            }
+        } <span class="code-keyword">catch</span> (Exception e) {
+            scheduler.shutdown();
+        }
+    }, 0, 100, <span class="code-class">TimeUnit</span>.MILLISECONDS);
+}</pre>
+    </div>
+    <div>
+      <h3>CampaignEventListener 模板</h3>
+<pre><span class="code-keyword">public class</span> <span class="code-class">MyListener</span>
+        <span class="code-keyword">extends</span> <span class="code-class">BaseCampaignEventListener</span> {
+
+    <span class="code-keyword">public</span> <span class="code-method">MyListener</span>() {
+        <span class="code-keyword">super</span>(<span class="code-keyword">false</span>); <span class="code-comment">// 不自动注册</span>
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">reportBattleOccurred</span>(
+            <span class="code-class">CampaignFleetAPI</span> winner,
+            <span class="code-class">BattleAPI</span> battle) {
+        <span class="code-comment">// 战斗结束处理</span>
+    }
+
+    <span class="code-keyword">@Override</span>
+    <span class="code-keyword">public void</span> <span class="code-method">reportPlayerOpenedMarket</span>(
+            <span class="code-class">MarketAPI</span> market) {
+        <span class="code-comment">// 打开市场处理</span>
+    }
+}</pre>
+    </div>
+  </div>
+
+  <!-- ===== 9. 常见任务 ===== -->
+  <h2 id="common-tasks"><span class="section-icon">🎮</span> 常见任务速查</h2>
+
+  <table>
+    <tr><th>需求</th><th>入口 API</th><th>参考</th></tr>
+    <tr><td>读取配置文件</td><td><code>Global.getSettings().loadJSON(path)</code></td><td>SettingsAPI</td></tr>
+    <tr><td>加载合并 CSV</td><td><code>getMergedSpreadsheetDataForMod(idCol, path, mod)</code></td><td>SettingsAPI</td></tr>
+    <tr><td>获取玩家舰队</td><td><code>Global.getSector().getPlayerFleet()</code></td><td>SectorAPI</td></tr>
+    <tr><td>获取玩家舰船（战斗）</td><td><code>Global.getCombatEngine().getPlayerShip()</code></td><td>CombatEngineAPI</td></tr>
+    <tr><td>添加每帧脚本</td><td><code>Global.getSector().addTransientScript(script)</code></td><td>EveryFrameScript</td></tr>
+    <tr><td>添加战斗插件</td><td><code>Global.getCombatEngine().addPlugin(plugin)</code></td><td>EveryFrameCombatPlugin</td></tr>
+    <tr><td>修改舰船属性</td><td><code>stats.get*().modifyFlat/Percent/Mult(id, val)</code></td><td>MutableShipStatsAPI</td></tr>
+    <tr><td>创建舰队</td><td><code>Global.getFactory().createEmptyFleet()</code></td><td>FactoryAPI</td></tr>
+    <tr><td>生成市场</td><td><code>Global.getFactory().createMarket()</code></td><td>FactoryAPI</td></tr>
+    <tr><td>添加情报</td><td><code>Global.getSector().getIntelManager().addIntel()</code></td><td>IntelManagerAPI</td></tr>
+    <tr><td>播放声音</td><td><code>Global.getSoundPlayer().playUISound(id)</code></td><td>SoundPlayerAPI</td></tr>
+    <tr><td>获取派系关系</td><td><code>faction.getRelationship()</code></td><td>FactionAPI</td></tr>
+    <tr><td>修改声望</td><td><code>faction.adjustRelationship(delta, source)</code></td><td>FactionAPI</td></tr>
+    <tr><td>添加船体改装</td><td><code>variant.addPermaMod(id)</code> / hullmod 文件</td><td>BaseHullMod</td></tr>
+    <tr><td>创建对话</td><td>实现 <code>InteractionDialogPlugin</code></td><td>CampaignPlugin</td></tr>
+    <tr><td>自定义产业</td><td>继承 <code>BaseIndustry</code></td><td>impl.campaign.econ</td></tr>
+    <tr><td>自定义能力</td><td>继承 <code>BaseToggleAbility</code> / <code>BaseDurationAbility</code></td><td>impl.campaign.abilities</td></tr>
+    <tr><td>自定义舰船系统</td><td>实现 <code>ShipSystemStatsScript</code></td><td>plugins 包</td></tr>
+    <tr><td>全局记忆</td><td><code>Global.getSector().getMemory()</code></td><td>MemoryAPI</td></tr>
+    <tr><td>日志输出</td><td><code>Global.getLogger(MyClass.class)</code></td><td>log4j</td></tr>
+  </table>
+
+  <!-- ===== 10. 最佳实践 ===== -->
+  <h2 id="best-practice"><span class="section-icon">✅</span> 最佳实践速查</h2>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-title">🏗️ 架构设计</div>
+      <ul class="card-list">
+        <li><span>继承 Base* 基类，不要直接实现接口</span></li>
+        <li><span>监听器/脚本用 transient，onGameLoad 重注册</span></li>
+        <li><span>能用公开 API 就不要用反射</span></li>
+        <li><span>反射结果务必缓存</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ 性能优化</div>
+      <ul class="card-list">
+        <li><span>每帧脚本中避免频繁反射</span></li>
+        <li><span>集合遍历时不要修改集合</span></li>
+        <li><span>用 IntervalUtil 控制执行频率</span></li>
+        <li><span>缓存查询结果（同帧内多次查询）</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔒 兼容性</div>
+      <ul class="card-list">
+        <li><span>反射调用加 try-catch 容错</span></li>
+        <li><span>数据类实现 Serializable</span></li>
+        <li><span>configureXStream 注册自定义类别名</span></li>
+        <li><span>避免修改其他 mod 的数据</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🐛 调试技巧</div>
+      <ul class="card-list">
+        <li><span>开发模式 F8 热重载</span></li>
+        <li><code>Global.getLogger()</code><span>打日志</span></li>
+        <li><span>用 isDevMode() 加调试代码</span></li>
+        <li><code>DevModeVenting</code><span>等调试技能</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tip-box success">
+    <strong>📚 延伸阅读：</strong>
+    详细 API 说明请参阅 <a href="SSTLib_API_指南.html" style="color:var(--accent)">SSTLib API 指南</a>，
+    交互式浏览请使用 <a href="SSTLib_API_层级树.html" style="color:var(--accent)">SSTLib API 层级树</a>。
+  </div>
+
+</div>
+
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+  // 主题切换
+  const savedTheme = localStorage.getItem('sstlib_cheatsheet_theme');
+  if (savedTheme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('sstlib_cheatsheet_theme', next);
+  }
+
+  // 返回顶部
+  const backBtn = document.getElementById('backToTop');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 300) {
+      backBtn.classList.add('visible');
+    } else {
+      backBtn.classList.remove('visible');
+    }
+  });
+
+  // TOC 高亮
+  const tocLinks = document.querySelectorAll('.toc-bar a');
+  const sections = [];
+  tocLinks.forEach(link => {
+    const id = link.getAttribute('href').substring(1);
+    const el = document.getElementById(id);
+    if (el) sections.push({ id, el, link });
+  });
+
+  function updateToc() {
+    const scrollPos = window.scrollY + 120;
+    let current = sections[0];
+    for (const s of sections) {
+      if (s.el.offsetTop <= scrollPos) current = s;
+    }
+    tocLinks.forEach(l => l.classList.remove('active'));
+    if (current) current.link.classList.add('active');
+  }
+  window.addEventListener('scroll', updateToc);
+  updateToc();
+</script>
+
+</body>
+</html>
