@@ -58,8 +58,17 @@
   `mod_zh` 是**参照物仓库，不是产出仓库**：产出自带出处（deliver zip + git），混淆两者就分不清
   "哪个是社区版、哪个是我们做的"。
 - ❌ **英文原版备份** → 归 `mod_bak`（见 §1.2）。
-  现状里有 5 个 `*_EN_backup` 与 3 个 `*_backup` 落在 `mod_zh` 下，属**历史污染**；
-  **不强制迁移**，但新任务不要再往 `mod_zh` 放英文备份。
+  **2026-09 已清理**：原先散在 `mod_zh` 下的 9 个英文备份类条目已全部搬入 `mod_bak`，
+  并同步修正了 17 个引用它们的脚本与 9 个文档。
+  搬移清单：`ChickenTechShop_0.1.5_EN_backup`、`EXPSP_0.71_EN_backup`、`FDS_ROTS_0.11.4m_EN_backup`、
+  `Navarchy_of_Tania_1.2.0_EN_backup`、`Random-Assortment-of-ThingsI 旧汉化存档版`、`sylphon_1.1_EN_backup`、
+  `sylphon_1.1_premerge_backup`、`sylphon_1.1_pre_zh_backup`、`Volantian-Starsector-Mod-0.6.3_backup`。
+- ⚠️ **`sylphon_1.1_EN_backup` 是空目录（0 文件）**：备份失败留下的壳，无内容，保留仅为记录。
+
+> **判定"英文还是中文"不要看 `mod_info.json` 的 name**：不少备份的 name 已被改成中文
+> （如 `EXPSP_0.71_EN_backup` 的 name = "机械虚空船厂"），但数据文件仍是英文。
+> 可靠判据 = 抽样数据文件的中文字符数（`data\hulls\ship_data.csv`、`data\hullmods\hull_mods.csv`、
+> `data\campaign\rules.csv`），命中的才是汉化版。
 
 ### 1.4 `mod_src\<Mod>\` — 源码基线
 
@@ -76,8 +85,15 @@
 - ❌ 不做：改文件、放汉化产物、放分析中间物、装生成物。
 - 需要改动源码时 → 复制到 `mod_work\<Mod>\` 再改（保持基线可 diff 出"我们改了什么"）。
 
-> 现状备注：`mod_src\_jar_inst`、`mod_src\_jar_repo` 是 jar 相关目录（非源码仓库），
-> `Kyeltziv_Technocracy_1.9` 未 `git init`；新任务按本节落地即可。
+> **现状备注（2026-09 清理后）**：
+> - 曾有两个"非源码"目录 `_jar_inst` / `_jar_repo`（各 19 个 class，互为逐字节副本）。
+>   经核实其内容与 `mod_bak\ChickenTechShop_0.1.5_EN_backup\ChickenTechShop.jar` **19/19 逐字节一致**
+>   （即英文原版 jar 的解包副本）⇒ **已删除**。
+> - `Kyeltziv_Technocracy_1.9` **保留**：虽不是纯源码仓库（含 mod 载荷 `data`/`graphics`/`jars`），
+>   但它是 **97 个 `.java` 的唯一副本**（与 `jars\kyeltziv.jar` 的 98 个顶层类近乎一一对应，
+>   仅 `kyeltziv_rangefinders_station` 缺源码），价值高，未删除；亦未 `git init`。
+> - 其余（`automatic-orders`、`ChickenTechShop`、`FDS_ROTS`、`Navarchy-of-Tania`、`Starlords_Temp`、
+>   `TreasureHunt`）均为规范的上游源码基线（含 `.git`）。
 
 ## 2. 命名约定
 
