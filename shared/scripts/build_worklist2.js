@@ -1,12 +1,24 @@
-// Build the translation worklist from JAR constants, matched against source literals
-// (handling compile-time folding of adjacent string literals).
-// Output: worklist2.json -> [ { c: const, ctx: "file:line", src: source-line, classes: [..] } ]
+// build_worklist2.js —【旧版·dormant】由 jar 常量 + 源码字面量生成工作清单。
+// ⚠️ 已被 scan_jar_sources.js 取代（后者正确处理"注释夹折叠"与 Kotlin 片段）。新任务请用 scan_jar_sources.js。
+// 用法: node build_worklist2.js <srcDir> <jarConstants.json> [outJson]
+//   [outJson] 默认 <jarConstants.json 所在目录>/worklist2.json
+//   node build_worklist2.js --help
 const fs = require('fs');
 const path = require('path');
 
-const SRC = 'C:/game/StarSector.v0.9.8a-RC8/mods/Random-Assortment-of-Things/src';
-const JAR = JSON.parse(fs.readFileSync('C:/game/StarSector.v0.9.8a-RC8/mods/_rat_work/out/jar_constants.json', 'utf8'));
-const OUT = 'C:/game/StarSector.v0.9.8a-RC8/mods/_rat_work/out/worklist2.json';
+const argv = process.argv.slice(2);
+if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
+  console.log('usage: node build_worklist2.js <srcDir> <jarConstants.json> [outJson]');
+  console.log('（旧版脚本；新任务请用 scan_jar_sources.js <srcDir> <jarConstants.json> <out.json>）');
+  process.exit(argv.length ? 0 : 2);
+}
+const SRC = argv[0];
+const JARFILE = argv[1];
+if (!SRC || !JARFILE) { console.error('缺少参数：见 --help'); process.exit(2); }
+if (!fs.existsSync(SRC)) { console.error('srcDir 不存在: ' + SRC); process.exit(2); }
+if (!fs.existsSync(JARFILE)) { console.error('jarConstants.json 不存在: ' + JARFILE); process.exit(2); }
+const OUT = argv[2] || path.join(path.dirname(path.resolve(JARFILE)), 'worklist2.json');
+const JAR = JSON.parse(fs.readFileSync(JARFILE, 'utf8'));
 const jarSet = new Set(Object.keys(JAR));
 
 function unescape(str) {

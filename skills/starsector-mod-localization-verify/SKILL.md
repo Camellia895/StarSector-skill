@@ -48,22 +48,35 @@ node <skills>\shared\scripts\run_check.js --check=check_content.js --target=<Mod
 ```powershell
 node <skills>\shared\scripts\check_encoding.js <改动目录>             # UTF-8 无 BOM、无乱码（铁律：env.md §3）
 node <skills>\shared\scripts\check_csv_quotes.js <每个 csv>           # R1 弯引号 → 拆列崩溃
+node <skills>\shared\scripts\check_options_structure.js <modRoot> <EN原版备份>            # ★R13 options 结构等价
+node <skills>\shared\scripts\scan_data_stragglers.js <modRoot> <EN原版备份> <worklistDir>  # ★R14 提取完整性
 node <skills>\shared\scripts\check_rules_arg_quotes.js <rules.csv>    # R2 命令参数内嵌引号 → 静默截断
 node <skills>\shared\scripts\check_font_glyphs.js <data目录>           # R3 缺字形 → 显示 ?
-node <skills>\shared\scripts\verify_all_data.js [data根目录]           # 易漏区全量复查
+node <skills>\shared\scripts\verify_all_data.js <data根目录>           # 易漏区全量复查
 ```
 
 - [ ] 无 BOM（`.json`/`.csv`/`.version`/`.faction` 逐个抽查前 3 字节）
 - [ ] CSV 列数 = header；无 `""` 拆列；多行单元格解析正确（完整状态机）
-- [ ] rules script 列：弯引号 = 0、严格结构问题 = 0、疑似内嵌引号行 = 0
+- [ ] **`options` 结构等价（R13）**：段数与 optionId 序列与英文原版一致、无字面 `\n`。
+      ⚠ **列数=header、引号数=0 这类检查完全看不出 options 坏了** —— 必须单独跑这条；
+      坏了会在启动时 `Rules.o00000` 抛 `NumberFormatException` → 启动崩溃。
+- [ ] **data 层无未覆盖的英文残留（R14）**：`scan_data_stragglers.js` 0 候选。
+      这条同样是**提取阶段**的 G1 闸门（那时拿英文原版当 mod 跑）。
+- [ ] rules `script` 列：弯引号 = 0、严格结构问题 = 0、**奇数引号行 = 0**
+      （偶数个引号的"多参数命令"合法，如 `SetTextHighlights "a" "b" "c"`；脚本单列为 INFO，不计命中）
 - [ ] 缺字形字符种类 = 0 / 总出现 = 0
 - [ ] `verify_all_data.js` 全部通过（LunaSettings Text/Header/Radio、variants `displayName`、
       faction 舰队/官职名、`designTypeColors` 键唯一且与 CSV 匹配、`custom_entities`、`customStarts`）
 - [ ] 伪 JSON 用宽松解析验证过（`JsonProbe.java`），**没有**用严格解析器判死刑（铁律 R8）
+- [ ] **CSV 落盘行为实证（最强证据）**：用游戏自身解析器复刻（`TestCsv.java`）——
+      行数必须与英文基线相同，**"缺键数"也必须与基线相同**（不同 = 行列被拆）。
+      想直接看"解析后的字段值"，写个打印 `keys()` 的小探针（本项目实测：它把"对话引号被吞掉"
+      从猜测变成了证据——正常 12 个引号 vs 被吞到 1 个）。
 
 ## 3. G4 jar 安全（动过 jar 才做）
 
 ```powershell
+node <skills>\shared\scripts\scan_logic_keys.js <patch_map.json> <原classDir> <modId> [保留键...]  # ★R12 逻辑键
 node <skills>\shared\scripts\verify_identifiers.js <classDir>          # 标识符含 CJK = 0（铁律 R7）
 node <skills>\shared\scripts\check_u0001.js <mapping.json>             # \u0001 数量一致（R6）
 node <skills>\shared\scripts\verify_u0001_jar.js <原jar> <补丁jar>      # 每个含 \u0001 常量数量一致
@@ -71,11 +84,20 @@ node <skills>\shared\scripts\scan_stragglers.js <classDir>             # 英文 
 node <skills>\shared\scripts\sweep_sentences.js <classDir>             # 句子级复查（注释夹折叠漏译/键不匹配）
 ```
 
+- [ ] **逻辑键未被译（R12，启动 Fatal 的头号成因）**：`scan_logic_keys.js` 的 **A 类（保留键被译）= 0**。
+      ⚠ **R7 保护不了这类键** —— 它们是被 `CONSTANT_String` 引用的普通字符串，安全替换照样会改。
+      判据是"看调用点"：出现在 `getBoolean/getModSpec/isModEnabled/addSettingsListener/
+      getMergedSpreadsheetDataForMod/getStarSystem` 的**实参**位置 → 绝不译。
 - [ ] 标识符（`NameAndType`/`Class` 名称）含 CJK = 0
 - [ ] `\u0001` 数量与位置一致
 - [ ] 句子级英文残留 = 0（仅允许 Intrinsics/SMAP/调试日志/`Ljava/…` 签名）
 - [ ] 重打包后 zip 条目名全为**正斜杠**、`META-INF/` 保留（铁律 R9）
 - [ ] 混合结构：补丁后 jar 与 `out\production\<Mod>` 已同步（若原为逐字节相同）
+
+> **注入前置断言（写盘之前，属"预防"而非"验证"，但必须做）**：
+> `node <skills>\shared\scripts\check_install_source.js <modRoot> <EN原版备份>`（R15）——
+> 对**已汉化目录**二次注入会把合成字段（`options`）追加成"一行变两行 + optionId 重复"，
+> 与 R13 同一条崩溃路径；`.ship`/`.variant` 的替换则静默失配。不通过就**先还原英文原版再注入**。
 
 ## 4. G5 引用与类加载
 

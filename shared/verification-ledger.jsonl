@@ -27,3 +27,6 @@
 {"t":"2026-09-10T15:05:25.292Z","check":"check_content.js","target":"probe3","exit":1,"hit":true,"probe":true,"note":""}
 {"t":"2026-09-10T15:05:35.020Z","check":"verify_identifiers.js","target":"empty-dir3","exit":0,"hit":false,"probe":false,"note":""}
 {"t":"2026-09-10T15:05:35.145Z","check":"check_content.js","target":"probe4","exit":1,"hit":true,"probe":true,"note":""}
+{"t":"2026-09-11T12:28:42.143Z","check":"scan_data_stragglers.js","target":"Nightcross","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-11T12:28:42.302Z","check":"check_options_structure.js","target":"Nightcross","exit":1,"hit":true,"probe":false,"note":""}
+{"t":"2026-09-11T12:28:42.467Z","check":"check_rules_arg_quotes.js","target":"Nightcross","exit":0,"hit":false,"probe":false,"note":""}

@@ -27,10 +27,14 @@
 执行 `starsector-mod-localization-extract` 全文：
 
 - data 层 `recipe.json` → `build_data_worklist.js`；jar 层 `extract_jar_constants.js` → `analyze_jar_strings.js` → `scan_jar_sources.js` → `build_jar_worklist.js`；
+- **★反向网必跑**（recipe 只能覆盖"你想到的列"，实测漏译几乎全来自盲区，铁律 R14）：
+  `node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版目录> <worklistDir>` → **必须 0 候选**；
+- 结构化文件（`.ship`/`.skin`/`.variant`/`.faction`）**先列出全部字符串字段**再判哪些要译，别只 grep 已知字段
+  （实测：只 grep `hullName` 会漏掉 `.skin` 的 `descriptionPrefix`——图鉴描述前缀）；
 - 逐条核对**易漏区 13 条**；
 - 按 section 拆成**多份** worklist + `worklist_index.json` + `excluded_entries.json`。
 
-**闸门 G1**（定义见 `shared\conventions.md` §5）：提取完整。
+**闸门 G1**（定义见 `shared\conventions.md` §5）：提取完整 —— 含上面反向网 **0 候选**。
 
 ## 阶段 2 · 交给用户汉化（**本流程的关键交接点**）
 
@@ -52,22 +56,31 @@
 
 执行 `starsector-mod-localization-apply`：
 
-1. 自检：空 `zh` = 0；字段结构未被改。
-2. 数据层按结构类型回填（CSV 状态机 / rules script 列 / 伪 JSON 文本替换 / `.faction` / 变体 / 舰名 / 任务源码）。
-3. 若 jar 层有条目：`patchdir.js` + `rezip.js`（**铁律 R7 标识符绝不可译**、R9 正斜杠），必要时同步 `out\production`。
-4. 安装到 `mods\<Mod>\`，jar 备份 `*.orig`，装后做 SHA-256 比对。
+1. 自检：空 `zh` = 0；字段结构未被改。**「有意保留原文」的约定写法 = `zh` 与 `en`/`c` 逐字相同**（逻辑键、引擎 ENUM 等），注入会自动跳过。
+2. **★前置断言**（铁律 R15，**写入前必做**）：
+   `node <skills>\shared\scripts\check_install_source.js <modRoot> <EN原版备份>`
+   不通过 = 目标目录已汉化过 → **先还原英文原版再注入**（否则合成字段被追加 → 一行变两行 → 启动崩溃）。
+3. 数据层按结构类型回填（CSV 状态机 / **rules `options` 结构级重建（R13）** / 伪 JSON 文本替换 / `.faction` / 变体 / 舰名 / 任务源码）。
+4. 若 jar 层有条目：`patchdir.js` + `rezip.js`（**铁律 R7 标识符绝不可译**、**R12 逻辑键绝不可译**、R9 正斜杠），必要时同步 `out\production`。
+5. 安装到 `mods\<Mod>\`，jar 备份 `*.orig`，装后做 SHA-256 比对。
+
+跑完立刻过一遍闸门（`-apply` §3）：`check_options_structure.js` / `scan_data_stragglers.js` /
+`scan_logic_keys.js` / `check_jar_patch_integrity.js` 是本轮新增的四道，**别漏**。
 
 ## 阶段 4 · 验证（AI 做）
 
 执行 `starsector-mod-localization-verify`：
 
 - **G2** 内容完整（`check_content.js`）
-- **G3** 数据层字节安全（`check_encoding.js` / `check_csv_quotes.js` / `check_rules_arg_quotes.js` / `check_font_glyphs.js` / `verify_all_data.js`）
-- **G4** jar 安全（`verify_identifiers.js` / `check_u0001.js` / `verify_u0001_jar.js` / `scan_stragglers.js` / `sweep_sentences.js`）
+- **G3** 数据层字节安全（`check_encoding.js` / `check_csv_quotes.js` / **`check_options_structure.js`（R13）** / `check_rules_arg_quotes.js` / `check_font_glyphs.js` / `check_homoglyphs.js` / `verify_all_data.js` / **`scan_data_stragglers.js`（R14）**）
+- **G4** jar 安全（`verify_identifiers.js` / **`scan_logic_keys.js`（R12）** / `check_u0001.js` / `verify_u0001_jar.js` / **`check_jar_patch_integrity.js`** / `scan_stragglers.js` / `sweep_sentences.js`）
 - **G5** 引用与类加载（`check_refs.js` / `check_assets.js` / `check_sprites.js` / `LoadTest`）
 - **G6** 装船目检（游戏内逐路径）
 
 任一层不过 → 回阶段 3 修 → 重跑该层（**不要**跳过）。
+
+> **崩了怎么办**：启动期崩溃（`Fatal` / `ExceptionInInitializerError`）走 `workflows\wf-launch-audit.md`
+> 的查表流程（R12/R13/R15 是最常见的三个成因），**别**通读 40MB 日志。
 
 ## 阶段 5 · 交付
 

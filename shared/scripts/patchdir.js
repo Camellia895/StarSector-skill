@@ -1,5 +1,7 @@
-// Patch all .class files under a directory tree (in place) using the EN->ZH mapping.
-// Usage: node patchdir.js <mapping.json> <classDir>
+// patchdir.js — 对目录树内全部 .class 按映射**原位补丁**（写操作！先备份）+ 键命中报告。
+// 用法: node patchdir.js <mapping.json> <classDir> [outDir]
+//   [outDir] 键未命中报告（missing_keys.json）的落盘目录；默认 <classDir>/..（别落在 mod 目录里）
+// 退出码: 0 = 完成（未命中键只是提示，用报告复核）；2 = 参数/文件错误
 const fs = require('fs');
 const path = require('path');
 const { patchClass, encodeModifiedUtf8 } = require('./patcher.js');
@@ -14,8 +16,23 @@ function walk(dir) {
   return out;
 }
 
-const mappingFile = process.argv[2];
-const classDir = process.argv[3];
+const argv = process.argv.slice(2);
+if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
+  console.log('usage: node patchdir.js <mapping.json> <classDir> [outDir]');
+  console.log('  [outDir] missing_keys.json 的落盘目录；默认 <classDir>/..');
+  console.log('  ⚠ 原位改写 .class，运行前请先备份（*.orig 或整个 jar 副本）');
+  process.exit(argv.length ? 0 : 2);
+}
+const pos = argv.filter(a => !a.startsWith('--'));
+const mappingFile = pos[0];
+const classDir = pos[1];
+const outDir = pos[2] || (classDir ? path.join(classDir, '..') : '.');
+if (!mappingFile || !classDir) {
+  console.error('usage: node patchdir.js <mapping.json> <classDir> [outDir]');
+  process.exit(2);
+}
+if (!fs.existsSync(mappingFile)) { console.error('mapping.json 不存在: ' + mappingFile); process.exit(2); }
+if (!fs.existsSync(classDir)) { console.error('classDir 不存在: ' + classDir); process.exit(2); }
 const raw = JSON.parse(fs.readFileSync(mappingFile, 'utf8'));
 const mapping = new Map();
 for (const k of Object.keys(raw)) mapping.set(k, encodeModifiedUtf8(raw[k]));
@@ -55,6 +72,9 @@ const allKeys = new Set(mapping.keys());
 const misses = [...allKeys].filter(k => !foundKeys.has(k));
 console.log('mapping keys:', allKeys.size, 'found in jar:', foundKeys.size, 'MISSING:', misses.length);
 if (misses.length) {
-  fs.writeFileSync('C:/game/StarSector.v0.9.8a-RC8/mods/_rat_work/out/missing_keys.json', JSON.stringify(misses, null, 1), 'utf8');
-  console.log('missing keys saved to out/missing_keys.json');
+  const p = path.join(outDir, 'missing_keys.json');
+  fs.mkdirSync(path.dirname(path.resolve(p)), { recursive: true });
+  fs.writeFileSync(p, JSON.stringify(misses, null, 1), 'utf8');
+  console.log('missing keys saved to ' + p);
+  console.log('（未命中键必须逐条解释：改错键 / 该条已不存在 / 故意保留 —— 见 -apply §3 G4）');
 }

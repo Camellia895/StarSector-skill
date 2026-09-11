@@ -102,7 +102,7 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 # ---- 排除判断 ----
 $excludeDirNames = @('.git', '.idea', 'out', 'cache', 'build', 'dist')
 $excludeWildcards = @('*.iml', '*.bak', '*.bak_*', '*.orig', '*.rej', 'Thumbs.db', 'desktop.ini',
-    '~$*', '*.tmp', '*.lck', '.DS_Store')   # ~$* = Office/Excel 打开文件时生成的锁文件（被占用会导致读取失败）
+    '~$*', '*.tmp', '*.lck', '.DS_Store', '.gitignore', '.gitattributes')   # ~$* = Office/Excel 打开文件时生成的锁文件（被占用会导致读取失败）；.gitignore 属仓库配置，不进交付包
 function Test-Excluded([string]$rel, [bool]$isDir) {
     if ($NoExclude) { return $false }
     $parts = $rel -split '[\\/]'

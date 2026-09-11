@@ -8,17 +8,29 @@
 > **校验类脚本另带两个属性**（机制见 `verification-ledger.md`）：
 > `severity`（red/yellow/green = 违反后果等级）× `tier`（base/cond/sample/dormant = 加载策略）。
 > **跑校验请用 `run_check.js` 包装以自动记账**，别直接 `node xxx.js`，否则账本收不到票。
+>
+> **CLI 统一约定**（2026-09 修复：此前有 13 个脚本把路径硬编码到 `mods\_rat_work\` / `mods\_jarcheck` /
+> `mods\Templars[-old]\` / `mods\Random-Assortment-of-Things\`，换 mod 即 ENOENT 或**静默查错对象**）：
+> - 输入路径一律走 `process.argv`；**不再有任何工程专有默认值**（`verify_all_data.js` 现在必须显式给 data 目录）。
+> - 输出路径参数可选：省略时写到"输入同级目录"（**别落在 mod 目录里**，见 `conventions.md` §1）；
+>   传 `-` 表示只打印不写文件（`sweep_sentences.js` / `check_u0001.js` / `scan_stragglers.js`）。
+> - 所有脚本支持 `--help`（打印用法，exit 0）；无参数时打印用法并 exit 2。
+> - 有候选/有问题的脚本**用退出码表意**（0 = 干净，1 = 有命中），便于 `run_check.js` 记账。
+> - **写操作脚本**（`patchdir`/`migrate_*`/`translate_missions`）都支持 `--dry`（只报告不写盘）；
+>   其中 `migrate_json.js` 需要 `<plan.json>`（替换对**外置**，不再写死在脚本里）。
 
 ## A. 摸底 · 提取 · 清单生成
 
 | 脚本 | 用途 | 用法 |
 |---|---|---|
 | `analyze_jar_strings.js` | 解包 jar 常量池分析，给出**补丁安全分类**（`asString` = 被 `CONSTANT_String` 引用 ⇒ 真实字面量候选；`asId` = 被标识符条目引用 ⇒ 禁改） | `node analyze_jar_strings.js <jarDir> <jar_constants.json>` |
-| `extract_jar_constants.js` | 提取 jar 内全部 Utf8 常量（去重） | `node extract_jar_constants.js <jarDir>` → `jar_constants.json` |
+| `extract_jar_constants.js` | 提取 jar 内全部 Utf8 常量（去重）→ `{ "常量": ["相对/类.class", ...] }` | `node extract_jar_constants.js <jarDir> [outJson]`（默认 `<jarDir>/../jar_constants.json`） |
 | `scan_jar_sources.js` | jar 常量 ↔ 源码字面量对齐，产出**带上下文**的候选（含 Java/Kotlin、编译期折叠、注释夹折叠、`${}` 片段） | `node scan_jar_sources.js <srcDir> <jar_constants.json> <candidates.json>` |
-| `build_worklist2.js` | 由 jar 常量 + 源码字面量生成工作清单（旧版；注释夹折叠处理不如 `scan_jar_sources.js`） | `node build_worklist2.js …` → `worklist2.json` |
+| `build_worklist2.js` | 由 jar 常量 + 源码字面量生成工作清单（**旧版 dormant**；注释夹折叠处理不如 `scan_jar_sources.js`，新任务别用） | `node build_worklist2.js <srcDir> <jarConstants.json> [outJson]` |
 | `build_jar_worklist.js` | 汇总 LLM/人工分类结果 → `translate` 清单 + `skip` 审计（校验键存在且唯一） | `node build_jar_worklist.js <candidates.json> <outTranslate.json> <outAudit.json> <classify1.json> [...]` |
 | `build_data_worklist.js` | **data 层 recipe 化待译清单**（核心工具）：CSV/伪 JSON/纯文本按 recipe 抽可见文本，输出统一 schema | `node build_data_worklist.js <modRoot> <recipe.json> <outDir>`；kind 文档见脚本头部（`csv`/`hullNames`/`variantDisplayNames`/`rulesCsv`/`lunaSettings`/`tips`/`shipNames`/`jsonObjects`/`jsonScalars`/`factionFile`/`jsonDirObjects`/`missionDir`/`wholeText`） |
+| `scan_data_stragglers.js` | ★**data 层"字段级"残留扫描**（recipe 的反向网）：先把数据文件里**所有**人可读英文枚举出来，再判其是否被清单覆盖；未覆盖的即"提取遗漏候选"。**专治 recipe 只覆盖"你想到的列"这一盲区** | `node scan_data_stragglers.js <modRoot> <enBackupRoot> <worklistDir> [outJson\|-]` |
+| `extract_skins.js`（示例，见 §H） | `.ship/.skin` 里**除 hullName 之外**的可见文本（`descriptionPrefix`、`hullDesignation`）提取范例 | 见项目 `_work\mod_work\<Mod>\tools\` |
 | `csvlib.js` | RFC4180 公共库：parse + 写回（含引号内逗号/换行、记录起始物理行号） | `require('./csvlib.js')` |
 | `pseudojson.js` | **伪 JSON 宽松解析**公共库（`#` 注释/尾随逗号/`1.2f`/BOM）；只读，回写用文本替换 | `require('./pseudojson.js')` → `parseJsonLoose` |
 
@@ -29,11 +41,11 @@
 | `extract_old_map.js` | 旧 jar 对 **LCS 对齐**提取 EN→ZH 映射（重编译 jar 必须用 LCS，禁用索引/等长匹配） | `node extract_old_map.js …` → `old_en_zh_map.json` |
 | `align_newjar_oldzh.js` | **新 jar 类 vs 旧译 jar 类**按类名对齐，产出对新 jar 有效的 EN→ZH | `node align_newjar_oldzh.js …` |
 | `csvtool.js` | RFC4180 CSV parse/migrate（按 id 列迁移） | `node csvtool.js parse <file>` / `migrate <old> <new> <idCol> [cols] [out]` / `migrateAll <config.json>` |
-| `migrate_rules_script.js` | rules.csv **script 列**迁移（`AddText "…"`、`$marketLeaveTooltip = "…"`），保留规则语法与 `$变量` | `node migrate_rules_script.js …` |
-| `migrate_faction2.js` | `.faction` 嵌套对象（`ranks`/`posts`/`fleetTypeNames`）按"行前缀 + 引号值"迁移 | `node migrate_faction2.js …` |
-| `migrate_json.js` | 注释 JSON 的**文本替换**式迁移（`replaceOnce`，保持注释与缩进） | `node migrate_json.js …` |
-| `translate_missions.js` | 翻译 `data/missions/*/MissionDefinition.java` 字面量（运行时编译源码），保持 Java 语法 | `node translate_missions.js …` |
-| `check_encoding.js` | 检查改动文件为合法 UTF-8 无 BOM、无乱码 | `node check_encoding.js …` |
+| `migrate_rules_script.js` | rules.csv **script 列**迁移（`AddText "…"`、`$marketLeaveTooltip = "…"`），保留规则语法与 `$变量` | `node migrate_rules_script.js <oldRules.csv> <newRules.csv> [outCsv\|--inplace] [--dry]` |
+| `migrate_faction2.js` | `.faction` 嵌套对象（`ranks`/`posts`/`fleetTypeNames`）按"行前缀 + 引号值"迁移 | `node migrate_faction2.js <oldFaction> <newFaction> [--dry]` |
+| `migrate_json.js` | 注释 JSON 的**文本替换**式迁移（保持注释与缩进，铁律 R8）；替换对**外置**在 `<plan.json>` | `node migrate_json.js <plan.json> [--dry]` |
+| `translate_missions.js` | 翻译 `data/missions/*/MissionDefinition.java` 字面量（运行时编译源码），保持 Java 语法；映射**外置**在 JSON | `node translate_missions.js <missionsDir> <mapping.json> [--dry]` |
+| `check_encoding.js` | 检查改动文件为合法 UTF-8 无 BOM、无乱码 | `node check_encoding.js <modRoot\|目录\|文件> [...] [--all]`（`--all` 连非文本文件一起查；`--list` 看默认清单） |
 
 ## C. 注入 · 补丁 · 重打包
 
@@ -41,7 +53,7 @@
 |---|---|---|
 | `classparser.js` | 解析 `.class` 常量池（感知 modified UTF-8）：提取 Utf8、供校验与补丁 | `require('./classparser.js')` |
 | `patcher.js` | **常量池安全替换**（只替换被 `CONSTANT_String` 引用且不被标识符条目引用的 Utf8，铁律 R7）+ 最小 zip 读写（正斜杠条目名） | `require('./patcher.js')` |
-| `patchdir.js` | 对目录树内全部 `.class` 按映射**原位补丁** + 键命中报告 | `node patchdir.js <mapping.json> <classDir>` |
+| `patchdir.js` | 对目录树内全部 `.class` 按映射**原位补丁**（**写操作**，先备份）+ 键命中报告 | `node patchdir.js <mapping.json> <classDir> [outDir]`（`outDir` 存 `missing_keys.json`） |
 | `rezip.js` | 目录树重打包为 jar（条目名**正斜杠**，铁律 R9，保留 `META-INF/`） | `node rezip.js <dir> <out.jar>` |
 
 ## D. 验证 · 闸门
@@ -54,7 +66,7 @@
 | `check_encoding.js` | red | base | UTF-8 无 BOM、无乱码 | G3 |
 | `check_csv_quotes.js` | red | base | 弯引号计数 + 归一化后行列数预检（铁律 R1） | G3 |
 | `check_rules_arg_quotes.js` | red | cond | rules script 列命令参数内嵌引号（铁律 R2，**不崩溃只截断**） | G3 |
-| `verify_all_data.js` | red | base | **数据层全量复查**：LunaSettings Text/Header/Radio、variants `displayName`、faction 舰队/官职名、`designTypeColors` 键唯一且与 CSV 匹配、`custom_entities`、`customStarts` | G3 |
+| `verify_all_data.js` | red | base | **数据层全量复查**：LunaSettings Text/Header/Radio、variants `displayName`、faction 舰队/官职名、`designTypeColors` 键唯一且与 CSV 匹配、`custom_entities`、`customStarts` | G3（**必须显式给 data 目录**，无默认值） |
 | `check_refs.js` | red | cond | 引用完整性：variant/`.ship`/`.skin`/`default_ship_roles.json` → hull/武器/hullmod/wing；`weapon_data.csv` ↔ `.wpn` ↔ `.proj` | G5 |
 | `LoadTest.java` | red | cond | 离线类加载/实例化 + `hull_mods.csv`/`*.system` 脚本类存在性（**需 `-noverify` 与 logs 路径属性**，见 `env.md` §4） | G5 |
 | `check_content.js` | yellow | base | 译文内容自检（占位符/`%%`/`${}`/长度/空译文）；位于 `-content` 的 `scripts\` | G2 |
@@ -64,9 +76,17 @@
 | `check_deprecated.js` | yellow | cond | mod 是否用了 0.98a API 的 `@Deprecated` 成员 | G5 |
 | `JsonProbe.java` | yellow | cond | 用**游戏自带 `org.json`** 验证数据宽松语法（铁律 R8 的权威工具） | G3/排查 |
 | `cmp_strings.js` | yellow | cond | 新旧 jar 字符串常量对比（判源码/jar 漂移；用"原 jar 每条常量是否作为子串出现在新 jar 常量集合里"，不要求精确相等） | G5 |
-| `scan_stragglers.js` | green | sample | 补丁后英文 UI 残留扫描（排除 Intrinsics/SMAP/调试日志） | G4 |
-| `sweep_sentences.js` | green | sample | **句子级**复查：专治注释夹折叠漏译、弯引号键不匹配 | G4 |
-| `verify_patched.js` | green | sample | 补丁目录综合：`\u0001` + 英文句子残留（迁移场景） | G4 |
+| `cmp_csv_struct.js` | red | base | **注入结构等价性**（CSV 结构级重建法必备）：基线 vs 注入后的物理行数 / 解析数据行数 / 每行单元格数 / id 序列 | G3（`node cmp_csv_struct.js <基线目录> <注入后目录> <文件相对路径>...`） |
+| `cmp_csv_cells.js` | red | base | **差异格核对**（CSV 结构级重建法必备）：逐格对比基线 vs 注入后，差异格必须全在待译清单内 → 未登记差异 = 0 | G3（`node cmp_csv_cells.js <基线目录> <注入后目录> <worklistDir> <文件相对路径>...`） |
+| `scan_data_stragglers.js` | red | base | ★**data 层提取完整性**（recipe 的反向网）：未被清单覆盖的英文自然语言字段 = 0。提取阶段（拿英文原版当 mod）+ 交付前（拿注入后目录）各跑一次 | **G1/G3**（`node scan_data_stragglers.js <modRoot> <enBackupRoot> <worklistDir>`） |
+| `check_options_structure.js` | red | base | ★**options 单元格结构**（rules.csv / zgrstuff.csv）：段数与 optionId 序列必须与英文原版等价、不得出现字面 `\n`。坏了会启动崩溃（`NumberFormatException`）而列数检查看不出来 | **G3**（`node check_options_structure.js <modRoot> <enBackupRoot> [--renamed=FROM:TO]`） |
+| `scan_logic_keys.js` | red | base | ★**逻辑键误译**（启动 Fatal 的头号成因）：class 常量池里"显示文本"与"查找键"字面相同，本工具用"键查找调用上下文 + 保留键名单"识别。A 类（保留键被译）= 必错；B 类 = 待人工确认 | **G4**（`node scan_logic_keys.js <patch_map.json> <原classDir> [reservedKey...]`） |
+| `check_install_source.js` | red | base | ★**安装前置断言**：确认目标 mod 目录仍是英文原版。对**已汉化目录**二次注入会把合成字段追加成"一行变两行 + optionId 重复" → 启动崩溃 | **注入前**（`node check_install_source.js <modRoot> <enBackupRoot>`） |
+| `check_jar_patch_integrity.js` | red | cond | ★**jar 补丁洁净性**：逐类做常量池多重集差异，要求「类集合一致 + 每一处差异都落在声明的映射键/译文上」。把"我只改了文本"从自述变成证据；补丁脚本若退化成全量替换会立刻炸出来 | **G4**（`node check_jar_patch_integrity.js <原jar\|原classDir> <补丁jar\|补丁classDir> <patch_map.json>`） |
+| `check_homoglyphs.js` | yellow | base | ★**同形异义字符**：西里尔/希腊字母伪装成拉丁（`е`U+0435 vs `e`）。后果是字库缺字形显示 `?` + 英文检索静默失败；上游原文自带时易被照抄进译文 | **G1/G3**（`node check_homoglyphs.js <data目录或文件...> [outJson]`） |
+| `scan_stragglers.js` | green | sample | 补丁后英文 UI 残留扫描（排除 Intrinsics/SMAP/调试日志）；**有残留则 exit 1** | G4（`node scan_stragglers.js <classDir> [outJson] [--quiet]`） |
+| `sweep_sentences.js` | green | sample | **句子级**复查：专治注释夹折叠漏译、弯引号键不匹配；**有候选则 exit 1** | G4（`node sweep_sentences.js <jarConstants.json> <translations.json> [outJson\|-]`） |
+| `verify_patched.js` | green | sample | 补丁目录综合：`\u0001` + 英文句子残留（迁移场景） | G4（`node verify_patched.js <classDir>`） |
 | `csvcheck.js` | green | sample | CSV 表头/列数/指定列取值（**完整状态机**，处理引号内换行） | 排查 |
 | `jsonkeys.js` | green | sample | 容错 JSON 顶层键对比 | 排查 |
 | `build_worklist2.js` | green | dormant | 旧版 jar 清单生成器，已被 `scan_jar_sources.js` 取代 | — |

@@ -1,13 +1,30 @@
-// Post-patch verification: every \u0001-containing string literal in the patched classes
-// must have the same \u0001 count as its ORIGINAL text (either it was untouched, or it was
-// replaced by a translation whose key—the original text—has the same count).
+// verify_u0001_jar.js — 补丁后校验（铁律 R6）：补丁目录里每个含 \u0001 的字符串常量，
+// 其 \u0001 数量必须与"原文"（未被改动的原常量，或被替换译文的键）一致。
+// 用法:
+//   node verify_u0001_jar.js <jarConstants.json> <translations.json> <classDir>
+//     <jarConstants.json> 原始 jar 的常量清单（extract_jar_constants.js 产物）
+//     <translations.json> EN→ZH 映射
+//     <classDir>          补丁后的解包目录（含 .class）
+//   node verify_u0001_jar.js --help
+// 退出码: 0 = 全部一致；1 = 存在不一致/无法溯源（便于 run_check.js 记账）
 const fs = require('fs');
 const path = require('path');
 const { walkCp, decodeModifiedUtf8 } = require('./patcher.js');
-const jc = JSON.parse(fs.readFileSync('C:/game/StarSector.v0.9.8a-RC8/mods/_rat_work/out/jar_constants.json', 'utf8'));
-const tc = JSON.parse(fs.readFileSync('C:/game/StarSector.v0.9.8a-RC8/mods/_rat_work/out/translations_code.json', 'utf8'));
 
-const dir = 'C:/game/StarSector.v0.9.8a-RC8/mods/_rat_work/jarwork';
+const argv = process.argv.slice(2);
+if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
+  console.log('usage: node verify_u0001_jar.js <jarConstants.json> <translations.json> <classDir>');
+  process.exit(argv.length ? 0 : 2);
+}
+const pos = argv.filter(a => !a.startsWith('--'));
+const [jcFile, tcFile, dir] = pos;
+for (const [label, p] of [['jarConstants', jcFile], ['translations', tcFile], ['classDir', dir]]) {
+  if (!p) { console.error('缺少参数 ' + label + '：见 --help'); process.exit(2); }
+  if (!fs.existsSync(p)) { console.error(label + ' 不存在: ' + p); process.exit(2); }
+}
+const jcRaw = JSON.parse(fs.readFileSync(jcFile, 'utf8'));
+const jc = new Set(Object.keys(jcRaw));
+const tc = JSON.parse(fs.readFileSync(tcFile, 'utf8'));
 const count = s => (s.match(/\u0001/g) || []).length;
 // reverse map: zh -> set of en keys
 const zhToEn = new Map();
@@ -39,7 +56,7 @@ for (const f of walk(dir)) {
     if (!s.includes('\u0001')) continue;
     checked++;
     let origText = null;
-    if (s in jc) {
+    if (jc.has(s)) {
       origText = s; // untouched original
     } else if (zhToEn.has(s)) {
       origText = zhToEn.get(s)[0]; // replaced by translation; its key is the original text
@@ -54,6 +71,9 @@ for (const f of walk(dir)) {
     }
   }
 }
+console.log('classDir:', dir);
 console.log('checked \\u0001 string constants:', checked);
 console.log('count mismatches vs original:', bad);
 if (badList.length) console.log(JSON.stringify(badList.slice(0, 15), null, 1));
+process.exit(bad ? 1 : 0);
+

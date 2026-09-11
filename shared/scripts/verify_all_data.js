@@ -1,9 +1,18 @@
-// verify_all_data.js — 综合数据层复查：扫描已知易漏区，输出英文残留/键唯一性/匹配性报告。
-// 用法: node verify_all_data.js [data根目录]   (默认: RAT mod 的 data)
+// verify_all_data.js — 综合数据层复查（G3）：扫描已知易漏区，输出英文残留/键唯一性/匹配性报告。
+// 用法: node verify_all_data.js <data根目录>
+//   例: node verify_all_data.js C:/game/StarSector.v0.9.8a-RC8/mods/RTSAssist/data
+//   必须显式给路径：旧版把某个 mod 的 data 目录写死成默认值，换 mod 就会静默查错对象。
+// 退出码: 0 = 无问题；1 = 有报告项（便于 run_check.js 记账）
 const fs = require('fs');
 const path = require('path');
 
-const DATA = process.argv[2] || 'C:/game/StarSector.v0.9.8a-RC8/mods/Random-Assortment-of-Things/data';
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log('usage: node verify_all_data.js <data根目录>');
+  process.exit(0);
+}
+const DATA = process.argv[2];
+if (!DATA) { console.error('usage: node verify_all_data.js <data根目录>   （无默认值，必须显式指定）'); process.exit(2); }
+if (!fs.existsSync(DATA)) { console.error('data 目录不存在: ' + DATA); process.exit(2); }
 const isEn = s => /[A-Za-z]{3,}/.test(s) && !/[\u4e00-\u9fff]/.test(s);
 let issues = 0;
 const report = (tag, msg) => { issues++; console.log('  [' + tag + '] ' + msg); };

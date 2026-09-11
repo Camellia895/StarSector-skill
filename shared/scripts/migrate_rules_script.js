@@ -1,9 +1,29 @@
-// Migrate rules.csv script column: translate AddText "..." and $marketLeaveTooltip = "..."
-// contents from old zh, keeping the rule syntax (AddText, AdjustRep, $vars, \n) intact.
+// migrate_rules_script.js — 写操作：rules.csv **script 列**迁移。把 `AddText "…"`、
+// `$xxxTooltip = "…"` 等引号内文字从旧（中文）文件搬到新（英文）文件，
+// 保留规则语法、颜色参数与 `$变量`。
+//
+// 用法:
+//   node migrate_rules_script.js <oldRules.csv> <newRules.csv> [outCsv|--inplace] [--dry]
+//     默认 --inplace：改写 <newRules.csv>（写前请自行备份）
+//     传 outCsv 则写到新路径，不动输入文件
+//   node migrate_rules_script.js --help
+// 改完必跑 check_rules_arg_quotes.js（R2：script 参数内嵌引号只截断不崩溃）
+// 退出码: 0 = 完成；2 = 参数/文件错误
 const fs = require('fs');
 const { parseCSV, toCSV } = require('./csvtool.js');
-const OLD = 'C:/game/StarSector.v0.9.8a-RC8/mods/Templars-old/data/campaign/rules.csv';
-const NEW = 'C:/game/StarSector.v0.9.8a-RC8/mods/Templars/data/campaign/rules.csv';
+
+const argv = process.argv.slice(2);
+if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
+  console.log('usage: node migrate_rules_script.js <oldRules.csv> <newRules.csv> [outCsv|--inplace] [--dry]');
+  process.exit(argv.length ? 0 : 2);
+}
+const DRY = argv.includes('--dry');
+const pos = argv.filter(a => !a.startsWith('--'));
+const OLD = pos[0], NEW = pos[1];
+const OUT = (pos[2] && pos[2] !== '--inplace') ? pos[2] : NEW;
+if (!OLD || !NEW) { console.error('缺少参数：见 --help'); process.exit(2); }
+if (!fs.existsSync(OLD)) { console.error('旧 rules.csv 不存在: ' + OLD); process.exit(2); }
+if (!fs.existsSync(NEW)) { console.error('新 rules.csv 不存在: ' + NEW); process.exit(2); }
 
 const oldRows = parseCSV(fs.readFileSync(OLD, 'utf8'));
 const newRows = parseCSV(fs.readFileSync(NEW, 'utf8'));
@@ -59,5 +79,5 @@ for (const r of newRows.slice(1)) {
   }
   out.push(r);
 }
-fs.writeFileSync(NEW, toCSV(out), 'utf8');
-console.log('script column migrated for', changed, 'rules');
+if (!DRY) fs.writeFileSync(OUT, toCSV(out), 'utf8');
+console.log('script column migrated for', changed, 'rules', DRY ? '(dry-run, 未写盘)' : '-> ' + OUT);

@@ -40,11 +40,22 @@
 - `starsector.log` 是 **GBK/ANSI**：`Select-String -Encoding Default` 才不乱码（`-Encoding UTF8` 中文成乱码，英文仍可读）。
 - PowerShell 5.1 的 `.ps1` 按 ANSI/GBK 读 ⇒ 无 BOM 的中文脚本报"字符串缺少终止符"之类怪错。
 
-## 4. 三条"环境毒点"（踩过，别重复验证）
+## 4. 五条"环境毒点"（踩过，别重复验证）
 
 1. **`starfarer.api.jar` 被汉化工程替换过**（旁边有 `.bak`）：某些类 StackMapTable 是坏的（实测 `BaseIndustry.getMaxDeficit` 报 `VerifyError: bad offset @65536`）。游戏 `vmparams` 自带 `-noverify -XX:-BytecodeVerificationLocal -XX:-BytecodeVerificationRemote` 所以无感；**自己写的离线验证程序必须也加 `-noverify`**，否则看到一堆假崩溃。
 2. **离线程序必须设 `-Dcom.fs.starfarer.settings.paths.logs=<临时目录>`**：否则 `Global.getLogger` 会尝试往盘根写日志而抛错，掩盖真实问题。可照抄 `vmparams`。
 3. **javac 25 / JBR 17 的 class 版本差异**：游戏 JRE 17 不认 major 69 ⇒ **mod 本体用 `--release 8`（major 52），验证程序用 `--release 17`**。
+4. **PowerShell 变量名大小写不敏感**：`foreach ($s in ...)` 会把外层的 `$S`（脚本目录）**就地覆盖**，
+   于是 `Join-Path $S $s` 退化成相对文件名、`node` 报 `cjs/loader:1503` 之类莫名的模块解析错。
+   症状极具迷惑性：**同一条命令写在循环外完全正常，写进循环就失败**。
+   ⇒ 禁用的短名清单：`$S` / `$W` / `$P` / `$O`（`$W` 在 pwsh 里还是自动变量）；循环变量一律用 `$name`/`$f`/`$item`。
+6. **交付目录里的 zip 可能被外部程序（编辑器/压缩工具/预览）锁住**：`deliver.ps1` 会报
+   `Remove-Item : Cannot remove item ... because it is being used by another process`，
+   而**旧 zip 仍在原地**——此时若只看"已打包"字样会误以为成功，实际交付的还是上一版。
+   ⇒ 打包后**必须核对 zip 内的关键文件哈希/版本号**（`mod_info.json` 的 version、jar 大小），
+   并先把新包写到 `_work\deliver\<版本>\` 再尝试覆盖正式路径。5. **含中文的 `.ps1` 必须 UTF-8 带 BOM**（§3 已述）；**临时验证脚本一律写纯 ASCII** 最省事 ——
+   否则 PS 5.1 按 GBK 读会把中文串读坏，报出 "Unexpected token"/"missing closing ')'" 等与真实原因无关的错。
+
 
 ## 5. 核心 jar
 

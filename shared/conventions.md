@@ -8,7 +8,7 @@
 | `_work\mod_work\<Mod>\` | **本任务工作区** | 见 §1.1 最小约定 |
 | `_work\mod_zh\` | **外部中文版仓库** | 见 §1.3；**只放"从外部拿到的中文版"** |
 | `_work\mod_bak\` | **mod 备份区** | 见 §1.2；改动前的快照 |
-| `_work\deliver\` | 交付 zip 输出 | `deliver.ps1` 默认输出目录 |
+| `_work\deliver\` | 交付 zip 输出 | `deliver.ps1` 默认输出目录；**命名见 §1.5** |
 | `_work\_tools\` | 工具链 | cfr / kotlinc / maven |
 | `_work\_tmp\<名字>\` | 反编译/解包/探针等**中间产物** | 绝不落在 mod 目录内 |
 | `_work\_archive\` | 归档，**只移动不删除** | 废弃 skill、重复副本 |
@@ -101,6 +101,26 @@
 - 本任务专用脚本放 `_work\mod_work\<Mod>\tools\`；**跨任务复用**的脚本才进 `<skills>\shared\scripts\`。
 - 补丁/映射产物命名带层与作用域：`patch_map_<file>.json`、`skip_audit.json`。
 - 备份后缀见 §1.2（`_EN_backup` / `_premerge_backup` / `_pre_zh_backup` / `*.orig`）。
+- **交付 zip 命名：`<Mod>_<版本>_zh.zip`**（见 §1.5）。
+
+### 1.5 `_work\deliver\` — 交付包命名与多版本共存
+
+**命名**：`<Mod>_<上游版本>_<语言>.zip`，例：`RTSAssist_0.1.9c_zh.zip`、`RTSAssist_0.2.04exp_zh.zip`。
+语言后缀用 `zh`；若同一版本另有改动版可再加日期/标识（`..._zh_2026-09-11.zip`）。
+
+**规则**：
+
+1. **每个交付包名里必须带上游版本号** —— 没有版本号的裸名（`RTSAssist.zip`）会被下一个版本覆盖，
+   丢掉"上一版交付过什么"的追溯能力。
+2. **同一 mod 的多个版本并存**：出新版时**不删旧包**，只把新包命名为新版本号。
+   （用户明确要求保留旧交付包时尤其如此；历史上 `deliver\` 下已有按 mod 中文名命名的旧包，属既有风格，不强求改名。）
+3. `deliver.ps1` 的默认输出名来自 `mod_info.json` 的 `name`（自动清洗非法字符），
+   **不会**自动加版本后缀 ⇒ 打完包后**手动重命名**为上面的规范名，或先用 `-OutDir` 写到临时子目录再改名搬入。
+4. **打包后必须核验包内实际版本**（`mod_info.json` 的 `version` + jar 字节数/哈希）：
+   `deliver.ps1` 在目标 zip 被外部程序占用时会先报
+   `Remove-Item : Cannot remove item ... because it is being used by another process`，
+   而**旧包仍留在原地** —— 只看"已打包"字样会误以为成功（真实事故：交付目录里留的还是上一版）。
+   若被占用：先输出到 `-OutDir <deliver>\<版本>\`，等占用解除后再核对搬入正式路径。
 
 ## 3. 条目计数口径（任务2 分流用）
 

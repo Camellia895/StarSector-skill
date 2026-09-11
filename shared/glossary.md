@@ -96,6 +96,26 @@
 | `(Cheat)` | （作弊） | [自定]（模组作弊开关标记，全角括号） |
 | `LunaSettings` 的 Radio 取值（`Disabled`/`All Contacts`/`Intercept Or Hostile`/`Intercept Only`/`Always`/`Hostile Only`） | **保留英文** | [自定·铁律]（被 `Settings.loadAutopauseMode`/`loadJumpPauseMode` 的 `when(string)` 精确匹配，译后静默失效） |
 
+### 6.2 RTSAssist 0.1.9c（0.98a-RC8 汉化）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `RTS mode` / `vanilla` | RTS 模式 / 原版 | [自定]（`vanilla` 与核心「原版」一致） |
+| `assignment` | 命令 | [自定]（指 RTSAssist 的 assignment 体系；避免与核心 `order`「指令」混淆） |
+| `attack move` | 攻击移动 | [自定] |
+| `move and hold` / `move and release` | 移动并坚守 / 移动后释放 | [自定] |
+| `formation` / `control group` | 阵型 / 控制组 | [自定] |
+| `broadside` / `broadside modifier` | 舷侧 / 舷侧射击修正 | [自定]（ReadMe 里 `side` 作「舷侧」） |
+| `strafe (camera)` / `translate` / `rotate` | （镜头）平移 / 平移 / 旋转 | [自定] |
+| `vent (flux)` | 排幅 | [自定]（核心 `vent` 作「排幅」） |
+| `focus enemy` / `target enemy` | 锁定敌人 / 指定为目标 | [自定] |
+| `escort assignment` | 护航指派 | [自定]（沿用 §1 的 `escort` = 护航） |
+| `selection tolerance` | 选取容错判定范围 | [自定] |
+| `scroll speed` / `scroll smoothing` | 滚动速度 / 平滑程度 | [自定] |
+| `UI scaling` | 界面缩放 | [自定] |
+| LunaLib 页签名 `HotKeys`/`Settings`/`UI Settings`/`Dev Tools` | 热键 / 设置 / 界面设置 / 开发者工具 | [自定] |
+| ⚠️ **绝不译** | 全部 `RTSA_Settings*` 键、`hotKeys`/`config`、`modID`（**同时是 `Config.ini` 的键** `confPointer.get("modID")`，且与局部变量同名 ⇒ patcher 会按标识符保护跳过）、音效事件名（sounds.json 的键）、第三方舰体/系统 id、`Point Defense (Area)` 等与原版比对的串 | [铁律 R7] |
+
 ## 7. 写作铁律摘要（详见 `iron-rules.md`）
 
 - 标点全角：，。；：？！（）——…；中文强调用 **`【】`/`《》`**，**禁用 `「」『』`**（缺字形 → `?`，铁律 R3）。

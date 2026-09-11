@@ -21,6 +21,19 @@ CSV 字段被提前闭合 → 该行拆成多行、列错位 → 引擎读 `opti
 **校验**：`node <skills>\shared\scripts\check_csv_quotes.js <csv>`（弯引号计数 + 归一化后行列数预检）、
 权威复现 `TestCsv.java`（行数 = EN 基线、0 缺键）。
 
+**两类弯引号后果不同，别一刀切（2026-09 修正一处过严的判据）**：
+
+| 字符 | 归一化为 | 是否破坏 CSV 结构 |
+|---|---|---|
+| `\u201c` `\u201d`（弯**双**引号） | `"` | **会** —— 落在字段边界/字段开头即提前闭合字段 → 拆列 |
+| `\u2018` `\u2019`（弯**单**引号） | `'` | **不会** —— 解析器不把 `'` 当引号，任何位置都安全 |
+
+实测证据（`CsvProbe`）：把一段对话里的弯双引号**原样**写在单元格中（不加 CSV 引号包裹）时，
+归一化出的 `"` 落进裸字段，解析器按"空引用字段 + 游离引号"处理 →
+**4 个引号只剩 1 个，首句引号被静默吞掉**；改为"ASCII 引号 + RFC4180 包裹/转义（`""`）"后
+**12 个引号全部保住**。因此：**写回前把弯引号归一化成 ASCII 引号、并让写入器按 RFC4180 包裹转义**
+是最稳的做法（与引擎归一化结果一致）。单引号可原样保留，不必报错。
+
 ## R2 · rules script 列：命令参数内禁引号（**不崩溃**，静默截断）
 
 rules.csv 的 `script` 列是**命令文本**（`AddText "…" textBlueColor`、`SetTooltip <optionId> "…"`）。
@@ -113,3 +126,103 @@ Starsector 的 JSON 带 `#` 注释（整行或行内）、尾随逗号 `,}`/`,]`
 ## R11 · 随机舰名/加权词表：重复词是设计
 
 `ship_names.json` 内**重复词是加权设计**，同词同译、按出现次序逐条回填，不要去重。
+
+## R12 · 逻辑键绝不译：显示文本与查找键在常量池里**字面相同**（会**启动 Fatal**）
+
+**引擎事实**：同一个字面量常同时充当"显示文本"与"查找键"，**无法按字面区分**：
+
+```java
+LunaSettings.getBoolean("Nightcross", "na_pascal_system")                      // ← modID 键
+Global.getSettings().getMergedSpreadsheetDataForMod("id", CSV, "Nightcross")   // ← modID 键
+system.addPlanet("nightcross", pascal, "Nightcross", "na_nightcross", …)       // ← 显示名
+sector.createStarSystem("Pascal")                                              // ← 星系内部名
+```
+
+把查找键当显示文本翻译 → 查找失败。实测事故：`"Nightcross"` 被译成 `"夜十字"` 后
+
+```
+ERROR lunalib.lunaSettings.LunaSettings - LunaSettings: Could not find mod 夜十字
+java.lang.NullPointerException: … LunaSettings.getBoolean(String, String) is null
+  at data.scripts.campaign.plugins.NA_SettingsListener.<clinit>   ← 静态初始化 booleanValue()
+→ ExceptionInInitializerError at NAModPlugin.onApplicationLoad → 启动 Fatal
+```
+
+**强制约束**：
+
+1. **保留键名单**：mod id、引擎常量、spec id、星系内部名（与 `corvus_capitals.csv` 等白名单表一致的那些）
+   在清单里记为「有意保留原文」（`zh === c`），注入脚本自动跳过。
+2. 判断某常量该不该译，**必须看调用点**：出现在 `getBoolean/getString/getModSpec/isModEnabled/
+   addSettingsListener/loadCSV/getMergedSpreadsheetDataForMod/getStarSystem/addCustomEntity/hasTag`
+   等**查找类 API 的实参**位置 → 绝不译；出现在 `addPara/setText/setName` 等显示位置 → 译。
+3. **R7 保护不了它**：R7 只保护**标识符**（`NameAndType`/`Class`）；这类键是被 `CONSTANT_String`
+   引用的**普通字符串**，安全替换照样会改它们。
+
+**校验**：`node <skills>\shared\scripts\scan_logic_keys.js <patch_map.json> <原classDir> <保留键...>`
+（A 类 = 保留键被译 → 必错；B 类 = 键查找上下文里"像 id"的常量被译 → 待人工确认）。
+
+> 实测提醒：**首次启动就崩**时，先在日志里搜 `Could not find mod`——若 mod 名是中文，基本就是本条。
+> 另：`getMergedSpreadsheetDataForMod` 拿错 modID **不抛异常**，只静默返回空数组（表现为"白名单没生效"），
+> 比崩溃更难发现。
+
+## R13 · 合成字段（rules.csv 的 `options`）结构必须与英文原版等价（会**启动崩溃**）
+
+**引擎事实**：`options` 不是纯显示文本，而是**合成结构**——每行 `optionId:标签`，或长式 `数字:optionId:标签`。
+引擎解析时对首段做数值/ID 处理（实测 `Rules.o00000` 执行 `Float.parseFloat(首段)`）。
+
+**事故形态**（汉化极易犯）：
+
+- 把「整格」或「整行」当成一个标签替换 → **optionId 被挤掉**（长式变成 `0:标签`）
+- 译名里把 optionId 又抄了一遍 → `ncamcb_start:ncamcb_start:询问绝密悬赏。`（一行变两段语义）
+
+→ 引擎拿 `"ncamcb_start"` 去 `Float.parseFloat` → `NumberFormatException` → **启动崩溃**。
+
+**另两个格式事实**：
+
+- 多行 options 用**真实换行**分隔，不是字面 `\n`；写成字面 `\n` 则单元格不含 `, "` 换行 →
+  不被引号包裹 → 游戏内显示字面 `\n` 且选项解析错乱。
+- 单元格含换行 → 必须按 RFC4180 用引号包裹（见 R1）。
+
+**安全做法**：以**英文结构为基准**逐行重建、只替换标签；行数或 optionId 不符时**报错并保留原文**，绝不猜。
+要改写 optionId 必须先确认全项目无引用（不是 `FireBest` 目标、不参与 `conditions`）。
+
+**校验**：`node <skills>\shared\scripts\check_options_structure.js <modRoot> <enBackupRoot> [--renamed=FROM:TO]`
+（**列数=header、引号数=0 这类常规检查完全看不出本问题**，必须单独跑。）
+
+## R14 · 提取完整性：recipe 只能覆盖"你想到的列"（漏译的头号来源）
+
+玩家可见文本分散在**远多于直觉**的位置。实测一个中等体量 mod 的遗漏点：
+
+| 位置 | 字段 | 表现 |
+|---|---|---|
+| `.skin` / `.ship` | `descriptionPrefix` | 图鉴描述前缀（引擎按 `prefix + "\n\n" + descriptions.csv 正文` 渲染 → "英文前缀 + 中文正文"混排） |
+| `weapon_data.csv` | `customPrimary`/`customPrimaryHL`/`customAncillary`/`customAncillaryHL`/`primaryRoleStr`/`speedStr`/`trackingStr`/`accuracyStr` | 武器 tooltip 的**覆写文案**（会替换默认文案） |
+| `.skin` | `hullDesignation` | 人可读短语（`Light Cruiser`）直接显示需译；ENUM（`frigate`）由引擎本地化 → 不译 |
+| `industries.csv` | `data` 列**内嵌** `fleetName:…` | 列名看似逻辑列，整列被跳过 |
+| `config/exerelin/mercConfig.json` | `name` / `desc` | Nexerelin 佣兵团名与简介 |
+
+**强制做法**：提取阶段**必须**用"枚举 → 判覆盖"的反向网，而不是只写 recipe：
+
+```powershell
+# 提取阶段（拿英文原版当 mod）＋ 交付前（拿注入后目录）：两者都必须 0 候选
+node <skills>\shared\scripts\scan_data_stragglers.js <modRoot> <EN原版目录> <worklistDir>
+```
+
+发现候选 → 补提取 → 重跑；**不要**靠"目检文件"。
+
+> 另一类盲区：**同名字段在不同文件里语义不同**。`hullName` 与 `ship_data.csv#name` 都要译且要一致；
+> 而 `id`/`tech`/`skinHullId` 绝不译。判据是"引擎读它做什么"，不是"它像不像名字"。
+
+## R15 · 注入前必须断言目标目录是**英文原版**（否则合成字段被追加 → 启动崩溃）
+
+**事故**：对**已经汉化**的 mod 目录再跑一次注入。替换按"英文原值 → 译文"匹配，全部失配；
+而 `options` 之类**合成字段**在失配时会保留"原文"（其实是上一次的中文），于是被追加成
+「英文行 + 中文行」→ 一行变两行、optionId 重复 → 与 R13 同一条崩溃路径。
+`.ship`/`.variant`/`.json` 的替换则静默失败（打印一堆"未命中"，容易被当成无害）。
+
+**强制做法**：写盘前跑断言，**不通过就拒绝注入**并从英文原版恢复：
+
+```powershell
+node <skills>\shared\scripts\check_install_source.js <modRoot> <EN原版备份目录>
+```
+
+**校验**：`check_install_source.js`（自动从英文备份里挑"最长英文文本列"作探针）。

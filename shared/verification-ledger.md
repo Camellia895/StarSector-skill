@@ -7,6 +7,12 @@
 | `check_csv_quotes.js` | red | base | 弯引号拆列 → 启动崩溃（R1） |
 | `check_rules_arg_quotes.js` | red | cond | 仅当有 rules.csv；静默截断（R2） |
 | `verify_all_data.js` | red | base | 数据层易漏区/键唯一性（R10） |
+| `scan_data_stragglers.js` | red | base | **data 层提取完整性**：未被清单覆盖的人可读英文 = 0。G1（英文原版）与 G3（注入后）各跑一次 |
+| `check_options_structure.js` | red | base | **options 结构等价**（rules/zgrstuff）：段数与 optionId 序列一致、无字面 `\n`；坏了启动崩溃而列数检查看不见 |
+| `scan_logic_keys.js` | red | base | **逻辑键误译**（显示文本与查找键字面相同）：保留键被译 = 启动 Fatal（本项目实测 `LunaSettings.getBoolean("Nightcross",…)`） |
+| `check_install_source.js` | red | base | **注入前置断言**：目标目录必须是英文原版，否则合成字段会被追加成"一行变两行 + optionId 重复" |
+| `check_jar_patch_integrity.js` | red | cond | **补丁洁净性**：类集合一致 + 映射外常量改动 = 0（补丁脚本退化成全量替换会立刻暴露） |
+| `check_homoglyphs.js` | yellow | base | 同形异义字符（西里尔/希腊伪拉丁）→ 字库缺字形显示 `?` + 英文检索静默失败 |
 | `check_refs.js` | red | cond | 改过装配/舰船/武器/贴图引用 |
 | `LoadTest.java` | red | cond | 离线类加载/实例化 + 脚本类存在性（skill 自带脚本，见 `script-registry.md` F 节） |
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3）；零宽字符单列提示、不计命中 |

@@ -1,11 +1,23 @@
-// Scan a jar/class tree for constants that still look like English UI text
-// (not replaced by the patch). Used as a quality net after patching.
+// scan_stragglers.js — 补丁后英文 UI 残留扫描（质量网）。
+// 用法:
+//   node scan_stragglers.js <classDir> [outJson] [--quiet]
+//     [outJson] 省略时不写文件，只打印（推荐：别在 mod 目录里落中间产物，见 conventions §1）
+//   node scan_stragglers.js --help
+// 退出码: 0 = 无残留；1 = 有残留（便于 run_check.js 记账）
 const fs = require('fs');
 const path = require('path');
 const { walkCp, decodeModifiedUtf8 } = require('./patcher.js');
 
-const dir = process.argv[2];
-const outFile = process.argv[3] || 'C:/game/StarSector.v0.9.8a-RC8/mods/_rat_work/out/stragglers.json';
+const argv = process.argv.slice(2);
+if (!argv.length || argv.includes('--help') || argv.includes('-h')) {
+  console.log('usage: node scan_stragglers.js <classDir> [outJson] [--quiet]');
+  process.exit(argv.length ? 0 : 2);
+}
+const QUIET = argv.includes('--quiet');
+const pos = argv.filter(a => !a.startsWith('--'));
+const dir = pos[0];
+const outFile = pos[1] || null;
+if (!dir || !fs.existsSync(dir)) { console.error('classDir 不存在: ' + dir); process.exit(2); }
 
 function walk(d) {
   const out = [];
@@ -36,6 +48,13 @@ for (const f of walk(dir)) {
 const arr = [];
 for (const [s, cls] of seen) arr.push({ s, classes: cls.slice(0, 5), n: cls.length });
 arr.sort((a, b) => b.n - a.n);
-fs.writeFileSync(outFile, JSON.stringify(arr, null, 1), 'utf8');
+if (outFile) {
+  fs.mkdirSync(path.dirname(path.resolve(outFile)), { recursive: true });
+  fs.writeFileSync(outFile, JSON.stringify(arr, null, 1), 'utf8');
+}
+console.log('dir:', dir);
 console.log('remaining English-looking constants:', arr.length);
-arr.slice(0, 40).forEach(x => console.log(`${x.n} | ${x.s.slice(0, 90)}`));
+if (!QUIET) arr.slice(0, 40).forEach(x => console.log(`${x.n} | ${x.s.slice(0, 90)}`));
+if (outFile) console.log('->', outFile);
+process.exit(arr.length ? 1 : 0);
+

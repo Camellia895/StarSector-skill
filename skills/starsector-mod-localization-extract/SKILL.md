@@ -57,6 +57,32 @@ node <skills>\shared\scripts\build_data_worklist.js <modRoot> <recipe.json> <out
 | `missionDir` | `data\missions\*`：`descriptor.json` 的 title/description + `mission_text.txt` |
 | `wholeText` | 任意纯文本整篇（如 `mission_text.txt`） |
 
+## 1.5 提取完整性闸门（**必跑**；recipe 有盲区，别只靠 recipe）
+
+recipe 是"按已知列写死的抽取规则"，**只能覆盖你想到的列**。实测漏译全部来自"没想到的字段"：
+
+| 容易整列/整字段漏掉的位置 | 字段 | 后果 |
+|---|---|---|
+| `.skin` / `.ship` | `descriptionPrefix` | 图鉴描述前缀（引擎按 `prefix + "\n\n" + 正文` 渲染 → "英文前缀 + 中文正文"混排） |
+| `weapon_data.csv` | `customPrimary` / `customPrimaryHL` / `customAncillary` / `customAncillaryHL` / `primaryRoleStr` / `speedStr` / `trackingStr` / `accuracyStr` | 武器 tooltip 的**覆写文案**（会替换默认文案） |
+| `.skin` | `hullDesignation` | 人可读短语（`Light Cruiser`）直接显示 → 需译；ENUM（`frigate`）由引擎本地化 → **不译** |
+| 任意 CSV | 列**内嵌**配置块（如 `industries.csv` 的 `data` 列里 `fleetName:Aria Station`） | 列名看似逻辑列 → 整列被跳过 |
+| 第三方集成配置（如 `config\exerelin\mercConfig.json`） | `name` / `desc` | 佣兵团名与简介 |
+
+**强制做法**：用"枚举 → 判覆盖"的**反向网**，而不是只写 recipe（铁律 R14）：
+
+```powershell
+# 提取阶段：拿**英文原版**当 mod，检查"清单是否覆盖了数据层里全部人可读英文"
+node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版目录> <worklistDir>
+```
+
+必须 **0 候选**才算提取完整。有候选 → 补提取（写专用提取脚本或扩 recipe）→ 重跑，**不要**靠目检文件。
+
+> 配套技巧：`.skin`/`.ship` 这类结构化文件，先"列出全部字符串字段 + 出现次数"摸清有哪些字段，
+> 再决定哪些要译；**别只 grep `hullName`**（本项目就是这样漏掉 `descriptionPrefix` 的）。
+>
+> 完整教训见 `shared\iron-rules.md` R14 与 `workflows\wf-launch-audit.md`。
+
 ## 2. 易漏区清单（全部是真实事故，逐条核对）
 
 > 漏一区的后果是"交付后玩家看到英文"。每条都要在 recipe 或人工核对里有交代。
@@ -76,6 +102,20 @@ node <skills>\shared\scripts\build_data_worklist.js <modRoot> <recipe.json> <out
 13. **舰船显示名/分类的真正来源是 `data\hulls\ship_data.csv`**：0.95a+ 引擎以该表 `name` 列作舰船显示名、`designation` 作舰级分类、`tech/manufacturer` 作制造商行。**只改 `.ship` 的 `hullName` ≠ 舰名已汉化**（事故：全舰 `.ship` 已译但游戏内仍英文）。designation 取值见 `<skills>\shared\glossary.md` §3。
 
 ## 3. jar 层提取（仅当字符串硬编码进 jar）
+
+### 3.0 先验一件事：**上游源码与已装 jar 是不是同一版**
+
+`jars\source.url` / `mod_info.json` 指向的仓库地址**不等于**你手上这个 jar 的源码。
+Nomadic Survival 实测：GitHub master 用 `javac --release 17` 重编译 → 42 个 class，
+与已装 jar 的**字符串全集差 470 条**（上游源码明显更新的构建），而安装版 jar 与官方发布包 **SHA-256 完全一致**。
+
+- **必做**：`cmp_build.js`（或任何"重编译后比字符串集合"的手段）先比一次；
+  差异显著 ⇒ **只把反编译源码当"语境参考"**，一切判定以 **jar 常量池 + `javap -c` 字节码**为准。
+- 别让清单里的 `src` 上下文变成"看起来很有把握"的错误依据：它对不上时**不报错**，
+  只会让你按错误的调用点去判"这条是不是 UI 文本"。
+- 找不到同版源码时**不要**试图重编译（见 `starsector-mod-java-hardcoded-text` §1.1），走常量池补丁。
+
+### 3.1 提取步骤
 
 ```powershell
 # 1) 解包 jar（.NET ZipFile::ExtractToDirectory）
@@ -113,8 +153,21 @@ node <skills>\shared\scripts\build_jar_worklist.js <candidates.json> <outTransla
 ## 5. 闸门 G1（提取完整）通过标准
 
 - [ ] 每个 section 都有清单文件；`worklist_index.json` 条目数之和 = 各分片实际条目数
+- [ ] **data 层反向网 0 候选（§1.5，最高优先级）**：
+      `node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版目录> <worklistDir>`
+      → 必须 0 候选。**只靠 recipe 不算通过**（recipe 有盲区，实测漏的正是"没想到的字段"）。
 - [ ] §2 的 13 个易漏区**逐条**有交代（纳入 recipe 或写明"不存在/故意跳过"）
+- [ ] **结构化文件要"看全部字段"而不是 grep 已知字段**：`.ship`/`.skin`/`.variant`/`.faction` 先列出
+      所有字符串字段+出现次数，再判哪些是可见文本（本项目因只 grep `hullName` 而漏掉 `descriptionPrefix`）
 - [ ] jar 层候选已分类，`skip` 项有 `category` 与理由（留档审计）
+- [ ] **排除项自审（必做，别只看"剩多少条"）**：把 jar 候选里**未分类**的条目**按理由分组列出并计数**，
+      人工抽查 ≥20 条；"看着像文本但被排除"的一律逐条解释。
+      > 血泪：Nomadic Survival 首轮漏 47 条、补漏脚本又因两条写错的排除正则再漏 22 条
+      > （把 `"Lose %s "` 当格式片段、把 `"Starsector "` 当键名），两次都是**静默误杀**。
+      > 正确写法与两种错法见 `starsector-mod-java-hardcoded-text` §2.5。
+- [ ] **jar 常量池的"非 `CONSTANT_String` 引用"也要扫**：显示文本可能只经
+      `invokedynamic`（`makeConcatWithConstants` recipe）进入字节码，`asString=false` 但**仍然是可见文本**
+      （拼接片段、句尾标点、单位词、单复数分支词）。这类条目占 Nomadic Survival 待译文本的近 1/3。
 - [ ] 清单里 `locator` 唯一（无重复回填目标）
 - [ ] `excluded_entries.json` 已生成，排除理由可复核
 - [ ] 英文原版已备份（`_work\mod_bak\<Mod>_<版本>_EN_backup`）

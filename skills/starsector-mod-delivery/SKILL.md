@@ -86,3 +86,5 @@ powershell -ExecutionPolicy Bypass -File "<skills>\skills\starsector-mod-deliver
   `[System.IO.File]::Exists` + `Remove-Item -LiteralPath` 规避。
 - **想要英文内部文件夹**：社区惯例是英文 id 文件夹（`-InnerName Templars`），压缩包名仍可用中文。
 - **反编译/解包中间产物被打进包**：确保分析产物落在 `_work\_tmp\`，不放 mod 目录（`starsector-jar-decompile`）。
+
+## 在任务的最后（完成交付后提议分析当前的会话，在获得许可后，总结/优化skill，减少下一次类似任务的探索开销）
