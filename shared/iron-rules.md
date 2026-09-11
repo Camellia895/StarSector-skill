@@ -123,6 +123,26 @@ Starsector 的 JSON 带 `#` 注释（整行或行内）、尾随逗号 `,}`/`,]`
 `tech/manufacturer` 中文值**精确一致**且**键唯一**（事故：`Abyss`/`Abyssal` 都译"深渊" →
 `Duplicate key "深渊"` fatal）。术语表见 `<skills>\shared\glossary.md`。
 
+**R10 补充：`designTypeColors` 是"注册表"，查不到不报错、而是把原值当分类名显示。**
+任何进入"舰船设计类型/制造商"字段的值都必须**逐字命中** `settings.json` 的 `designTypeColors` 键集合。
+该字段出现在**两处**（R14 的漏译重灾区）：
+
+| 出现位置 | 字段 | 说明 |
+|---|---|---|
+| `data/hulls/ship_data.csv` | `tech`、`manufacturer` | 图鉴列表与详情页的"分类/制造商" |
+| `data/hulls/skins/*.skin`、`data/hulls/*.ship` | `tech` | **只改 CSV 不改这里 → 界面仍显示英文**（事故：卡塞峡谷 (E) 分类显示英文 `Nightcross`） |
+
+**两种失效模式，方向相反，都必须防**：
+
+- 把注册**键**译了 → 查不到 → 原值（中文）被当分类名显示 → 键与 CSV 值不再匹配。
+- 把值译成**未注册**的中文（如键是「夜十字军械」而值是「夜十字」）→ 同样查不到 → **英文原值被原样显示**。
+  这类**静默降级**不报错、不打日志，只看代码永远发现不了；症状就是"分类名还是英文"。
+
+因此 `tech`/`manufacturer` 的值应当是"各设计类型的规范名"，全 mod 必须**同族同词**。
+`.skin`/`.ship` 里值等于已注册键集合中某个键时，属**保留项**：`zh` 写死等于 `en`
+（例如 `TWINDRILL`），**不要留空**——留空是"待译"语义，会让 `preflight` 报 `[空译文]`。
+闸门：`check_designtype.js`（见 `script-registry.md` D 节）。
+
 ## R11 · 随机舰名/加权词表：重复词是设计
 
 `ship_names.json` 内**重复词是加权设计**，同词同译、按出现次序逐条回填，不要去重。

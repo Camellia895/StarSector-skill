@@ -32,6 +32,7 @@ Select-String -Path starsector-core\starsector.log -Pattern 'FATAL|ExceptionInIn
 | `NumberFormatException: For input string: "<选项id>"` + `at ...campaign.rules.Rules.o00000` | **R13 options 结构损坏** | 见 §3 |
 | 一行变两行 / `options` 里 `id:id:标签` | R13 **或 R15**（对已汉化目录二次注入） | 见 §3 + `check_install_source.js` |
 | `Duplicate key "<中文>"` | R10 `designTypeColors` 键译重了 | `verify_all_data.js` → 合并同义键 |
+| **无任何报错**，但界面某处照旧显示英文（典型：舰船图鉴的**分类/制造商**名还是英文原文） | **R10 补充：`designTypeColors` 未注册** —— 引擎查不到不报错，**把该值原样当分类名显示**（静默降级） | `check_designtype.js <modRoot> <core>`；**务必同时查 CSV 与 `.skin`/`.ship` 的 `tech`**（只改 CSV 会漏第二处） |
 | `UnknownFormatConversionException` | R4 字面 `%` 未写 `%%` | 修该 tooltip 字段 |
 | `BootstrapMethodError: StringConcatException` | R6 `\u0001` 数量被改 | `check_u0001.js` |
 | `JSONObject["options"] not found` | R1 弯引号拆列 | `check_csv_quotes.js` |

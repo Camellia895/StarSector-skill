@@ -13,6 +13,7 @@
 | `check_install_source.js` | red | base | **注入前置断言**：目标目录必须是英文原版，否则合成字段会被追加成"一行变两行 + optionId 重复" |
 | `check_jar_patch_integrity.js` | red | cond | **补丁洁净性**：类集合一致 + 映射外常量改动 = 0（补丁脚本退化成全量替换会立刻暴露） |
 | `check_homoglyphs.js` | yellow | base | 同形异义字符（西里尔/希腊伪拉丁）→ 字库缺字形显示 `?` + 英文检索静默失败 |
+| `check_designtype.js` | red | base | **设计类型/制造商注册表**：`tech`/`manufacturer` 值必须命中 `designTypeColors` 键，否则原值被当分类名显示（静默降级，症状=分类名还是英文）。查 CSV **与** `.skin`/`.ship` 的 `tech` 两处 |
 | `check_refs.js` | red | cond | 改过装配/舰船/武器/贴图引用 |
 | `LoadTest.java` | red | cond | 离线类加载/实例化 + 脚本类存在性（skill 自带脚本，见 `script-registry.md` F 节） |
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3）；零宽字符单列提示、不计命中 |

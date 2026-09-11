@@ -84,6 +84,7 @@
 | `check_install_source.js` | red | base | ★**安装前置断言**：确认目标 mod 目录仍是英文原版。对**已汉化目录**二次注入会把合成字段追加成"一行变两行 + optionId 重复" → 启动崩溃 | **注入前**（`node check_install_source.js <modRoot> <enBackupRoot>`） |
 | `check_jar_patch_integrity.js` | red | cond | ★**jar 补丁洁净性**：逐类做常量池多重集差异，要求「类集合一致 + 每一处差异都落在声明的映射键/译文上」。把"我只改了文本"从自述变成证据；补丁脚本若退化成全量替换会立刻炸出来 | **G4**（`node check_jar_patch_integrity.js <原jar\|原classDir> <补丁jar\|补丁classDir> <patch_map.json>`） |
 | `check_homoglyphs.js` | yellow | base | ★**同形异义字符**：西里尔/希腊字母伪装成拉丁（`е`U+0435 vs `e`）。后果是字库缺字形显示 `?` + 英文检索静默失败；上游原文自带时易被照抄进译文 | **G1/G3**（`node check_homoglyphs.js <data目录或文件...> [outJson]`） |
+| `check_designtype.js` | red | base | ★**设计类型/制造商注册表**（静默降级，不报错不打日志）：`tech`/`manufacturer` 的值必须**逐字命中** `settings.json` 的 `designTypeColors` 键集合，否则引擎**把该值原样当分类名显示** → 症状就是"分类名还是英文"。同时查两处：① 含 `tech/manufacturer` 列的 CSV；② `data/hulls/**` 的 `.skin`/`.ship` 文件级 `tech`（**CSV 检查看不见**，只改 CSV 会漏） | **G3**（`node check_designtype.js <modRoot> [游戏core目录]`；**给了 core 才不误报 core 的设计类型**） |
 | `scan_stragglers.js` | green | sample | 补丁后英文 UI 残留扫描（排除 Intrinsics/SMAP/调试日志）；**有残留则 exit 1** | G4（`node scan_stragglers.js <classDir> [outJson] [--quiet]`） |
 | `sweep_sentences.js` | green | sample | **句子级**复查：专治注释夹折叠漏译、弯引号键不匹配；**有候选则 exit 1** | G4（`node sweep_sentences.js <jarConstants.json> <translations.json> [outJson\|-]`） |
 | `verify_patched.js` | green | sample | 补丁目录综合：`\u0001` + 英文句子残留（迁移场景） | G4（`node verify_patched.js <classDir>`） |
@@ -98,6 +99,7 @@
 |---|---|---|
 | `run_check.js` | **包装执行校验并自动记账**（退出码 → ledger；默认不透传子命令输出以省上下文） | `node run_check.js --check=<名> [--target=<标签>] [--note=] [--probe] [--out] -- <命令...>` |
 | `ledger_report.js` | 聚合账本 → 升降档/退役候选/需探针/需修复 报告 | `node ledger_report.js [--json] [--check=<名>]` |
+| `sync_to_mod.js` | **把 skills 库的当前状态快照进交付 mod 的 `ai\`**（各 skill 的 SKILL.md/自带脚本、shared 文档含 `glossary.md`→`core-glossary.md` 改名、`workflows\*`、共享脚本 → `ai\脚本\`）。**只增改不删**，以免误删 `ai\脚本` 中不属于 skills 库的一次性诊断脚本。交付前跑一次，否则包里是旧文档旧脚本 | `node sync_to_mod.js <skillsDir> <modAiDir> [--dry]` |
 
 ## E. 诊断（引擎行为复现）
 

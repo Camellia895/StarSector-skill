@@ -59,6 +59,8 @@
 | `hyperspace` / `gate` | 超空间 / 星门 | [核心] |
 
 > 势力显示名须与 `weapon_data.csv` 的 `tech/manufacturer`、`settings.json` 的 `designTypeColors` 键**精确一致**（铁律 R10）。
+> 分类/制造商名同时存在于 `ship_data.csv` 的 `tech`/`manufacturer` **和** `.skin`/`.ship` 的 `tech` —— 两处都要改，且值必须**命中已注册的键**，
+> 否则引擎不报错、直接把该值当分类名显示（症状：分类名还是英文）。闸门 `check_designtype.js`。
 
 ## 5. 商品
 
