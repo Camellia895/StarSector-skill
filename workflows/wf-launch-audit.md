@@ -39,6 +39,7 @@ Select-String -Path starsector-core\starsector.log -Pattern 'FATAL|ExceptionInIn
 | `NoSuchFieldError`/`NoSuchMethodError`（消息乱码） | R7 标识符被改 | `verify_identifiers.js` |
 | 文本在引号处截断（无报错） | R2 rules 参数内嵌引号 | `check_rules_arg_quotes.js` |
 | 个别字显示 `?` | R3 缺字形 | `check_font_glyphs.js` |
+| 残留扫描报几十~几百条英文（**假警报**） | 扫的是**补丁前**的解包副本（`scan_stragglers.js` 只吃 `.class` 目录） | 改用 `check_jar_stragglers.js` **直接对交付 jar 跑** |
 
 ## 2. R12（逻辑键误译）的定位与修复
 

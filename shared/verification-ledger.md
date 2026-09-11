@@ -25,6 +25,7 @@
 | `cmp_strings.js` | yellow | cond | 仅 jar↔源码一致性证明 |
 | `validate_star_system.ps1` | yellow | cond | 仅星系 mod（skill 自带脚本，见 F 节） |
 | `scan_stragglers.js` | green | sample | 漏译网；`sweep_sentences.js` 是其句子级补充 |
+| `check_jar_stragglers.js` | red | base | **交付 jar 英文残留闸门**：直接吃 jar 文件（避 `scan_stragglers.js` 对着补丁前副本跑出假警报），用 patch_map + skip 审计判定 A（要译却仍英文，必错）/ B（已记账跳过，允许）/ C（未记账）；A=C=0 才通过 |
 | `sweep_sentences.js` | green | sample | 专治注释夹折叠漏译 |
 | `verify_patched.js` | green | sample | 迁移场景的合并版扫描 |
 | `csvcheck.js` | green | sample | 只读列检查（`verify_all_data.js` 已覆盖常见段） |

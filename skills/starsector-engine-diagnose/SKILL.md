@@ -57,7 +57,7 @@ ERROR com.fs.starfarer.combat.CombatMain - org.json.JSONException: JSONObject["o
 |---|---|---|---|
 | `com.fs.starfarer.loading.G` | `public static JSONArray o00000(String)` | CSV 文本 → JSONArray（每行一个 JSONObject，键 = 表头） | ✅ 纯文本 |
 | `com.fs.starfarer.loading.LoadingUtils` | `super(List, String, ZZ)` 等 | 文件读取 + 可选归一化 + 解析（依赖资源管理器 `C`，需游戏上下文） | ❌ 直接调用需环境；内部两步可手工复刻 |
-| `com.fs.starfarer.loading.SpecStore` | `?00000(String)` | 弯引号归一化（`“”→"`、`‘’�→'`） | ✅ 纯文本（正则即可复刻） |
+| `com.fs.starfarer.loading.SpecStore` | `?00000(String)` | 弯引号归一化（`“”→"`、`‘’\ufffd→'`） | ✅ 纯文本（正则即可复刻） |
 
 **离线复刻管线（rules.csv 权威验证）**：
 

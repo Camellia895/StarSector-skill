@@ -73,7 +73,7 @@
 
 - **G2** 内容完整（`check_content.js`）
 - **G3** 数据层字节安全（`check_encoding.js` / `check_csv_quotes.js` / **`check_options_structure.js`（R13）** / `check_rules_arg_quotes.js` / `check_font_glyphs.js` / `check_homoglyphs.js` / **`check_designtype.js`（R10 补充：分类名静默降级）** / `verify_all_data.js` / **`scan_data_stragglers.js`（R14）**）
-- **G4** jar 安全（`verify_identifiers.js` / **`scan_logic_keys.js`（R12）** / `check_u0001.js` / `verify_u0001_jar.js` / **`check_jar_patch_integrity.js`** / `scan_stragglers.js` / `sweep_sentences.js`）
+- **G4** jar 安全（`verify_identifiers.js` / **`scan_logic_keys.js`（R12）** / `check_u0001.js` / `verify_u0001_jar.js` / **`check_jar_patch_integrity.js`** / **`check_jar_stragglers.js`（对着交付 jar 跑；`scan_stragglers.js` 只吃 .class 目录，易扫到补丁前副本 → 假警报）** / `sweep_sentences.js`）
 - **G5** 引用与类加载（`check_refs.js` / `check_assets.js` / `check_sprites.js` / `LoadTest`）
 - **G6** 装船目检（游戏内逐路径）
 

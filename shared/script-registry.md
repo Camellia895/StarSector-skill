@@ -86,6 +86,7 @@
 | `check_homoglyphs.js` | yellow | base | ★**同形异义字符**：西里尔/希腊字母伪装成拉丁（`е`U+0435 vs `e`）。后果是字库缺字形显示 `?` + 英文检索静默失败；上游原文自带时易被照抄进译文 | **G1/G3**（`node check_homoglyphs.js <data目录或文件...> [outJson]`） |
 | `check_designtype.js` | red | base | ★**设计类型/制造商注册表**（静默降级，不报错不打日志）：`tech`/`manufacturer` 的值必须**逐字命中** `settings.json` 的 `designTypeColors` 键集合，否则引擎**把该值原样当分类名显示** → 症状就是"分类名还是英文"。同时查两处：① 含 `tech/manufacturer` 列的 CSV；② `data/hulls/**` 的 `.skin`/`.ship` 文件级 `tech`（**CSV 检查看不见**，只改 CSV 会漏） | **G3**（`node check_designtype.js <modRoot> [游戏core目录]`；**给了 core 才不误报 core 的设计类型**） |
 | `scan_stragglers.js` | green | sample | 补丁后英文 UI 残留扫描（排除 Intrinsics/SMAP/调试日志）；**有残留则 exit 1** | G4（`node scan_stragglers.js <classDir> [outJson] [--quiet]`） |
+| `check_jar_stragglers.js` | red | base | ★**交付 jar 的英文残留闸门（可判定版）**：`scan_stragglers.js` 是纯启发式且只吃 `.class` 目录 —— 对着**补丁前的解包副本**跑会得到原始 jar 的 383 条假警报（实测）。本脚本直接吃 **jar 文件**，并用两份账把结果判定成三类：A 声明要译却仍是英文（**必错**）/ B 已记账的跳过（允许）/ C 未记账（须人工判定）。**A 与 C 必须都为 0** | **G4**（`node check_jar_stragglers.js <jar文件> <patch_map.json> [jar_skip_audit.json] [--show-b]`） |
 | `sweep_sentences.js` | green | sample | **句子级**复查：专治注释夹折叠漏译、弯引号键不匹配；**有候选则 exit 1** | G4（`node sweep_sentences.js <jarConstants.json> <translations.json> [outJson\|-]`） |
 | `verify_patched.js` | green | sample | 补丁目录综合：`\u0001` + 英文句子残留（迁移场景） | G4（`node verify_patched.js <classDir>`） |
 | `csvcheck.js` | green | sample | CSV 表头/列数/指定列取值（**完整状态机**，处理引号内换行） | 排查 |
