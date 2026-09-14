@@ -32,7 +32,7 @@
 | `scan_data_stragglers.js` | ★**data 层"字段级"残留扫描**（recipe 的反向网）：先把数据文件里**所有**人可读英文枚举出来，再判其是否被清单覆盖；未覆盖的即"提取遗漏候选"。**专治 recipe 只覆盖"你想到的列"这一盲区** | `node scan_data_stragglers.js <modRoot> <enBackupRoot> <worklistDir> [outJson\|-]` |
 | `extract_skins.js`（示例，见 §H） | `.ship/.skin` 里**除 hullName 之外**的可见文本（`descriptionPrefix`、`hullDesignation`）提取范例 | 见项目 `_work\mod_work\<Mod>\tools\` |
 | `csvlib.js` | RFC4180 公共库：parse + 写回（含引号内逗号/换行、记录起始物理行号） | `require('./csvlib.js')` |
-| `pseudojson.js` | **伪 JSON 宽松解析**公共库（`#` 注释/尾随逗号/`1.2f`/BOM）；只读，回写用文本替换 | `require('./pseudojson.js')` → `parseJsonLoose` |
+| `pseudojson.js` | **伪 JSON 宽松解析**公共库（`#` 注释/尾随逗号/`1.2f`/裸枚举值 `[STATIONS]`/BOM）；只读，回写用文本替换。2026-09-15 增补：OMM 的 `custom_entities.json` 用了引擎允许的**裸枚举值**（`"layers":[STATIONS]`），严格/原宽松解析均抛错 ⇒ `parseJsonLoose` 现把冒号/逗号/左括号后的裸标识符按字符串值处理（`true/false/null` 除外） | `require('./pseudojson.js')` → `parseJsonLoose` |
 
 ## B. 汉化迁移（旧译复用）
 
@@ -67,25 +67,28 @@
 | `check_csv_quotes.js` | red | base | 弯引号计数 + 归一化后行列数预检（铁律 R1） | G3 |
 | `check_rules_arg_quotes.js` | red | cond | rules script 列命令参数内嵌引号（铁律 R2，**不崩溃只截断**） | G3 |
 | `verify_all_data.js` | red | base | **数据层全量复查**：LunaSettings Text/Header/Radio、variants `displayName`、faction 舰队/官职名、`designTypeColors` 键唯一且与 CSV 匹配、`custom_entities`、`customStarts` | G3（**必须显式给 data 目录**，无默认值） |
-| `check_refs.js` | red | cond | 引用完整性：variant/`.ship`/`.skin`/`default_ship_roles.json` → hull/武器/hullmod/wing；`weapon_data.csv` ↔ `.wpn` ↔ `.proj` | G5 |
-| `LoadTest.java` | red | cond | 离线类加载/实例化 + `hull_mods.csv`/`*.system` 脚本类存在性（**需 `-noverify` 与 logs 路径属性**，见 `env.md` §4） | G5 |
+| `check_refs.js` | red | cond | 引用完整性：variant/`.ship`/`.skin`/`default_ship_roles.json` → hull/武器/hullmod/wing；`weapon_data.csv` ↔ `.wpn` ↔ `.proj`。**2026-09-15 Ifed 实测修正**：.wpn/.proj 搜索范围扩到 `data/shipsystems/`（原版系统武器在 `shipsystems/wpn/`，如 flarelauncher1）+ core 递归 walk（Vayra ② 的 core `data\weapons\proj\` 子目录随之覆盖，`tpc_shot.proj` 类不再误报）；.proj 改按**内部 `id`** 匹配（引擎语义，文件名可不同，实测 ifed_citadelpd.proj 内部 id=ifed_citadelpd_shot）；补退出码 0/1（此前命中也 exit 0，账本误记 clean）。**残留已知假阳性**：variant 引用 `.skin` 的 `skinHullId` 自建 id（脚本已跳过） | G5 |
+| `LoadTest.java` | red | cond | 离线类加载/实例化 + `hull_mods.csv`/`*.system` 脚本类存在性（**需 `-noverify` 与 logs 路径属性**，见 `env.md` §4）。⚠️ **被测 jar 必须放在无空格/无撇号路径**再进 `-cp`：`ZipFile` 能数出条目，但带 `mods/Vayra's Sector/...` 这种条目的系统 classloader 打不开 jar → **全部 `ClassNotFoundException`**（假全灭；复制到 `_work\_tmp\...` 再测即可） | G5 |
 | `check_content.js` | yellow | base | 译文内容自检（占位符/`%%`/`${}`/长度/空译文）；位于 `-content` 的 `scripts\` | G2 |
 | `check_font_glyphs.js` | yellow | base | 中文字库字形覆盖（铁律 R3）；零宽字符单列提示、不计命中 | G3 |
 | `check_assets.js` | yellow | cond | 全部 `graphics/…` 字面量是否存在（**必须同时搜 mod + core + 其它已装 mod**，跳过注释行） | G5 |
-| `check_sounds.js` | yellow | cond | `data/config/sounds.json` 引用的音频文件是否存在（宽松 JSON：剥 `#` 注释与尾逗号；元素可为 `{file:…}` 或字符串；用法 `node check_sounds.js <modDir>`） | G5 |
+| `check_sounds.js` | yellow | cond | `data/config/sounds.json` 引用的音频文件是否存在（宽松 JSON：剥 `#` 注释与尾逗号；元素可为 `{file:…}` 或字符串；用法 `node check_sounds.js <modDir>`）。**2026-09-15 Ifed 实测修正**：搜索范围从"仅 mod 目录"扩为 mod+core+其余已装 mod（引擎 VFS 语义；此前引用核心 ogg 的 mod 全部假 MISS）；带 `source` 的打包音频条目（music.bin）磁盘无独立文件，跳过；补退出码 0/1 | G5 |
 | `check_sprites.js` | yellow | cond | 源码 `getSprite("分类","键")` 是否在 mod 或 core 的 `settings.json` 有定义 | G5 |
-| `check_deprecated.js` | yellow | cond | mod 是否用了 0.98a API 的 `@Deprecated` 成员 | G5 |
+| `check_deprecated.js` | yellow | cond | mod 是否用了 0.98a API 的 `@Deprecated` 成员。**已知假阳性（2026-09 Vayra 实测，6 处命中 4 处错）**：行号取的是"成员名首次出现处"，`@Deprecated` 常标在**相邻成员**上 → 逐条看 API 源码 javadoc 定性，别按脚本报的行号直接下结论；只有 javadoc 写 "Does nothing. Replaced with X" 才是真失效（`@Deprecated` 但仍存在的常量如 `Skills.PLANETARY_OPERATIONS` 在 0.98 核心仍带 `.skill` 数据，照样生效） | G5 |
 | `JsonProbe.java` | yellow | cond | 用**游戏自带 `org.json`** 验证数据宽松语法（铁律 R8 的权威工具） | G3/排查 |
 | `cmp_strings.js` | yellow | cond | 新旧 jar 字符串常量对比（判源码/jar 漂移；用"原 jar 每条常量是否作为子串出现在新 jar 常量集合里"，不要求精确相等） | G5 |
 | `cmp_csv_struct.js` | red | base | **注入结构等价性**（CSV 结构级重建法必备）：基线 vs 注入后的物理行数 / 解析数据行数 / 每行单元格数 / id 序列 | G3（`node cmp_csv_struct.js <基线目录> <注入后目录> <文件相对路径>...`） |
 | `cmp_csv_cells.js` | red | base | **差异格核对**（CSV 结构级重建法必备）：逐格对比基线 vs 注入后，差异格必须全在待译清单内 → 未登记差异 = 0 | G3（`node cmp_csv_cells.js <基线目录> <注入后目录> <worklistDir> <文件相对路径>...`） |
 | `scan_data_stragglers.js` | red | base | ★**data 层提取完整性**（recipe 的反向网）：未被清单覆盖的英文自然语言字段 = 0。提取阶段（拿英文原版当 mod）+ 交付前（拿注入后目录）各跑一次 | **G1/G3**（`node scan_data_stragglers.js <modRoot> <enBackupRoot> <worklistDir>`） |
+| `scan_refs.js` | red | base | ★**标识符引用点全扫**：列出某字面量出现在哪些 class、以什么形态被引用（`String` / `Fieldref` / `Methodref`）。两个必用场景：① 枚举改名**白名单必须覆盖全部引用点**（枚举类 + 合成 `$SwitchMap` 类 + 使用方，漏一个就 `NoSuchFieldError`，真实事故崩了两次）；② 补丁后作**硬门槛**扫"旧名是否还作为 `Fieldref` 出现"（译文等于原文者如 `CR→CR` 可豁免） | **G4**（`node scan_refs.js <已解包class目录> <字面量...> [--strict]`） |
 | `check_options_structure.js` | red | base | ★**options 单元格结构**（rules.csv / zgrstuff.csv）：段数与 optionId 序列必须与英文原版等价、不得出现字面 `\n`。坏了会启动崩溃（`NumberFormatException`）而列数检查看不出来 | **G3**（`node check_options_structure.js <modRoot> <enBackupRoot> [--renamed=FROM:TO]`） |
 | `scan_logic_keys.js` | red | base | ★**逻辑键误译**（启动 Fatal 的头号成因）：class 常量池里"显示文本"与"查找键"字面相同，本工具用"键查找调用上下文 + 保留键名单"识别。A 类（保留键被译）= 必错；B 类 = 待人工确认 | **G4**（`node scan_logic_keys.js <patch_map.json> <原classDir> [reservedKey...]`） |
 | `check_install_source.js` | red | base | ★**安装前置断言**：确认目标 mod 目录仍是英文原版。对**已汉化目录**二次注入会把合成字段追加成"一行变两行 + optionId 重复" → 启动崩溃 | **注入前**（`node check_install_source.js <modRoot> <enBackupRoot>`） |
 | `check_jar_patch_integrity.js` | red | cond | ★**jar 补丁洁净性**：逐类做常量池多重集差异，要求「类集合一致 + 每一处差异都落在声明的映射键/译文上」。把"我只改了文本"从自述变成证据；补丁脚本若退化成全量替换会立刻炸出来 | **G4**（`node check_jar_patch_integrity.js <原jar\|原classDir> <补丁jar\|补丁classDir> <patch_map.json>`） |
+| `ProjSpecCheck.java` + `run_projspeccheck.ps1` | red | cond | ★**弹道/导弹 spec 的引擎语义级校验**：用游戏自带 `org.json` + 逐字复刻的 `LoadingUtils` 注释剥离算法读全部 `.proj`/`.wpn`/`.system`，报"解析失败 / 缺 WeaponSpecLoader 的 `getDouble` 必备键 / `behavior:"PROXIMITY_FUSE"` 缺 `range`（= 近炸引信导弹一造成伤害就 `JSONException: JSONObject["range"] not found`）"。**专治"引擎侧严格读法 + 数据漏键"这类只在战斗中才炸的崩溃** | `powershell -File run_projspeccheck.ps1 -DataDir <mod data 目录>` 或 `-AllMods`（编译产物落 `_work\_tmp\projspeccheck`） |
 | `check_homoglyphs.js` | yellow | base | ★**同形异义字符**：西里尔/希腊字母伪装成拉丁（`е`U+0435 vs `e`）。后果是字库缺字形显示 `?` + 英文检索静默失败；上游原文自带时易被照抄进译文 | **G1/G3**（`node check_homoglyphs.js <data目录或文件...> [outJson]`） |
-| `check_designtype.js` | red | base | ★**设计类型/制造商注册表**（静默降级，不报错不打日志）：`tech`/`manufacturer` 的值必须**逐字命中** `settings.json` 的 `designTypeColors` 键集合，否则引擎**把该值原样当分类名显示** → 症状就是"分类名还是英文"。同时查两处：① 含 `tech/manufacturer` 列的 CSV；② `data/hulls/**` 的 `.skin`/`.ship` 文件级 `tech`（**CSV 检查看不见**，只改 CSV 会漏） | **G3**（`node check_designtype.js <modRoot> [游戏core目录]`；**给了 core 才不误报 core 的设计类型**） |
+| `check_designtype.js` | red | base | ★**设计类型/制造商注册表**（静默降级，不报错不打日志）：`tech`/`manufacturer` 的值必须**逐字命中** `settings.json` 的 `designTypeColors` 键集合，否则引擎**把该值原样当分类名显示** → 症状就是"分类名还是英文"。同时查两处：① 含 `tech/manufacturer` 列的 CSV；② `data/hulls/**` 的 `.skin`/`.ship` 文件级 `tech`（**CSV 检查看不见**，只改 CSV 会漏）。**已知假阳性（2026-09 Vayra 实测）**：引擎实际用的是 **core + 全部已装 mod 合并后**的 `designTypeColors`，而脚本只查 mod 自己的 settings.json（给了 core 参数也只消 core 的键）→ 报警的值先 grep 核心与其它已启用 mod 的 settings.json 再定性 | **G3**（`node check_designtype.js <modRoot> [游戏core目录]`） |
+| `check_eol.js` | red | base | ★**行尾风格审计**（铁律 R17）：按**原始字节**比较基线 vs 注入后的 `CRLF 数 / 单独 LF 数 / 是否以换行结尾`，必须全等。**`cmp_csv_struct.js` 查不出行尾变化**（它按解析结果比对，行尾被吞掉照样"结构一致"）；实测事故：注入器硬编码 CRLF 把 LF-only 的 10 个 CSV 改了风格、`rules.csv` 变成混合行尾 | **G3**（`node check_eol.js <基线目录> <注入后目录> [扩展名...]`，默认 `.csv`） |
 | `scan_stragglers.js` | green | sample | 补丁后英文 UI 残留扫描（排除 Intrinsics/SMAP/调试日志）；**有残留则 exit 1** | G4（`node scan_stragglers.js <classDir> [outJson] [--quiet]`） |
 | `check_jar_stragglers.js` | red | base | ★**交付 jar 的英文残留闸门（可判定版）**：`scan_stragglers.js` 是纯启发式且只吃 `.class` 目录 —— 对着**补丁前的解包副本**跑会得到原始 jar 的 383 条假警报（实测）。本脚本直接吃 **jar 文件**，并用两份账把结果判定成三类：A 声明要译却仍是英文（**必错**）/ B 已记账的跳过（允许）/ C 未记账（须人工判定）。**A 与 C 必须都为 0** | **G4**（`node check_jar_stragglers.js <jar文件> <patch_map.json> [jar_skip_audit.json] [--show-b]`） |
 | `sweep_sentences.js` | green | sample | **句子级**复查：专治注释夹折叠漏译、弯引号键不匹配；**有候选则 exit 1** | G4（`node sweep_sentences.js <jarConstants.json> <translations.json> [outJson\|-]`） |
@@ -109,6 +112,7 @@
 |---|---|---|
 | `find_crash.js` | 大日志（GBK、多会话）切分会话 + 定位 ERROR/Exception 与最后会话上下文 | `node find_crash.js <starsector.log> [--all]` |
 | `TestCsv.java` | **离线复刻游戏 CSV 管线**（读 UTF-8 → 归一化弯引号 → 引擎 `G.o00000` 解析），判定该文件是否会让引擎崩溃 | `java TestCsv <rules.csv>` |
+| `ProjSpecCheck.java` | **离线复刻游戏 proj/wpn JSON 管线**（`LoadingUtils` 剥注释 + `org.json`）+ 复刻 `WeaponSpecLoader` 必备键检查；含 `PROXIMITY_FUSE` 缺 `range` 专项（`ProximityFuseAI` 崩溃根因） | `powershell -File run_projspeccheck.ps1 -DataDir <目录>` / `-AllMods` |
 
 ## F. 各 skill 自带脚本（不共享）
 
@@ -122,7 +126,7 @@
 | `build-cfr.bat` | `starsector-jar-decompile` | CFR 构建命令（参数写死在内部，避免 cmd 在 `=` 处拆参） |
 | `launcher\cfr.ps1` / `cfr.cmd` | `starsector-jar-decompile` | CFR 启动器（参数原样透传） |
 | `deliver.ps1` | `starsector-mod-delivery` | 交付打包（zip 名 = mod 中文名，内嵌 mod 文件夹，自动排除开发残留） |
-| `fork_src.ps1` | `starsector-repo-source` | fork + codeload tarball 下载 + 本地 git 化（未传 `-Branch` 自动探测默认分支） |
+| `fork_src.ps1` | `starsector-repo-source` | fork + codeload tarball 下载 + 本地 git 化（未传 `-Branch` 自动探测默认分支）。⚠️ 2026-09 修复：脚本首行 `$ErrorActionPreference='Stop'` 会让 PS 5.1 把 `gh repo view <you>/<repo>`（fork 尚不存在时）的 GraphQL 报错**升级为终止错误**，于是在"查是否已 fork"那一步就中断（SanIris 实测）。已改为 `Invoke-Capture`（局部降级 EAP + 回传退出码），并给 `curl`/`tar`/`git` 的 stderr 加 `2>$null`。 |
 | `probe_github.ps1` | `starsector-repo-source` | GitHub 各域名 `:443` 可达性探针 |
 | `validate_star_system.ps1` | `starsector-mod-star-system` | 自定义星系数据校验 |
 

@@ -252,6 +252,37 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
     报"程序包/符号不存在"时**先怀疑 cp，再怀疑 API 断**。
     注：MagicLib 1.5.6 仍保留 `data.scripts.util.*` 旧包名的 @Deprecated 垫片（真类、可用），
     老 mod 引用旧包名**不是**断裂，`check_deprecated.js` 扫的是游戏 API，盖不到这层。
+20. **classpath 条目带空格/撇号 → Class.forName 假全灭**（2026-09 Vayra's Sector 实测）：
+    `ZipFile(jarPath)` 能数出 jar 内全部条目，但把 `mods/Vayra's Sector/xxx.jar` 这种**带空格/撇号的
+    条目**放进 `-cp` 时，系统 classloader 打不开它 → jar 内每个类 `ClassNotFoundException`，
+    症状像"jar 全坏"。解法：被测 jar 复制到 `_work\_tmp\` 下无空格路径再进 `-cp`。
+    同理 **javac 的 `@argfile` 只认双引号包路径**，`Vayra's Sector` 的撇号会被直接吞掉
+    （报"找不到文件: mods\Vayras Sector\..."）——每行路径写成 `"..."` 再喂 `@file`。
+21. **编译期常量内联 = 依赖 jar 当前值的快照**（`cmp_strings.js` 差异的新解释维度）：
+    `static final String` 跨类引用会被 javac 内联进 mod 的 class。依赖 jar 被汉化后重编译
+    （如 lw_Console 的 `CommonStrings.ERROR_CAMPAIGN_ONLY` 现值为中文），新 jar 内联的是**中文**，
+    cmp_strings 会报"原 jar 独有英文串"——不是回归，反而与运行时一致；同理新 javac 可能对个别
+    `static final` 改用 `getstatic` 字段引用而非内联（`ShippingDisruption.COMMODITY_LOSS_PREFIX`
+    实测）。两条都属编译器/依赖产物，逐条解释后放行。
+22. **同名 `.faction` 文件 0.98a = 核心+各 mod 按键合并，不是整文件替换**（2026-09 Ifed Legacy 实测 +
+    反编译 `LoadingUtils`：非 `fullOverrides` 时以核心为 master，各 mod 深度合并——对象递归、数组追加、
+    `"core_clearArray"` 重置数组；0.8 时代"必须整份拷贝"的经验已过时）。`shipRoles` 仍被 `SpecStore` 解析；
+    但 `knownShips` **不会**从 shipRoles 自动生成 ⇒ 只写 shipRoles 的 mod，船会进舰队构成却不进市场出售列表
+    （0.8a 亦然，属上游设计，别"顺手补" knownShips）。faction 片段文件只需写自己新增的键。
+23. **0.8-0.9 时代 mod 的 cp1252 乱码**：Word 弯撇号 `'`（U+2019）以单字节 `0x92` 混进 UTF-8 文本，
+    GBK 终端显示成"抯"等假 CJK；`check_encoding.js` 报 invalid-utf8 即此。修复=字节级 `0x92→0x27`
+    （与其余 ASCII 撇号一致），别整段重译。
+24. **核心音效 id 会被删改**：老 mod `.wpn` 引用的核心音效 id 可能已不存在（实证 0.8a `launch_tube_1`）
+    ⇒ 不崩、静默无音效+日志 warning。修复=在 mod 自己的 `sounds.json` 补定义该 id 指向现存核心 ogg
+    （比改 .wpn 引用更小）。另：`sounds.json` 扁平写法合法（sylphon 三种写法并存：分区/扁平/`sounds`
+    数组对象）；mod 与核心同名音效 id = 覆盖核心定义，需 grep 全部 .wpn 确认无人使用再决定留否。
+25. **CSV 尾部全空填充行无害**（Excel 导出残留；空 id 行被跳过；原版 ship_data.csv 表头下也有空行）；
+    `ship_data - Copy.csv` 类改名残留不会被读（加载器写死 `data/hulls/ship_data.csv`，
+    `ShipHullSpreadsheetLoader` 实证）；`.ship.bak` 是社区标准禁用手法，不被加载。
+26. **0.8a 纯数据 mod 升级，真要改的经常只有几字节**（Ifed Legacy：191 文件最终只改 3 处+新增 1 个）——
+    CSV 表头列名 0.8→0.98 高度稳定（按表头名取列，缺列=默认值）、id/variant 引用大多健在。
+    先跑 check_encoding / check_refs / check_assets / ProjSpecCheck / JsonProbe + 与原版表头 diff 取证，
+    别凭"年代久远"预设大改；命名顾虑（如 `peak CR sec`、`variant` 列）一律以核心现行文件对照定夺。
 
 ## 4. 反模式
 

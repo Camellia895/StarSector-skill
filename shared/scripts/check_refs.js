@@ -6,10 +6,13 @@
 //   data/hulls/*.ship                -> builtInWeapons / builtInMods / builtInWings / style
 //   data/hulls/skins/*.skin          -> baseHullId（skinHullId 是皮肤自建 id，跳过）
 //   data/world/factions/default_ship_roles.json -> variant id
-//   data/weapons/weapon_data.csv     <-> data/weapons/*.wpn <-> data/weapons/proj/*.proj
+//   data/weapons/weapon_data.csv     <-> *.wpn（data/weapons + data/shipsystems，原版系统武器就放后者）
+//                                      <-> *.proj（按 .proj 内部 "id" 匹配——引擎语义；文件名可能不同）
 // 定义来源：core + 全部已装 mod（脚本自动枚举）
 //
-// 已知假阳性（脚本已规避）：.skin 的 skinHullId；default_ship_roles 的空对象；动态拼接的 sprite 名。
+// 已知假阳性（脚本已规避）：.skin 的 skinHullId；default_ship_roles 的空对象；动态拼接的 sprite 名；
+// shipsystems/wpn 下的系统武器（2026-09-15 修正：此前只扫 data/weapons，误报"csv 行没有 .wpn"）；
+// .proj 文件名 ≠ 内部 id（2026-09-15 修正：此前按文件名匹配，误报"projectileSpecId 没有 .proj"）。
 const fs = require('fs');
 const path = require('path');
 
@@ -65,6 +68,15 @@ function parseLoose(txt) {
   try { return JSON.parse(t); } catch (e) { return null; }
 }
 
+// .proj 按内部 "id" 匹配（引擎语义，实测 ifed_citadelpd.proj 的 id 是 ifed_citadelpd_shot）；读不出 id 时退回文件名
+function projInternalId(file) {
+  try {
+    const m = fs.readFileSync(file, 'utf8').match(/"id"\s*:\s*"([^"]+)"/);
+    if (m) return m[1];
+  } catch (e) { /* 读不了就退回文件名 */ }
+  return path.basename(file, '.proj');
+}
+
 // ---- 收集定义 ----
 const ships = new Set(), weapons = new Set(), hullmods = new Set(), wings = new Set(), variants = new Set(), styles = new Set();
 const projIds = new Set();
@@ -79,7 +91,8 @@ for (const d of dirs) {
   for (const id of csvIds(path.join(d, 'data/hullmods/hull_mods.csv'), 'id')) hullmods.add(id);
   for (const id of csvIds(path.join(d, 'data/hulls/wing_data.csv'), 'id')) wings.add(id);
   for (const f of walk(path.join(d, 'data/variants'))) if (f.endsWith('.variant')) variants.add(path.basename(f, '.variant'));
-  for (const f of walk(path.join(d, 'data/weapons'))) if (f.endsWith('.proj')) projIds.add(path.basename(f, '.proj'));
+  for (const f of [...walk(path.join(d, 'data/weapons')), ...walk(path.join(d, 'data/shipsystems'))])
+    if (f.endsWith('.proj')) projIds.add(projInternalId(f));
   const hs = path.join(d, 'data/config/hull_styles.json');
   if (fs.existsSync(hs)) {
     const t = fs.readFileSync(hs, 'utf8').replace(/#.*$/gm, '');
@@ -142,7 +155,10 @@ if (fs.existsSync(dsr)) {
   }
 }
 
-// ---- 5) 武器 <-> .wpn <-> .proj ----
+// ---- 5) 武器 <-> .wpn <-> .proj（.wpn/.proj 搜索范围含 data/shipsystems：原版系统武器布局，flarelauncher1.wpn 等就在那里） ----
+const listWpnProj = (d) => [...walk(path.join(d, 'data/weapons')), ...walk(path.join(d, 'data/shipsystems'))];
+const coreWpn = new Set(listWpnProj(coreDir).filter(f => f.endsWith('.wpn')).map(f => path.basename(f, '.wpn')));
+const coreProj = new Set(listWpnProj(coreDir).filter(f => f.endsWith('.proj')).map(projInternalId));
 const wcsv = path.join(modDir, 'data/weapons/weapon_data.csv');
 if (fs.existsSync(wcsv)) {
   const rows = parseCsvFull(fs.readFileSync(wcsv, 'utf8'));
@@ -150,19 +166,19 @@ if (fs.existsSync(wcsv)) {
   const idi = hdr.indexOf('id');
   const csvW = new Set();
   if (idi >= 0) for (let r = 1; r < rows.length; r++) if (rows[r][idi] && rows[r][idi].trim()) csvW.add(rows[r][idi].trim());
-  const modWpn = new Set(walk(path.join(modDir, 'data/weapons')).filter(f => f.endsWith('.wpn')).map(f => path.basename(f, '.wpn')));
-  const modProj = new Set(walk(path.join(modDir, 'data/weapons')).filter(f => f.endsWith('.proj')).map(f => path.basename(f, '.proj')));
+  const modWpn = new Set(listWpnProj(modDir).filter(f => f.endsWith('.wpn')).map(f => path.basename(f, '.wpn')));
+  const modProj = new Set(listWpnProj(modDir).filter(f => f.endsWith('.proj')).map(projInternalId));
   for (const id of csvW) {
-    if (!modWpn.has(id) && !fs.existsSync(path.join(coreDir, 'data/weapons', id + '.wpn')))
+    if (!modWpn.has(id) && !coreWpn.has(id))
       problems.push(`weapon_data.csv: '${id}' 没有对应 .wpn（游戏日志会报 "Weapon [...] from weapon_data.csv not found in store"）`);
   }
   for (const id of modWpn) {
     if (!csvW.has(id)) problems.push(`.wpn '${id}' 在 weapon_data.csv 里没有行（游戏日志会报 "Weapon spec [...] not found in weapon_data.csv"）`);
   }
-  for (const f of walk(path.join(modDir, 'data/weapons')).filter(f => f.endsWith('.wpn'))) {
+  for (const f of listWpnProj(modDir).filter(f => f.endsWith('.wpn'))) {
     const t = fs.readFileSync(f, 'utf8');
     const m = t.match(/"projectileSpecId"\s*:\s*"([^"]+)"/);
-    if (m && !modProj.has(m[1]) && !fs.existsSync(path.join(coreDir, 'data/weapons', m[1] + '.proj')))
+    if (m && !modProj.has(m[1]) && !coreProj.has(m[1]))
       problems.push(`${path.basename(f)}: projectileSpecId '${m[1]}' 没有 .proj`);
   }
   console.log(`武器: csv ${csvW.size} / .wpn ${modWpn.size} / .proj ${modProj.size}`);
@@ -173,3 +189,4 @@ ok.forEach(l => console.log('  ' + l));
 console.log(`\n检查完成，问题 ${problems.length} 条：`);
 for (const p of problems) console.log('  ' + p);
 if (problems.length) console.log('\n注意：JSON 解析失败类问题请先用 JsonProbe.java 以游戏 org.json 复核，避免严格解析器造成的假阳性。');
+process.exit(problems.length ? 1 : 0); // 登记表契约：0=干净，1=有命中（此前缺这行，账本把命中记成了 clean）
