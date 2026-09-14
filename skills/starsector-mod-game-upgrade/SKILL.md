@@ -142,6 +142,10 @@ node <skills>\shared\scripts\cmp_strings.js <原jar解包目录> <新jar解包�
 **已知的正常失败**（不要当 bug）：构造函数里 `Global.getSettings().getSprite(...)` 的插件在离线环境会 NPE
 （`Global` 未初始化）——sylphon 有 3 个这样的插件，游戏内日志证明它们其实正常加载了。
 
+**janino 脚本不在 jar 里**（`data/**` 下的 `.java` 由游戏运行时编译）⇒ LoadTest 第 3 步对它们报
+`ClassNotFoundException` 是预期现象。想跑出全绿：把第 2 步编译探测的输出目录加进 `-cp` 复跑一遍
+（实测 Hiigaran：首跑 4 条缺失 → 加 `-cp` 后 ALL PASS）。
+
 ### 第 5 步 · 数据层审计（**最容易白忙一场的地方**）
 
 **核心事实：Starsector 的 CSV 加载器按表头名取列。**
@@ -242,6 +246,12 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 17. **写 JSON/CSV 后复查 BOM**（第 5 步）。
 18. **`deliver.ps1` 会排除任意层级 `src`、`*.orig`、`.git`、`desktop.ini`**——所以 `jars\src` 与 `*.jar.orig`
     不进交付包是预期；想带源码加 `-IncludeSrc`。
+19. **编译探测的 classpath 必须配齐源码实际 import 的所有 mod 库**（2026-09 Hiigaran 实测：漏了
+    `MagicLib.jar` ⇒ `data.scripts.util.MagicRender` 报"程序包不存在"，差点误判成 0.98a 断裂）。
+    动手前先 `grep ^import` 汇总非 `com.fs`/`java`/`org.lwjgl` 的包，逐个找到归属 jar 再编译；
+    报"程序包/符号不存在"时**先怀疑 cp，再怀疑 API 断**。
+    注：MagicLib 1.5.6 仍保留 `data.scripts.util.*` 旧包名的 @Deprecated 垫片（真类、可用），
+    老 mod 引用旧包名**不是**断裂，`check_deprecated.js` 扫的是游戏 API，盖不到这层。
 
 ## 4. 反模式
 

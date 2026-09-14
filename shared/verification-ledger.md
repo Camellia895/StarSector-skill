@@ -19,6 +19,7 @@
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3）；零宽字符单列提示、不计命中 |
 | `check_content.js` | yellow | base | 空译文/占位符/字段结构（skill 自带脚本） |
 | `check_assets.js` | yellow | cond | 改过 `graphics/` 引用 |
+| `check_sounds.js` | yellow | cond | mod 有 `data/config/sounds.json` 时（音频文件存在性；2026-09 Hiigaran 任务沉淀） |
 | `check_sprites.js` | yellow | cond | 改过源码 `getSprite` |
 | `check_deprecated.js` | yellow | cond | 版本升级场景 |
 | `JsonProbe.java` | yellow | cond | 伪 JSON 存疑时（R8） |

@@ -72,6 +72,7 @@
 | `check_content.js` | yellow | base | 译文内容自检（占位符/`%%`/`${}`/长度/空译文）；位于 `-content` 的 `scripts\` | G2 |
 | `check_font_glyphs.js` | yellow | base | 中文字库字形覆盖（铁律 R3）；零宽字符单列提示、不计命中 | G3 |
 | `check_assets.js` | yellow | cond | 全部 `graphics/…` 字面量是否存在（**必须同时搜 mod + core + 其它已装 mod**，跳过注释行） | G5 |
+| `check_sounds.js` | yellow | cond | `data/config/sounds.json` 引用的音频文件是否存在（宽松 JSON：剥 `#` 注释与尾逗号；元素可为 `{file:…}` 或字符串；用法 `node check_sounds.js <modDir>`） | G5 |
 | `check_sprites.js` | yellow | cond | 源码 `getSprite("分类","键")` 是否在 mod 或 core 的 `settings.json` 有定义 | G5 |
 | `check_deprecated.js` | yellow | cond | mod 是否用了 0.98a API 的 `@Deprecated` 成员 | G5 |
 | `JsonProbe.java` | yellow | cond | 用**游戏自带 `org.json`** 验证数据宽松语法（铁律 R8 的权威工具） | G3/排查 |
