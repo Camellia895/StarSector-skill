@@ -246,3 +246,23 @@
 | 变体名 `Defensive/Support/Strike/Hailstorm` | 防御型/支援型/打击型/雹暴 | [自定] ⚠️ 与 jar 内 `variantDisplayName.contains(...)` 匹配键成对翻译（R12 类内限定） |
 | 关系等级 Vengeful…Cooperative | 仇怨…合作 | [社区]（核心通用） |
 | `cycle N` / `the Collapse` | 星历N年 / 大崩塌 | [核心] |
+
+
+### 6.8 Vayra's Sector（vayrasector，3.2.2 汉化，2026-09）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `Rimward Venture（Trading Company）`（势力） | 边陲拓殖商团 | [自定]（设计类型 `Merchant Marine`=商船队） |
+| `Ashen Keepers` | 灰烬守护会 | [自定]（设计类型同名；军衔含 朝圣者/求索中尉/诘问上尉/渎神上将/大宗叛教者/暗夜低语者 等） |
+| `（Persean Democratic People's）Revolutionary Council` | （英仙座民主人民）革命委员会 | [自定]（设计类型 `Red Guards`=赤卫军；军衔 统一为「同志」） |
+| `（Independent AI）Research Mandate` | （独立AI）研究特许局 | [自定]（设计类型同名；其后继 `Aleph Ascendancy`=阿列夫升格议会） |
+| `Stormhawk Republic` | 风暴鹰共和国 | [自定]（设计类型同名；`entityNamePrefix` Stormhawk=风暴鹰） |
+| `Iron Armada（of Kazeron）` | （卡泽伦）铁甲舰队 | [自定]（设计类型同名） |
+| `（Knightly）Order of Westernesse` | 维斯特尼斯修会（骑士修会） | [自定]（设计类型同名） |
+| `Goetia Cartel` | 戈提亚卡特尔 | [自定] |
+| `Pirate`（designTypeColors/tech 值） | 海盗 | [核心]（中文核心 settings.json 键为中文，须同译） |
+| `Unique Midline` | **保留英文** | [铁律 R16]（Ship and Weapon Pack 注册键，英文版安装） |
+| `Ghost Ship` / 幽灵船五线（alien/nanite/plague/cannibal/rogue AI/hyperlost） | 幽灵船 / 异种生物侵染、纳米宿主、瘟疫之船、食人死邪教、失控AI、维度异常 | [自定] |
+| `Dungeon Master` / `TriPad` | 地下城主 / 三合板 | [自定]（酒馆 RPG 线） |
+| `⚠️ 不译`：`unique_bounty_data.csv` 的 `rank` 列（setRankId 军衔键）、`L'Interstellaire`、`Kumari Kandam`、`AADS`、VayraTags 混淆常量（ew/ri/si/fpe/ZZZzZZ）、`top left` 等象限键 | 保留原文 | [铁律 R7/R12] |
+| ⚠️ 联动成组：`orbiting/hiding out near`、`located in/hiding out in`（replaceAll 对）；`unremarkable`（levelDesc.contains 检查词）；`a/an`（aOrAn 兜底冠词，元音表其余字母是逻辑键） | 译文成组一致 | [自定·实测] |

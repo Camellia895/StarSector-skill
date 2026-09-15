@@ -31,9 +31,10 @@
 | `build_data_worklist.js` | **data 层 recipe 化待译清单**（核心工具）：CSV/伪 JSON/纯文本按 recipe 抽可见文本，输出统一 schema | `node build_data_worklist.js <modRoot> <recipe.json> <outDir>`；kind 文档见脚本头部（`csv`/`hullNames`/`variantDisplayNames`/`rulesCsv`/`lunaSettings`/`tips`/`shipNames`/`jsonObjects`/`jsonScalars`/`factionFile`/`jsonDirObjects`/`missionDir`/`wholeText`） |
 | `scan_data_stragglers.js` | ★**data 层"字段级"残留扫描**（recipe 的反向网）：先把数据文件里**所有**人可读英文枚举出来，再判其是否被清单覆盖；未覆盖的即"提取遗漏候选"。**专治 recipe 只覆盖"你想到的列"这一盲区** | `node scan_data_stragglers.js <modRoot> <enBackupRoot> <worklistDir> [outJson\|-]` |
 | `extract_java_strings.js` | **Janino 源码 mod 的 .java 字符串字面量提取**（无 jars、`data/plugins|scripts/*.java` 运行时编译的 mod）：词法状态机抓全部 `"..."` 字面量（跳过注释、保留原始转义），附所在行语句上下文与 EOL 风格 | `node extract_java_strings.js <modRoot> <outJson>`（用后必跑 `check_java_residue.js` 复核，见 D 节） |
+| `fix_csv_eol.js` | **混合行尾 CSV 的字节级注入修复**：从基线恢复原字节后，按 worklist (id,field) 用 span 精确替换单元格；单元格内换行沿用原风格（2026-09-16 Vayra 新增；`inject_data` 整体重建会把 mixed-EOL 文件统一成 CRLF，R17 红灯后用它修复） | `node fix_csv_eol.js <modRoot> <enBackupRoot> <worklistDir> <file...>` |
 | `extract_skins.js`（示例，见 §H） | `.ship/.skin` 里**除 hullName 之外**的可见文本（`descriptionPrefix`、`hullDesignation`）提取范例 | 见项目 `_work\mod_work\<Mod>\tools\` |
 | `csvlib.js` | RFC4180 公共库：parse + 写回（含引号内逗号/换行、记录起始物理行号） | `require('./csvlib.js')` |
-| `pseudojson.js` | **伪 JSON 宽松解析**公共库（`#` 注释/尾随逗号/`1.2f`/裸枚举值 `[STATIONS]`/BOM）；只读，回写用文本替换。2026-09-15 增补：OMM 的 `custom_entities.json` 用了引擎允许的**裸枚举值**（`"layers":[STATIONS]`），严格/原宽松解析均抛错 ⇒ `parseJsonLoose` 现把冒号/逗号/左括号后的裸标识符按字符串值处理（`true/false/null` 除外） | `require('./pseudojson.js')` → `parseJsonLoose` |
+| `pseudojson.js` | **伪 JSON 宽松解析**公共库（`#` 注释/尾随逗号/`1.2f`/裸枚举值 `[STATIONS]`/BOM）；只读，回写用文本替换。2026-09-15 增补：OMM 的 `custom_entities.json` 用了引擎允许的**裸枚举值**（`"layers":[STATIONS]`），严格/原宽松解析均抛错 ⇒ `parseJsonLoose` 现把冒号/逗号/左括号后的裸标识符按字符串值处理（`true/false/null` 除外） | `require('./pseudojson.js')` → `parseJsonLoose`。**2026-09-16 修复**：裸枚举替换已带字符串感知（insideString），此前 tips.json 里 `, 词,` 形态会被误加引号搅成非法 JSON |
 
 ## B. 汉化迁移（旧译复用）
 
@@ -82,7 +83,7 @@
 | `cmp_strings.js` | yellow | cond | 新旧 jar 字符串常量对比（判源码/jar 漂移；用"原 jar 每条常量是否作为子串出现在新 jar 常量集合里"，不要求精确相等） | G5 |
 | `cmp_csv_struct.js` | red | base | **注入结构等价性**（CSV 结构级重建法必备）：基线 vs 注入后的物理行数 / 解析数据行数 / 每行单元格数 / id 序列 | G3（`node cmp_csv_struct.js <基线目录> <注入后目录> <文件相对路径>...`） |
 | `cmp_csv_cells.js` | red | base | **差异格核对**（CSV 结构级重建法必备）：逐格对比基线 vs 注入后，差异格必须全在待译清单内 → 未登记差异 = 0 | G3（`node cmp_csv_cells.js <基线目录> <注入后目录> <worklistDir> <文件相对路径>...`） |
-| `scan_data_stragglers.js` | red | base | ★**data 层提取完整性**（recipe 的反向网）：未被清单覆盖的英文自然语言字段 = 0。提取阶段（拿英文原版当 mod）+ 交付前（拿注入后目录）各跑一次 | **G1/G3**（`node scan_data_stragglers.js <modRoot> <enBackupRoot> <worklistDir>`） |
+| `scan_data_stragglers.js` | red | base | ★**data 层提取完整性**（recipe 的反向网）：未被清单覆盖的英文自然语言字段 = 0。提取阶段（拿英文原版当 mod）+ 交付前（拿注入后目录）各跑一次 | **G1/G3**（`node scan_data_stragglers.js <modRoot> <enBackupRoot> <worklistDir>`）；**2026-09-16 增补**：支持 `<worklistDir>/excluded_entries.json`（en 精确 > file#id&field > 整个 file），按口径故意不译的条目不再永久报候选 |
 | `scan_refs.js` | red | base | ★**标识符引用点全扫**：列出某字面量出现在哪些 class、以什么形态被引用（`String` / `Fieldref` / `Methodref`）。两个必用场景：① 枚举改名**白名单必须覆盖全部引用点**（枚举类 + 合成 `$SwitchMap` 类 + 使用方，漏一个就 `NoSuchFieldError`，真实事故崩了两次）；② 补丁后作**硬门槛**扫"旧名是否还作为 `Fieldref` 出现"（译文等于原文者如 `CR→CR` 可豁免） | **G4**（`node scan_refs.js <已解包class目录> <字面量...> [--strict]`） |
 | `check_options_structure.js` | red | base | ★**options 单元格结构**（rules.csv / zgrstuff.csv）：段数与 optionId 序列必须与英文原版等价、不得出现字面 `\n`。坏了会启动崩溃（`NumberFormatException`）而列数检查看不出来 | **G3**（`node check_options_structure.js <modRoot> <enBackupRoot> [--renamed=FROM:TO]`） |
 | `scan_logic_keys.js` | red | base | ★**逻辑键误译**（启动 Fatal 的头号成因）：class 常量池里"显示文本"与"查找键"字面相同，本工具用"键查找调用上下文 + 保留键名单"识别。A 类（保留键被译）= 必错；B 类 = 待人工确认 | **G4**（`node scan_logic_keys.js <patch_map.json> <原classDir> [reservedKey...]`） |

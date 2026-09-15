@@ -57,6 +57,12 @@
    否则 PS 5.1 按 GBK 读会把中文串读坏，报出 "Unexpected token"/"missing closing ')'" 等与真实原因无关的错。
 
 
+7. **Git Bash 里给 `java -cp` 传多段路径会被 MSYS 路径转换搅坏**（症状：主类都
+   "找不到或无法加载主类"，或类加载全灭）。解法：把整段命令写进 **纯 ASCII + CRLF 的
+   `.cmd` 批处理**再 `cmd /c` 执行（实测 Vayra's Sector LoadTest；PowerShell 对
+   `-Dkey=value` 的拆分同样有毒，别用）。
+
+
 ## 5. 核心 jar
 
 `<game>\starsector-core\`：`starfarer.api.jar`、`starfarer_obf.jar`（混淆本体）、`lwjgl.jar`、`lwjgl_util.jar`、`json.jar`（游戏自带 `org.json`）、`log4j-1.2.9.jar`、`janino.jar`、`fs.common_obf.jar`。

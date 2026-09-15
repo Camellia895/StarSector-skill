@@ -11,6 +11,16 @@ description: Starsector（远行星号）mod 汉化的第三阶段——把填�
 **下游**：`starsector-mod-localization-verify`（全层验证）→ `starsector-mod-delivery`。
 **必读**：`<skills>\shared\env.md`、`<skills>\shared\iron-rules.md`（R1/R2/R6/R7/R8/R9 是本 skill 的命脉）、`<skills>\shared\conventions.md`。
 
+## -1. 现成实现模板（能抄就别重写）
+
+Vayra's Sector 汉化（2026-09-16）沉淀了一对可直接改造的通用注入器：
+- `inject_data.js`（项目版见 `_work\mod_work\Vayra's Sector	ools\`）：CSV 按 (id, 列)
+  结构化回填 + 其余（JSON/faction/skin/variant/INI 注释/整段文本）按行游标替换 `"en"`→`"zh"`；
+- 共享库 `fix_csv_eol.js`：**混合行尾 CSV**（记录尾 CRLF + 单元格内 LF 之类）被整文件重建破坏后，
+  从基线恢复原字节并按 span 精确重放译文（R17 红灯的专用修复）。
+> 教训：整文件重建 CSV 会把上游"混搭"的行尾统一掉（hull_mods/descriptions/rules 实测全是混合体）。
+> 注入器要么做 span 级替换，要么注入后必跑 `check_eol.js` 并用 `fix_csv_eol.js` 修复。
+
 ## 0. 动手前
 
 1. **确认所有清单 `zh` 已填**（空 `zh` = 0）——空值注入会写出空字符串，比漏译更糟。
