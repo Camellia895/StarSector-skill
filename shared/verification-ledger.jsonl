@@ -39,3 +39,17 @@
 {"t":"2026-09-14T16:45:51.950Z","check":"ProjSpecCheck","target":"Ifed Legacy","exit":0,"hit":false,"probe":false,"note":""}
 {"t":"2026-09-14T17:16:28.503Z","check":"check_refs.js","target":"Ifed Legacy","exit":0,"hit":false,"probe":false,"note":"check_refs.js 修正 shipsystems/wpn + proj 内部 id 后复跑"}
 {"t":"2026-09-14T17:20:16.791Z","check":"check_sounds.js","target":"Ifed Legacy","exit":0,"hit":false,"probe":false,"note":"check_sounds.js 修复搜索范围（mod+core+其它mod、跳过打包音频）后复跑"}
+{"t":"2026-09-15T17:28:25.526Z","check":"check_install_source.js","target":"Ifed Legacy(汉化注入前)","exit":0,"hit":false,"probe":false,"note":"R15 断言：目标=英文原版 v.02，通过"}
+{"t":"2026-09-15T17:28:25.526Z","check":"build_data_worklist.js","target":"Ifed Legacy","exit":0,"hit":false,"probe":false,"note":"197 条提取（5 section）"}
+{"t":"2026-09-15T17:28:25.526Z","check":"scan_data_stragglers.js","target":"Ifed Legacy(英文版)","exit":0,"hit":false,"probe":false,"note":"G1 反向网：补 Copy.csv 覆盖后 0 候选"}
+{"t":"2026-09-15T17:28:25.526Z","check":"check_encoding.js","target":"Ifed Legacy(注入后)","exit":0,"hit":false,"probe":false,"note":"0 BOM 0 非法UTF8（顺手修 ai/脚本/probe*.txt GBK→UTF8）"}
+{"t":"2026-09-15T17:28:25.526Z","check":"check_csv_quotes.js","target":"Ifed Legacy(5 csv)","exit":0,"hit":false,"probe":false,"note":"列数=header，无拆列"}
+{"t":"2026-09-15T17:28:25.526Z","check":"check_eol.js","target":"Ifed Legacy(注入后)","exit":0,"hit":false,"probe":false,"note":"R17 行尾风格与基线一致（CRLF+格内LF 保持）"}
+{"t":"2026-09-15T17:28:25.526Z","check":"check_font_glyphs.js","target":"Ifed Legacy/data","exit":0,"hit":false,"probe":false,"note":"缺字形 0"}
+{"t":"2026-09-15T17:28:25.526Z","check":"check_homoglyphs.js","target":"Ifed Legacy","exit":0,"hit":false,"probe":false,"note":"0 命中"}
+{"t":"2026-09-15T17:28:25.526Z","check":"cmp_csv_struct.js","target":"Ifed Legacy(5 csv)","exit":0,"hit":false,"probe":false,"note":"结构等价：行数/格数/id 序列全同"}
+{"t":"2026-09-15T17:28:25.526Z","check":"cmp_csv_cells.js","target":"Ifed Legacy(5 csv)","exit":0,"hit":false,"probe":false,"note":"135 差异格 全部登记（worklist 覆盖）"}
+{"t":"2026-09-15T17:28:25.526Z","check":"verify_all_data.js","target":"Ifed Legacy/data","exit":0,"hit":false,"probe":false,"note":"全过（上轮升级时 variants 英文 displayName 命中，汉化后消除）"}
+{"t":"2026-09-15T17:28:25.526Z","check":"check_designtype.js","target":"Ifed Legacy","exit":0,"hit":false,"probe":false,"note":"无 tech 列/无 designTypeColors，0 问题"}
+{"t":"2026-09-15T17:28:25.526Z","check":"JsonProbe(org.json)","target":"Ifed Legacy(mod_info/.ship/.variant/sounds)","exit":0,"hit":false,"probe":false,"note":"全 OK；independent.faction 严格解析失败=上游固有宽松风格，与备份逐字节一致，引擎宽容读取，未动"}
+{"t":"2026-09-15T17:28:25.526Z","check":"apply_zh.js","target":"Ifed Legacy","exit":0,"hit":false,"probe":false,"note":"197/197 注入；修复：mod_info 多条目共用 text 变量致后者覆盖前者（name 曾被还原英文）"}

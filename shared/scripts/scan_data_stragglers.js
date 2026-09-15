@@ -81,6 +81,34 @@ const isNaturalEnglish = v => {
   return true;
 };
 
+// ---- 排除清单（约定 §3：故意不译的条目须留档且可复核）----
+// <worklistDir>/excluded_entries.json = [{ file, id?, field?, en?, reason }, ...]
+// 匹配规则：en 存在时按 file+en 精确匹配；否则按 file#id&field 匹配；两者都缺 = 整个 file 排除。
+// 2026-09-16 新增（Vayra's Sector 汉化实测）：人名/资源文件名/命令语法等"按口径故意不译"
+// 的条目此前只能靠口头解释，反向网会永远报候选 ⇒ 无法达成 G1 的"0 候选"判据。
+const excludedEn = new Set();     // file\0en
+const excludedCell = new Set();   // file#id&field
+const excludedFile = new Set();   // file
+{
+  const exPath = path.join(WL, 'excluded_entries.json');
+  if (fs.existsSync(exPath)) {
+    let arr = [];
+    try { arr = JSON.parse(fs.readFileSync(exPath, 'utf8')); } catch (e) { console.error('excluded_entries.json 解析失败: ' + e.message); process.exit(2); }
+    for (const e of arr) {
+      if (!e || !e.file) continue;
+      if (e.en !== undefined) excludedEn.add(e.file + '\u0000' + String(e.en));
+      else if (e.id !== undefined && e.field !== undefined) excludedCell.add(`${e.file}#${e.id}&${e.field}`);
+      else excludedFile.add(e.file);
+    }
+    console.log(`(排除清单: ${arr.length} 条, 来自 ${path.basename(exPath)})`);
+  }
+}
+const isExcluded = (rel, id, field, val) =>
+  excludedFile.has(rel) ||
+  excludedEn.has(rel + '\u0000' + String(val)) ||
+  excludedCell.has(`${rel}#${id}&${field}`);
+
+
 // ---- 读清单：建"覆盖索引" ----
 const covered = new Set();          // file#id&field
 const coveredEn = new Set();        // file\0en
@@ -133,6 +161,7 @@ for (const abs of walk(path.join(MOD, 'data'))) {
         if (SKIP_COLS.has(col)) continue;
         const v = (r.cells[c] || '').trim();
         if (!isNaturalEnglish(v)) continue;
+        if (isExcluded(rel, id, col, v)) continue;
         // 已覆盖？① (file,id,列) ② (file,en) 出现过
         const byCell = covered.has(`${rel}#${id}&${col}`);
         const byEn = coveredEn.has(rel + '\u0000' + v);
@@ -155,6 +184,7 @@ for (const abs of walk(path.join(MOD, 'data'))) {
       const v = vRaw.replace(/\\"/g, '"');
       if (!isNaturalEnglish(v)) continue;
       const id = path.basename(abs).replace(/\.(ship|skin|variant|faction|json|system|wpn|proj)$/i, '');
+      if (isExcluded(rel, id, k, v)) continue;
       const byCell = covered.has(`${rel}#${id}&${k}`);
       const byEn = coveredEn.has(rel + '\u0000' + v);
       if (byCell || byEn) continue;
@@ -192,6 +222,7 @@ for (const abs of walk(path.join(MOD, 'data'))) {
         if (!isNaturalEnglish(val) && !(val.length >= 6 && /^[A-Za-z][A-Za-z0-9 '’\-]+$/.test(val))) continue;
         const field = `${col}#${key}`;
         if (covered.has(`${rel}#${id}&${field}`) || coveredEn.has(rel + '\u0000' + val)) continue;
+        if (isExcluded(rel, id, field, val)) continue;
         push(rel, id, field, val, `列「${col}」内嵌配置块中的 ${key}（列名看似逻辑列，极易被整列跳过）`);
       }
     }

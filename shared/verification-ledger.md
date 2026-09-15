@@ -30,6 +30,8 @@
 | `validate_star_system.ps1` | yellow | cond | 仅星系 mod（skill 自带脚本，见 F 节） |
 | `scan_stragglers.js` | green | sample | 漏译网；`sweep_sentences.js` 是其句子级补充 |
 | `check_jar_stragglers.js` | red | base | **交付 jar 英文残留闸门**：直接吃 jar 文件（避 `scan_stragglers.js` 对着补丁前副本跑出假警报），用 patch_map + skip 审计判定 A（要译却仍英文，必错）/ B（已记账跳过，允许）/ C（未记账）；A=C=0 才通过 |
+| `check_java_residue.js` | red | cond | 仅 Janino 源码 mod（无 jars、`data/plugins|scripts/*.java`）：与提取器不同解析路径的独立复查网，未覆盖英文字面量 = 0（2026-09 SiC Aux 事故：提取器行注释 bug 漏 79 条被它抓回） |
+| `check_java_equiv.js` | red | cond | 仅 Janino 源码 mod：注入后骨架逐字节等价 + 字面量数一致 + 词法完整（= "只改了字面量内容"的机器证明；源码层 G4/G5 替代） |
 | `sweep_sentences.js` | green | sample | 专治注释夹折叠漏译 |
 | `verify_patched.js` | green | sample | 迁移场景的合并版扫描 |
 | `csvcheck.js` | green | sample | 只读列检查（`verify_all_data.js` 已覆盖常见段） |

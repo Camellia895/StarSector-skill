@@ -15,7 +15,8 @@
 1. 备份英文原版：`mods\<Mod>\` → `<game>\_work\mod_bak\<Mod>_<版本>_EN_backup`。
 2. 建工作区：`<game>\_work\mod_work\<Mod>\out\`（产物）+ `tools\`（本次脚本）——最小约定见 `conventions.md` §1.1。
 3. 需要源码 → `starsector-repo-source`。
-4. 判定翻译机制（strings 表 vs 硬编码）→ `starsector-mod-localization-extract` §0。
+4. 判定翻译机制（strings 表 vs 硬编码）→ `starsector-mod-localization-extract` §0；
+   **无 `jars/` 且 `data/plugins|scripts` 直接放 `.java`** → 加读 `starsector-mod-janino-source-localization`（源码即载体，不走 jar 补丁）。
 
 > **目录分工**（别放错，详见 `shared\conventions.md` §1）：
 > `mod_src` = 源码**只读基线**；`mod_bak` = **改动前备份**（含英文原版）；`mod_work` = 本次产物与脚本；

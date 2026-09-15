@@ -317,3 +317,47 @@ node <skills>\shared\scripts\check_install_source.js <modRoot> <EN原版备份�
 4. 收尾跑 `check_rules_arg_quotes.js`，**判据是"奇数引号行 = 0"**（不是只看"弯引号 = 0"——
    本次弯引号一直是 0，问题出在 ASCII 引号被吃）。
 
+
+## R19 · 伪 JSON 值内禁未转义 ASCII 引号（org.json 解析失败）
+
+**引擎事实**：`.json`/`.skin`/`.ship`/`.variant` 的**字符串值**里出现未转义的 ASCII `"` 会**提前终止该字符串**
+（`"称为"风暴"。"}` → 值止于 `称为`，其后 token 全部错位）→ 引擎解析抛
+`Expected a ',' or '}'`。`#` 注释/尾随逗号游戏能容忍（R8），**值内裸双引号不能**。
+
+**规范**：
+1. 译文里的中文引用一律用**弯引号 `“”`**（有字形，无结构含义）或 **`【】`**；**不要**写 ASCII `"`，
+   也**不要**依赖手工转义 `\"`（注入器转义链一多必漏）。
+2. **权威校验 = 游戏自带 org.json**（`JsonProbe.java`，注意 `javac --release 17`，env.md 毒点 3）：
+   **先 probe 英文基线再 probe 注入版** —— 基线也 FAIL 的是引擎本就容忍的伪 JSON（如 `.ship` 尾随逗号），
+   保持原样；基线 OK 注入版 FAIL 才是注入引入的破坏。
+   严格解析器（`check_refs` 等）对尾随逗号的报警可能是假阳性，用基线对照定分责任。
+3. **事故实录**（sic-auxiliaries 2026-09）：`aux_tempest.skin` 的 `descriptionPrefix` 译文写了
+   `称为"风暴"` → org.json FAIL；修复 = 值内 `"风暴"` → `“风暴”`。该问题被 `check_refs` 首先报警，
+   由 JsonProbe + 基线对照确诊。
+
+## R19 · jar 层"成对文本"：整句与其高亮/匹配片段必须同批翻译（2026-09 The Vass）
+
+jar 里有两类"同一中文决策必须同时落到多个常量"的成对文本，只译其一必然静默劣化：
+
+1. **高亮子串**：`addPara(text, color, "片段A", "片段B")` 的高亮参数是**译文的子串**。
+   整句 `text` 与每个"片段"常量必须**同批写译**，且译文里必须逐字包含各片段的译文，
+   否则高亮静默失效（无报错，只是不发光）。
+2. **匹配键与显示名成对**：代码用 `variantDisplayName.contains("Defensive")` 这类**显示值匹配**时，
+   数据层显示名译文与 jar 匹配键译文必须**逐字一致**；且该常量在其它类可能另有用途 ⇒
+   jar 补丁必须**类内限定**（patch 时按 class 路径过滤映射），不能全局替换。
+   （事故源：The Vass `VassSmallFleetStart` 依据变体显示名挑开局舰名，只改数据层会让开局逻辑全体落空。）
+
+**校验**：`check_jar_stragglers.js`（A/C=0）只保证"没漏译"，**保证不了配对**；
+配对要在翻译表里以 note 显式登记 + 注入后 `scan_refs.js`/人工 grep 复核。
+
+## R20 · 翻译表必须以"常量原文"为键做二次校验（2026-09 The Vass）
+
+以候选列表的**数组索引**为键写翻译表时，极易把审读输出里 src 行的**整句**当成常量本体
+（实测 810 条里写错 4 处：把 `addPara` 整句当成了旁边的高亮词）。索引只用于审读定位，
+**落表前必须逐条 `candidates[i].c` 回读比对**；更稳的做法是直接以常量原文（文本）为键
+（候选已按文本去重时文本键唯一）。同时注意两类"常量与源码字面量不等长"的折叠：
+- **编译期常量内联**：`static final int PURCHASE_COST = 175000` 会把 `"Lost " + COST + " credits"`
+  折叠成 `"Lost 175000 credits"` —— 译文必须包含数字与单位，不能按"只有前后缀"来译；
+- **第三方常量内联**：编译时 classpath 上的其它 mod 的 `static final String` 会被原样内联
+  （The Vass 内联了本机中文版 Console Commands 的 `ERROR_CAMPAIGN_ONLY`，jar 里出现现成中文）。
+  这类串跳过即可，别当 bug。

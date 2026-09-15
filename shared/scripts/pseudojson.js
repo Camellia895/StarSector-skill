@@ -31,9 +31,22 @@ function parseJsonLoose(raw) {
   s = s.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
   // 引擎 JSON 允许裸枚举值（实测 custom_entities.json 的 "layers":[STATIONS]）：
   // 冒号/逗号/左括号之后的裸标识符按字符串值处理（true/false/null 除外）；只影响“读”，不回写。
-  s = s.replace(/([:,\[]\s*)([A-Za-z_][A-Za-z_0-9]*)(?=\s*[,\]}]|\s*$)/gm, (m, pre, word) =>
-    /^(true|false|null)$/.test(word) ? m : pre + '"' + word + '"');
+  // 2026-09-16 修复：该替换必须跳过字符串内部——tips.json 实测 "…bombers, Daggers, Perditions…"
+  // 这类行内 `, Word,` 会被误加引号，把合法字符串数组搅成非法 JSON（Vayra's Sector 汉化事故）。
+  s = s.replace(/([:,\[]\s*)([A-Za-z_][A-Za-z_0-9]*)(?=\s*[,\]}]|\s*$)/gm, (m, pre, word, off) =>
+    /^(true|false|null)$/.test(word) || insideString(s, off) ? m : pre + '"' + word + '"');
   return JSON.parse(s);
+}
+
+// 判定 offset 是否落在 JSON 字符串字面量内部（处理 \" 转义）。
+function insideString(text, off) {
+  let inStr = false;
+  for (let i = 0; i < off; i++) {
+    const c = text[i];
+    if (inStr) { if (c === '\\') i++; else if (c === '"') inStr = false; }
+    else if (c === '"') inStr = true;
+  }
+  return inStr;
 }
 
 // 原始文本按行切分（去掉行尾 \r）

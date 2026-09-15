@@ -136,6 +136,52 @@
 - `Aegirràn`（jar 常量，带重音符）与 CSV 里的 `Aegirran Frame` / `Aegirran Manufacturing` 指同一事物，**译名须一致**。
 - `hull_mods.csv` 里 `#Chitin Armor` / `#Offensive Targeting Array` 是**被 `#` 注释掉的整行**，译文必须保留开头 `#`。
 
+### 6.4 星际联邦：重制版（Interstellar Federation Refurbished v1.00，2026-09 汉化）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `Interstellar Federation`（势力/制造商） | **星际联邦** | [用户决策] tech/manufacturer 55 格 + 描述内同名，全 mod 一致 |
+| `Interstellar Federation Refurbished`（mod 名） | 星际联邦的遗产 | [用户决策] `mod_info.json` name |
+| `Ifed`（武器制造商旧拼写，4 格） | 星际联邦 | [用户决策] 与 Interstellar Federation 归一同词（英文原版两种拼写并存） |
+| 舰名（Dakota/Rickshaw/Titan… 约 30 条） | 音译，逐条见 `mods\Interstellar Federation Refurbished\ai\zh\02_ship_data.json` | [用户决策] |
+| designation 体系（Frigate/Carrier/…） | 沿用 §3 核心译名 | [核心] |
+
+> 完整 EN→ZH 语料（298 条）：`mods\Interstellar Federation Refurbished\ai\zh\`（与 `ai\en\` 逐条对齐）。
+
+### 6.5 Second-in-Command: Auxiliaries（1.3.0 汉化，2026-09）
+
+| EN | ZH | 来源 / 约束 |
+|---|---|---|
+| `Cadet` / `Storm` / `Valkyrie` / `Apostle` / `Nomad` / `Guerilla` / `Helios` | 学员 / 风暴 / 女武神 / 使徒 / 游牧者 / 游击者 / 赫利俄斯 | [用户决策]（7 倾向名；同时是 Java 高亮词与职务名括号内词，全 mod 同词） |
+| `Raptor` / `Raptor Mk.II`（= `.ship` 的 `Mega Raptor`） | 猛禽 / 猛禽 Mk.II | [用户决策]（显示名以 `ship_data.csv#name` 为准；`.ship` hullName 已对齐同词） |
+| `Tempest (Mk. Storm)` | 暴雨 (风暴型) | [用户决策]（`.skin` hullName） |
+| `Perfect Construction` | 完美构造 | [用户决策]（Nomad 技能名 ↔ Inactive S-Mods 船插 tooltip 高亮词联动） |
+| `Explorer`（修正来源标签） | 探索 | [用户决策]（4 处 `modifyXxx` tooltip 标签） |
+| `Transverse Jump` | 横轴跳跃 | [自定]（核心译名在混淆包内 grep 不到，取「横轴」呼应横移语义） |
+| `Emergency Burn` | 紧急加速 | [核心]（core `strings.json`） |
+| `Megaport` / `Orbital Works` / `High Command` | 特大型港口 / 轨道工业设施 / 最高指挥部 | [用户决策]（产业名，与核心产业词风格一致） |
+| 里程碑名 `Threat/Dweller/Derelict/Remnant/Omega` | 威胁 / 潜伏者 / 残骸 / 余晖 / 欧米伽 | [用户决策]（残骸/余晖与核心势力词一致） |
+| `Open market` / `Black market` | 公开市场 / 黑市 | [核心] |
+| 舰载机类型 `Bomber/Fighter/Interceptor/Support` | 轰炸机 / 战机 / 截击机 / 支援 | [用户决策]（WingType 常量 ↔ WingRoleUpdater 替换词联动） |
+
+> 完整 EN→ZH 语料（560 条）：`mods\sic-auxiliaries-1.3.0\ai\zh\`（与 `ai\en\` 逐条对齐）。
+
+### 6.4 OMM / OrbitalManipulationMaintenance（0.9.0f master 汉化）
+
+| EN | ZH | 来源 / 约束 |
+|---|---|---|
+| `Freitag Corporation`（设计类型/制造商/势力全名） | **弗赖塔格公司** | [自定] ⚠️ **R16 四处一致**：settings.json designTypeColors 键 + ship_data/weapon_data/hull_mods 三表 tech,manufacturer 值 |
+| `Freitag Co.` / `the Freitag Co.` | 弗赖塔格商行 | [自定] .faction displayName |
+| `Freitag Corporation HQ` | 弗赖塔格公司总部 | [自定] jar addCustomEntity/市场名（与 custom_entities freitag_hq 语境衔接） |
+| `Anthozoa Station`（freitag_hq 兜底名） | 珊瑚虫站 | [自定] custom_entities defaultName（代码显式名优先，兜底亦译） |
+| `The Dead Titan`（salvage_gate 兜底名） | 死亡泰坦 | [自定] custom_entities defaultName（代码显式名 "Destroyed Gate"=摧毁的星门 优先） |
+| `Knights of Ludd` | 卢德骑士团 | [核心] jar 军事子市场名 |
+| `commission`（jar Highlights 匹配词） | 委托 | [自定] ⚠️ 必须与 jar Req: 系列配方中 commission 同词，否则高亮静默失效 |
+| `Suspicion level: none/…/extreme` | 怀疑程度：无/轻微/中等/较高/很高/极高 | [自定] 黑市交易风险提示 |
+| Pod 系无人机 | 能量/协同/导弹/复合/混合/大型 荚舱；护盾/点防御/维护 无人机 | [自定] wing_data role desc + ship_data name 同词 |
+| 蟹虾系舰名（Crevette 罗氏虾 / Ecrevisse 螯虾 / Euphausia 磷虾 / Macrocheira 巨螯蟹 / Sesarma 沙蟹 / Limnopilos 淡水蟹 / Sand Hopper 沙跳虫 等） | 见 `_work\mod_work\OMM\out\zh\03_data_ship_data.json` | [自定] 舰名 ↔ 变体 ↔ 图鉴 ↔ tips 全 mod 同词（R11） |
+| `Valhalla` | **不译** | [铁律 R12] 代码星系查找键 |
+
 ## 7. 写作铁律摘要（详见 `iron-rules.md`）
 
 - 标点全角：，。；：？！（）——…；中文强调用 **`【】`/`《》`**，**禁用 `「」『』`**（缺字形 → `?`，铁律 R3）。
@@ -151,7 +197,7 @@
 `<skills>\shared\glossary.json`（`glossary` 映射 + `style_notes`）供脚本消费（`build_worklist2.js` 等）。
 **新增术语请同时更新 `.md`（人读，带来源）与 `.json`（脚本读）。**
 
-### 6.2 SCAV-CO Ship Works（sv，X-8 汉化）
+### 6.6 SCAV-CO Ship Works（sv，X-8 汉化）
 
 | EN | ZH | 来源 |
 |---|---|---|
@@ -168,3 +214,35 @@
 | `Volturnian lobster` | 蓝龙虾 | [核心] |
 | `Corvette`（designation） | 护卫艇 | [自定]（核心语料无该词） |
 | uiTags 分类词（`Shields/Weapons/.../Requires Dock`） | 护盾/武器/…/需要船坞 | [核心]（与核心 hull_mods.csv 同列用词逐字一致；该列为显示列） |
+
+### 6.7 AI War（aiwar，0.4.0 汉化）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `Spire` / `Imperial Spire` | 晶塔 / 帝国晶塔（带冠词版同形，不译 the） | [自定] |
+| `Dark Spire` | 黑暗晶塔 | [自定] |
+| `Neinzul` | 奈因祖尔 | [自定] |
+| `Gemstone`（星系/恒星） | 宝石 | [自定] |
+| `Optica`（星系/恒星） | 奥普蒂卡（音译） | [自定] |
+| `Vengeance Fleet` / `Pestilence Fleet` / `Doom Fleet` | 复仇舰队 / 瘟疫舰队 / 末日舰队（default_fleet_type_names 与 strings 两处同译，R10） | [自定] |
+| `Vengeance Generator` | 复仇发生器 | [自定] |
+| `Forcefield` / `Crystalline Hull` / `Organic Systems` / `Large Vessel` / `Neinzul Youngling` | 力场 / 晶体船体 / 有机系统 / 大型舰体 / 奈因祖尔幼体 | [自定] |
+| 变体后缀 `Assault/Command/Mod-H/Mod-Z/Elite/Basic/Hammer/Sniper/Standard/Beam/Lance/Missile/Standoff/Line/Siege/Support/Skirmisher/Strike` | 突击/指挥/H型改装/Z型改装/精英/基础/重锤/狙击/标准/光束/光矛/导弹/远程/战列/攻城/支援/游击/打击 | [自定] |
+| 舰名前缀 `SIS` / `DSV` / `TTS` / `PLS` | 保留缩写（SIS/DSV 为架空势力前缀；TTS/PLS 沿用核心速子/辛达前缀） | [自定] |
+
+### 6.5 The Vass（维斯家族，0.4.3 · 2026-09 汉化）
+
+> 全 mod 权威译名，源自 `mods\the_vass\ai\README_汉化说明.md`；jar 高亮子串与数据层名称已锁定一致。
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `Vass` / `Vass Families` | 维斯 / 维斯诸家族 | [自定·用户未反对] 势力显示名 + designTypeColors 键族前缀 |
+| `Accel`/`Multa`/`Perturba`/`Recipro`/`Torpor` | 阿克塞尔/穆尔塔/珀图尔巴/瑞西普罗/托泊尔 | [自定] 五大家族（音译）；对应 `* Tech` 键族逐字同步 |
+| 舰名 8 艘（Makhaira/Akrafena/Schiavona/Curtana/Estoc/Katzbalger/Tuck/Baselard） | 玛海拉/阿克拉菲纳/夏沃纳/库尔塔纳/埃斯托克/卡茨巴格/塔克/巴塞拉德 | [自定] 音译 |
+| `Yawarakai-Te` / `Juuchi Yosamu` | 柔手 / 十千夜寒 | [自定] 日文名意译/沿用名刀汉名 |
+| `Periodic Plating` / `Integrated Mountpoint` / `Swiftlaunch Fighter Bays` | 周期镀层 / 整合武器挂点 / 速发舰载机机库 | [自定] 船插 |
+| 14 个战术系统（Chrono Jump 等） | 时序跃迁/等时场/时间撤退… | [自定] 逐条见语料 `ai/zh/03` |
+| `Safety Overrides` | 安全协议超驰 | [核心]（沿用 §6.2） |
+| 变体名 `Defensive/Support/Strike/Hailstorm` | 防御型/支援型/打击型/雹暴 | [自定] ⚠️ 与 jar 内 `variantDisplayName.contains(...)` 匹配键成对翻译（R12 类内限定） |
+| 关系等级 Vengeful…Cooperative | 仇怨…合作 | [社区]（核心通用） |
+| `cycle N` / `the Collapse` | 星历N年 / 大崩塌 | [核心] |
