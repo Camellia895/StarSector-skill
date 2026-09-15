@@ -123,13 +123,82 @@ Java 编译器对相同文本复用同一个 Utf8 条目，因此：
 **安全前提（三条同时成立才可改名）**：
 1. 该 Utf8 只被 ① 本枚举类自己的 `CONSTANT_String`、② 同名字段的 `NameAndType`、③ 枚举构造的字符串参数引用；
 2. **不被任何 `Class` / `MethodType` / `Module` / `Package` 条目引用**（否则是类名/模块名，改了必崩）；
-3. 代码里没有 `Enum.valueOf(X.class, "<该名>")` 或 `name().equals("<该名>")` 这类**按名字串匹配**的逻辑。
+3. 代码里没有 `Enum.valueOf(X.class, "<该名>")` 或 `name().equals("<该名>")` 这类**按名字串匹配**的逻辑；
+4. ⚠️ **凡是引用该枚举常量的类，必须一起改**（见 §2.4.1 的合成类坑）。
 
-**做法**：把常量名**整体重命名**（`Enum.<init>("新名")`、字段名、`CONSTANT_String` 三处引用同一个 Utf8 条目，
-改名自洽）；补丁器要**显式白名单**放行，并在放行前做第 2 条的安全检查，命中即拒绝。
+### 2.4.1 ⚠️ 最容易翻车的点：引用点没改全 = `NoSuchFieldError`（同一 bug 崩了两次）
 
-**验收**：改名后必须实测 `values()` / `name()` 返回中文且类可加载 —— 反射调 `getDeclaredMethod("values")`
-（注意包私有枚举要 `setAccessible(true)`，`name()` 要用 `Enum.class.getMethod("name")` 因为它是继承方法）。
+**第一次崩**：白名单**只写常量不限定 class** ⇒ 只改了枚举类，合成类没改。
+**第二次崩**（修了第一次之后仍崩，栈还指向 `AnomalyIntel.<init>`）：白名单补了合成类 `$1`，
+但**漏了使用方 `AnomalyIntel`** —— 它的构造函数里有 `getstatic TabID.Report`（源码 `TabID selectedTab = TabID.Report;`）。
+
+**枚举常量的引用点一共有三类，一个都不能漏**：
+
+| 引用点 | 引用形态 | 漏改的后果 |
+|---|---|---|
+| 枚举类自身（字段声明 + `Enum.<init>("Report")`） | `CONSTANT_String` + `NameAndType` | 字段名与显示名不一致 |
+| **合成 switch-map 类**（`$1`，`switch` 生成） | **只有 `Fieldref`** | `NoSuchFieldError` |
+| **使用方类**（`getstatic TabID.Report`、`putstatic`、枚举字段默认值） | **只有 `Fieldref`** | `NoSuchFieldError` |
+
+**查全的办法（改之前必跑）**：列出该字面量出现在哪些 class、分别是什么形态
+```powershell
+node scan_refs.js <已解包class目录> Report Stage Fuel Data CR
+# 输出形如：AnomalyIntel.class  "Report" ← Fieldref
+#          AnomalyIntel$1.class "Report" ← Fieldref
+#          AnomalyIntel$TabID.class "Report" ← String+Fieldref
+```
+
+**还有一个更隐蔽的坑（第二次崩的第二层原因）**：若补丁器以「被 `CONSTANT_String` 引用」为替换门槛
+（`patcher.js` 的默认行为），那么**只被 `Fieldref` 引用的那两类会被结构性跳过** ——
+即使把它们写进白名单也不生效。白名单的判定必须与"引用形态"解耦：
+**命中白名单就替换**，并加一致性检查——若该字面量被 `Fieldref` 当字段名用，
+则**每个使用点的宿主类也必须在同一白名单内**，否则拒绝并报错（杜绝"改名一半"）。
+
+**正确做法**：白名单**逐条限定 classes，列出全部三类引用点**：
+```json
+{ "c": "Report",
+  "classes": ["…/AnomalyIntel$TabID.class", "…/AnomalyIntel$1.class", "…/AnomalyIntel.class"],
+  "why": "枚举名=显示名；$1 是合成 switch-map 类、AnomalyIntel 是使用方，三处必须同改" }
+```
+**怎么找全**：改之前先列出"这个字面量出现在哪些 class 里"（遍历全部 class 的 Utf8）；
+原 jar 里 `Report` 会同时出现在 `AnomalyIntel$1.class` 与 `AnomalyIntel$TabID.class`，两个都要进白名单。
+同理 `Fuel` **必须限定 class** —— 商品 id `"fuel"` 出现在别的类里，全局放行会误译。
+
+⇒ **白名单的正确形态是 `{常量, 类白名单}`，而不是"常量白名单"**：同一字面量在不同类里含义可能不同。
+
+### 2.4.2 验收：必须强制**初始化**，只"加载"抓不到
+
+| 检查 | 能否抓到 `NoSuchFieldError: Report` |
+|---|---|
+| `Class.forName(c, false)`（只加载） | ❌ **抓不到** —— 加载不解析成员引用。真实事故里这一步显示 `46/46 OK` |
+| `Class.forName(c, true)`（初始化 → 执行 `<clinit>` 里的 `getstatic`） | ⚠️ 能抓，但**不可靠**：若该类 `<clinit>` 里先抛了别的异常（如需要游戏状态的 NPE），`NoSuchFieldError` 会被挡在后面 |
+| 专门初始化**合成 switch-map 类**并读它的 `$SwitchMap$…` 数组 | ✅ 最直接（见下） |
+| 反射遍历成员（`getDeclaredFields/Methods` + `getType()/getParameterTypes()`） | ✅ 顺带覆盖 |
+| **静态核对：补丁后扫"旧名是否还作为 Fieldref 出现"** | ✅ **最可靠、零环境依赖**（推荐作为硬门槛） |
+
+```powershell
+# 硬门槛：补丁后不得再有旧名作为 Fieldref 出现
+node scan_refs.js <补丁后解包目录> Report Stage Fuel Data CR
+# 通过标准：Fieldref 命中 = 0（译文等于原文的条目，如 "CR"→"CR"，可豁免）
+```
+
+```java
+// 最小探针 ProbeSwitchMap：直接点名合成类，<clinit> 一跑就会暴露引用错误
+Class<?> k = Class.forName("pkg.AnomalyIntel$1", true, cl);
+for (Field f : k.getDeclaredFields()) if (f.getName().startsWith("$SwitchMap")) {
+    f.setAccessible(true); int[] v = (int[]) f.get(null);
+    System.out.println(f.getName() + " len=" + v.length);   // 能打印 len ⇒ 枚举字段引用全部解析成功
+}
+```
+> 分类打印异常时，`NoSuchFieldError` 是 `IncompatibleClassChangeError` 的**子类**，别只匹配字面量就放心；
+> 也**不要**因为"没抛链接错误"就判定通过 —— 先抛的别的异常会把真问题遮住。
+
+### 2.4.3 保守选项（可作为退路）
+
+不想承担同步全部引用点的风险时：**保留枚举名英文**，只中文化 `getName()` 型显示名（构造参数那个字段），
+并在交付说明里写明"哪几处界面会显示英文"。
+（Nomadic Survival 最终选择了"改全 + 静态核对 + 探针"这条路，已通过；
+保守路线的代价是 `TabID` 的 5 个分页标签保持英文。）
 
 ### 坑 5：提取/分类环节的两个"静默误杀"（同一会话，共漏 69 条）
 
@@ -153,6 +222,7 @@ Java 编译器对相同文本复用同一个 Utf8 条目，因此：
 | 2 | 内容变化可控 | 逐条目解压比对（注意 `usize/csize=0` 的目录条目要按空处理，否则 `inflateRawSync` 报 `unexpected end of file`） | 变化条目 == 预期清单 |
 | 3 | 指令等价 | `javap -p -c` 两边对比，把 `// String …` 注释替换为占位符后逐行 diff | **差异行全部是 `ldc`**、行数相同、偏移一一对应 |
 | 4 | 标识符未动 | `walkCp` 的标识符集合两边比对 | 集合相等；全 jar 标识符含 CJK = 0 |
+| 4b | **引用可解析** | `verify_refs_resolvable.js`（Fieldref/Methodref → 宿主类声明表）或 `ProbeSwitchMap`（初始化合成 switch-map 类） | 补丁**新增**的"无法解析引用" = 0；`$SwitchMap$…` 数组能打印出长度 |
 | 5 | 键字面量完好 | 从**全 jar** 的 Utf8 全集里查关键键名 | 全部存在（键可能定义在其它类，别只查目标类） |
 | 6 | 类加载 | 离线 LoadTest（游戏 JRE + `-noverify` + `-Dcom.fs.starfarer.settings.paths.logs=<tmp>`） | 失败 = 0；**"需要游戏上下文"的类单列**（见下） |
 | 7 | 译文落位 | 数据层文件 + jar 常量池双向确认 | 英文原文消失数 = 应消失数；译文命中数 = 应命中数 |

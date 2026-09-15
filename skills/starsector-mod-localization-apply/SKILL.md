@@ -33,6 +33,9 @@ description: Starsector（远行星号）mod 汉化的第三阶段——把填�
 |---|---|---|
 | CSV（单行字段） | 按 `id` 列匹配回填指定列；写回**仅当字段含 `",` `\n` `\r` 之一才加引号**并做 `""` 转义 | `<skills>\shared\scripts\csvlib.js`（`parseCsv` + 写回）；迁移场景用 `csvtool.js migrate` |
 | CSV（多行单元格） | 必须用完整状态机（原版 `hull_mods.csv` 的 `desc` 含真实换行，295 物理行 vs 152 逻辑行） | 同上，勿逐行 `split(',')` |
+| CSV（行尾/末尾换行） | **保持每个文件自己的风格**（铁律 R17）：读原文件判断 `\r\n` 还是 `\n`，并保留"是否以换行结尾"。**别硬编码 CRLF** —— 原版核心是 CRLF，但个别 mod（San-Iris）全 LF，硬编码会把 10 个 CSV 改风格、多行单元格变混合行尾 | 自写（`const EOL = text.includes('\r\n') ? '\r\n' : '\n'`） |
+| rules.csv `text`/`script` | 只回填 `text` 列整格与 `script` 列 `AddText "…"`/`$var = "…"` 的**引号内文字**，保留 `AddText`/颜色参数/`$变量`。⚠️ **needle 必须只是引号内的正文**（铁律 R18）：取成 `AddText "正文` 会把命令关键字一起替换掉，整格只剩 `"译文" 颜色参数`，**命令失效且不报错**；替换后必须断言 `AddText` 仍在 | `migrate_rules_script.js` 思路；改完必跑 R2 校验 |
+| 设计类型名（收尾一遍） | 注入最后**再扫一遍** `settings.json` 的 `designTypeColors` 键 + `ship_data.csv`/`weapon_data.csv` 的 `tech/manufacturer` 全列（铁律 R16：这三处 recipe 覆盖不到，键值不一致 = 静默不上色） | 自写；改完必跑 `check_designtype.js` |
 | rules.csv `text`/`script` | 只回填 `text` 列整格与 `script` 列 `AddText "…"`/`$var = "…"` 的**引号内文字**，保留 `AddText`/颜色参数/`$变量` | `migrate_rules_script.js` 思路；改完必跑 R2 校验 |
 | rules.csv `options` | **合成字段，必须结构级重建**（铁律 R13）：以英文原版的**行数 + 每行 optionId**为准，只替换标签；长式（`数字:optionId:标签`）保留数字前缀；多行之间用**真实换行**（不是字面 `\n`），由写入器按 RFC4180 加引号。**行数/optionId 不符就报错并保留原文，绝不猜** | 自写（本项目 `apply_data.js` 的 `translateOptions`）；改完必跑 `check_options_structure.js` |
 | 伪 JSON | **文本替换**式（`replaceOnce(path, 原片段, 译文片段)`），保持 `#` 注释与缩进原样 | `migrate_json.js`；**严禁** `ConvertTo-Json` 回写（铁律 R8） |

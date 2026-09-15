@@ -1,6 +1,6 @@
 ---
 name: starsector-mod-game-upgrade
-description: 把一个旧版本 Starsector（远行星号）mod（0.95/0.96/0.97 时代，Java 或 Kotlin、有源码或只有 jar）升级到当前 0.98a-RC8 的通用流程与工具集（任务3 的执行主体）。覆盖：环境取证（日志/存档/依赖版本）、编译探测（用 0.98a API 直接编译源码找断点）、jar↔源码一致性证明（javap 签名逐类 diff + 字符串常量对比，判断"能否整包重编译而不丢汉化/逻辑"）、离线 LoadTest、数据层审计（CSV 按表头名读列的证明、缺列是否致命、BOM/宽松 JSON 语法）、引用完整性校验、语义核查（反汇编 starfarer_obf.jar 单点确认引擎行为）、并行子代理深度审查的正确用法、事故库（10+ 条真实假阳性陷阱）、版本号/changelog/交付衔接。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
+description: 把一个旧版本 Starsector（远行星号）mod（0.7x/0.8x/0.95/0.96/0.97 时代，Java 或 Kotlin、有源码或只有 jar）升级到当前 0.98a-RC8 的通用流程与工具集（任务3 的执行主体）。覆盖：环境取证（日志/存档/依赖版本）、编译探测（用 0.98a API 直接编译源码找断点）、jar↔源码一致性证明（javap 签名逐类 diff + 字符串常量对比，判断"能否整包重编译而不丢汉化/逻辑"）、离线 LoadTest、数据层审计（CSV 按表头名读列的证明、缺列是否致命、BOM/宽松 JSON 语法）、引用完整性校验、语义核查（反汇编 starfarer_obf.jar 单点确认引擎行为）、并行子代理深度审查的正确用法、事故库（26+ 条真实假阳性陷阱）、**0.9 以下旧 mod 专项（§7：wing_data 表头硬读、.faction known*/shipRoles 三层坑、经济模型条件→产业、机翼变体改名，附三个专属闸门）**、版本号/changelog/交付衔接。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
 ---
 
 # mod 版本升级（旧版 → 0.98a-RC8）
@@ -19,6 +19,11 @@ description: 把一个旧版本 Starsector（远行星号）mod（0.95/0.96/0.97
 ## 1. 判定树：先给 mod 分类（决定走哪条路）
 
 ```
+先看 mod_info.json 的 gameVersion（目标准入版本）：
+├─ ≤ 0.8x（0.9 以下）→ 主体十步 + **必读 §7**（势力文件/wing_data/经济模型/机翼改名四类硬断点
+│   + 3 个专属闸门；编译 114 错→0 之后仍连爆 5 轮运行时错误，全部落在 §7 射程内。AI War 实证）
+├─ 0.9x 及以后 → 主体十步即可
+
 有 jars\src（或 mod 目录内任意层级 src）?
 ├─ 有 → 检查 jar 是否可整包重编译（第 3 步）；能重编译就别做常量池补丁
 └─ 无 → 见 §1.1「只有 jar 的 mod」
@@ -283,6 +288,15 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
     CSV 表头列名 0.8→0.98 高度稳定（按表头名取列，缺列=默认值）、id/variant 引用大多健在。
     先跑 check_encoding / check_refs / check_assets / ProjSpecCheck / JsonProbe + 与原版表头 diff 取证，
     别凭"年代久远"预设大改；命名顾虑（如 `peak CR sec`、`variant` 列）一律以核心现行文件对照定夺。
+27. **0.9 以下（0.7x）mod ≠ 0.8a 纯数据 mod 的难度**：0.7 时代 mod 命中 §7 的四类硬断点
+    （wing_data 表头硬读、.faction known* 三层坑、经济模型条件→产业、机翼变体改名），
+    "只改几字节"的经验**不适用**；且错误沿加载顺序逐层暴露（AI War 连爆 5 轮），详见 §7。
+28. **变体 id 以「文件内 variantId 字段」为准，不是文件名**：`kite/kite_Interceptor.variant`
+    注册 id 是 `kite_hegemony_Interceptor`。建校验池必须解析每个 `.variant` 的内部字段，
+    按文件名建的池会给出假 PASS（§7.4）。
+29. **faction 数据校验发生在读档/开局期，不在启动期**：`CoreLifecyclePluginImpl.verifyFactionData`
+    逐条核对 knownShips/knownHullMods/knownFighters/knownWeapons 对注册表，id 填错（如
+    knownHullMods 填类名而非小写 id）= 读档时 RuntimeException ⇒ **冒烟必须读一次档**，只进主菜单不够（§7.2）。
 
 ## 4. 反模式
 
@@ -305,6 +319,7 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 - [ ] `changelog.txt` 有新版本条目
 - [ ] 交付走 `starsector-mod-delivery`（结构说明 + `ai\` + git + zip 自检）
 - [ ] **游戏内**：新档能生成内容 → 目标功能可用 → 日志无新增 `at data.scripts.` 栈帧
+- [ ] **（≤0.8x mod，§7）**三个专项闸门 PASS + **读档冒烟**（verifyFactionData 在读档期跑）
 - [ ] 若此 mod 有汉化：`-apply` 重打补丁 + `-verify` G4/G5 通过
 
 ## 6. 脚本（本 skill 的 `scripts\`）
@@ -314,6 +329,104 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 | `build_java_mod.ps1` | 编译 `src` → 打包 → 备份 → 安装 | `-ModDir mods\<Mod> [-SrcDir jars\src] [-JarName X.jar] [-NoInstall] [-ExtraCp <jars;>]` |
 | `LoadTest.java` | 离线类加载/实例化/脚本类校验 | `java -noverify -D...logs=<tmp> -cp ... LoadTest <jar> <modDir>` |
 
+> §7 专项闸门（0.9 以下 mod）在 `<skills>\shared\scripts\`：`check_wing_data_schema.js` /
+> `check_faction_shiproles.js` / `check_faction_known_lists.js`，用法见 `script-registry.md` D 节。
+
 > 其余校验脚本（`check_refs.js`/`check_assets.js`/`check_sprites.js`/`check_deprecated.js`/`cmp_strings.js`/
 > `csvcheck.js`/`jsonkeys.js`/`JsonProbe.java`）已统一到 `<skills>\shared\scripts\`，见 `script-registry.md`。
 > 全部校验脚本**只读+打印**；改文件请人工确认后再动手。
+
+## 7. 0.9 以下的 mod（0.7x/0.8x）专项断点（AI War 0.7.2a→0.98a 全量沉淀）
+
+> 适用判定：`mod_info.json` 的 `gameVersion` ≤ 0.8x。除主体十步外**必过本节**。
+> 这些断点编译器全查不出、且沿加载顺序**逐层暴露**：启动 spec 加载（wing_data）→ faction shipRoles
+> （NPE）→ faction knownShips（schema）→ **读档期** verifyFactionData（knownHullMods id）——
+> AI War 实际连爆 5 轮。三个专属闸门（`shared\scripts\`，均已登记 script-registry.md D 节）：
+> `check_wing_data_schema.js` / `check_faction_shiproles.js` / `check_faction_known_lists.js`。
+
+### 7.1 wing_data.csv：缺列会崩（"缺列=默认"的**唯一已知例外**）
+
+- `FighterWingSpreadsheetLoader` 对 **16 列** `getString` 硬读：id/variant/tier/tags/role desc/role/
+  refit/rarity/range/op cost/num/formation/fleet pts/base value/attackRunRange/attackPositionOffset。
+  0.7 时代 23 列表头缺 `role desc` 等 → 启动崩溃 `JSONObject["role desc"] not found`（资源加载线程死亡）。
+- 修法：**表头照抄 core 重建**（脚本程序化取 core 表头，别手数逗号——29 列）；原值（id/variant/FP/
+  formation/num/role/refit/base value/number）保留；新列按 core 同类机翼估值并留档；
+  `role desc` 可写中文（与本地化核心一致，过 `check_font_glyphs.js`）。
+- hulls/weapons/hull_mods 的"缺列=默认"**仍然成立**（sylphon/Ifed 实证），只有 wing_data 是例外。
+
+### 7.2 .faction：0.8a 势力重构三连（有的炸在读档期，冒烟必须读档）
+
+1. **known* 四键必需且必须是对象**：`"knownShips":{"tags":["<faction>"],"hulls":[...]}`，
+   内键固定 hulls/fighters/weapons/hullMods（SpecStore `getJSONObject` 硬读，**裸数组=启动崩溃**）。
+   0.7 无此机制（选船直接走 shipRoles）；缺失 → 势力选不到任何船/机翼。
+   id 对照合并注册表：hullmod 填 hull_mods.csv 的 **id（全小写）不是类名**；`CoreLifecyclePluginImpl.
+   verifyFactionData` 在**读档/开局期**逐条核对 → 只进主菜单的冒烟测不出来（事故库 29）。
+   顺带：player.faction 需有 `"id":"player"` 键。
+2. **shipRoles 全条目解析，dead 角色键不忽略**：0.9a 已删的 interceptor/fighter/bomber 角色里的
+   `"变体id":权重` 也会逐条 `Misc.getHullIdForVariantId` → id 不存在=NPE（"Loading xxx faction" 之后）。
+   修法：改指向现存变体，或删死角色（0.98 机翼由 carrier 角色 + knownFighters autofit 承担）。
+   校验注意：`fallback:{...}` 里是**角色名**不是变体，须先剥掉；**变体 id 按「文件内 variantId 字段」**
+   （注册 id）建池——`kite_Interceptor.variant` 注册为 `kite_hegemony_Interceptor`（事故库 28）。
+3. **`doctrine` 旧块被忽略**：0.98 只认 `factionDoctrine`（warships/carriers/phaseShips/officerQuality/
+   shipQuality/numShips/shipSize/aggression/combatFreighterProbability），旧块保留不删、旁边补新块
+   （照 hegemony.faction 模板迁移权重）。
+
+### 7.3 经济模型（0.7→0.9a 重写，代码+星系生成都要动）
+
+- 生产条件 → Industries（`market.addIndustry`，必须在 `EconomyAPI.addMarket(market, true)` 之前）：
+
+| 旧条件（0.7） | 0.98 产业 |
+|---|---|
+| ORE_COMPLEX / VOLATILES_COMPLEX / VOLATILES_DEPOT | `Industries.MINING` |
+| ORE_REFINING_COMPLEX | `Industries.REFINING` |
+| ORGANICS_COMPLEX / HYDROPONICS_COMPLEX | `Industries.FARMING` |
+| LIGHT_INDUSTRIAL_COMPLEX | `Industries.LIGHTINDUSTRY` |
+| AUTOFAC_HEAVY_INDUSTRY | `Industries.HEAVYINDUSTRY` |
+| ANTIMATTER_FUEL_PRODUCTION | `Industries.FUELPROD` |
+| MILITARY_BASE | `Industries.MILITARYBASE` |
+| HEADQUARTERS | `Industries.HIGHCOMMAND`（或保留条件 `"headquarters"`，注册表仍在） |
+| ORBITAL_STATION | `Industries.ORBITALSTATION` |
+| SPACEPORT | `Industries.SPACEPORT`（条件注册表已无它） |
+| TRADE_CENTER | 保留条件 `"trade_center"`（注册表仍在，Java 常量被注释用字面量） |
+
+- **population 产业必须显式加**：食物需求与人口增长都在它身上（全部原版市场都有；
+  `PopulationAndInfrastructure.demand(FOOD, size)`）。
+- 删除 `setBaseSmugglingStabilityValue`（走私稳定机制已移除）；`addMarket` 变两参 `(market, true)`。
+- 市场条件插件（如"无机人口"）：`MarketDemandAPI.getNonConsumingDemand()`、
+  `BaseMarketConditionPlugin.getPopulation(market)`、`ConditionData.POPULATION_FOOD_MULT` 全删——
+  食物需求 = `market.getSize()`（人口产业 demand(FOOD, size) 即 size×1）。
+- 负数 `cargo.addCommodity(id, -n)` 是 **no-op**（`CargoData.addItems` 忽略 ≤0）→ 用 `removeCommodity`
+  （走独立 removeItems 路径，反汇编证实）。
+
+### 7.4 机翼变体改名（0.6/0.7 的 `*_wing` → `*_Fighter/_Bomber/_Interceptor/_Support`）
+
+- 影响面：mission `addToFleet` 实参、`sim_opponents.csv`、`title_screen_variants.csv`、faction
+  shipRoles、代码里的 `endsWith("_wing")` 判据——`_Support` 与舰船变体冲突，判机翼改用
+  `Global.getSettings().getAllFighterWingSpecs()` 的 `getVariantId()` 匹配。
+- **wing id ≠ 变体 id**：wing_data 的 id 列仍叫 `*_wing`（knownFighters 用它），variant 列才是变体。
+- 检查引用时按 §7.2 的注册 id 口径，别用文件名、也别用后缀白名单（`*_wing` 恰是漏网案例）。
+
+### 7.5 任务与舰队 API
+
+- `CargoAPI.CrewXPLevel` 枚举与 `FleetMemberAPI.getCrewXPLevel()` 已删：任务 `addToFleet` 全部去掉
+  末位 XP 实参（janino 任务文件同步改，它们不在 jar 里、由游戏运行时编译）。
+- `FleetFactoryV2` → `FleetFactoryV3` + `FleetParamsV3`：旧 16 参 ctor 映射——
+  qualityOverride→ctor 第 4 参（Float）、officerNumMult→字段 `officerNumberMult`、
+  officerLevelBonus→字段、qualityBonus→ctor 末参 qualityMod（0 即默认）。
+- `reportBattleFinished` 的 `battle.getPrimary(...)` 可为 null（原版 CoreScript 同样判空），补 null 守卫。
+- 可选依赖的守卫模式（`getScriptClassLoader().loadClass(...)` + 静态 boolean）在 0.98 仍有效；
+  编译期需要被依赖 jar/桩（桩只进编译 classpath 不进交付 jar，方法描述符用 `javap -c` 从原 jar
+  字节码抄，别凭记忆）。XStream 仍在（`xstream-1.4.10.jar`），`configureXStream` 仍被引擎调用。
+
+### 7.6 升级闸门与冒烟纪律（AI War 五轮炸点 ↔ 闸门对应）
+
+| 炸点 | 症状 | 闸门 |
+|---|---|---|
+| wing_data 表头 | 启动崩 `JSONObject["role desc"] not found` | `check_wing_data_schema.js` |
+| shipRoles 变体 id | faction 加载 NPE（getHullIdForVariantId / getFPCost） | `check_faction_shiproles.js` |
+| known* 结构/条目 | faction 加载 JSONException；**读档期** verifyFactionData RuntimeException | `check_faction_known_lists.js` + shiproles 闸门 |
+
+- 三个闸门全 PASS **还不够**：`verifyFactionData` 在读档期跑 ⇒ 冒烟必须**读一次存档**；
+  能进游戏后再看功能（市场产业、舰队带机翼、战斗特效）。
+- 装完发现连爆多轮是**预期形态**：加载器修好第 N 层才会撞第 N+1 层，闸门的意义就是把
+  N+1… 层全部在进游戏前拦下。

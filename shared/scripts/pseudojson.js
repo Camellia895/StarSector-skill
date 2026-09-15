@@ -23,12 +23,16 @@ function stripJsonComments(raw) {
   return out;
 }
 
-// 宽松解析：去注释 → 去 Java float 后缀 → 去尾随逗号 → JSON.parse。
+// 宽松解析：去注释 → 去 Java float 后缀 → 去尾随逗号 → 裸枚举值加引号 → JSON.parse。
 // 注意：文件内字符串若含 “数字+f” 字面（几乎不会），会被误伤；可先人工确认。
 function parseJsonLoose(raw) {
   let s = stripJsonComments(raw);
   s = s.replace(/(\d+(?:\.\d+)?)f\b/g, '$1');   // 1.2f -> 1.2
   s = s.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
+  // 引擎 JSON 允许裸枚举值（实测 custom_entities.json 的 "layers":[STATIONS]）：
+  // 冒号/逗号/左括号之后的裸标识符按字符串值处理（true/false/null 除外）；只影响“读”，不回写。
+  s = s.replace(/([:,\[]\s*)([A-Za-z_][A-Za-z_0-9]*)(?=\s*[,\]}]|\s*$)/gm, (m, pre, word) =>
+    /^(true|false|null)$/.test(word) ? m : pre + '"' + word + '"');
   return JSON.parse(s);
 }
 

@@ -108,6 +108,13 @@ git -C <dir> remote add origin https://github.com/<you>/<repo>.git
 
 ## 4. 常见问题
 
+- **`fork_src.ps1` 在第 2 步就中断（2026-09 已修）**：脚本首行 `$ErrorActionPreference='Stop'` 会让
+  PS 5.1 把 `gh repo view <you>/<repo>`（fork 尚不存在时必然报的 GraphQL 错）**升级为终止错误**，
+  于是**走不到 fork 与下载**。症状：只打印 `[fork_src] account: …` 然后抛 `NativeCommandError`。
+  现脚本已内置 `Invoke-Capture`（局部把 EAP 降为 `Continue`，回传 `$LASTEXITCODE` 与 stdout），
+  并以"输出为空"而非"报错"作为"尚未 fork"的判据。
+  **写新脚本时的通用纪律**：PS 5.1 下任何**预期会失败**的 native 命令（`gh` 查不存在的仓库、`git` 写 stderr 进度）
+  都必须 `2>$null` 或走 `Invoke-Capture`，否则在 `EAP='Stop'` 下会把正常流程打断。
 - **gh 能通、git clone 不通**：`api.github.com` 通 ≠ `github.com` 通；git 智能协议走 github.com，
   被阻断时无解（`insteadOf` 改写也无法替代 git 协议），用第 5 步 tarball。
 - **fork 报 404 查看失败**：`gh repo view <you>/<repo>` 对不存在的仓库报 GraphQL 错——这正是"尚未 fork"的判定信号。

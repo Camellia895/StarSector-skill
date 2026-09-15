@@ -118,6 +118,24 @@
 | LunaLib 页签名 `HotKeys`/`Settings`/`UI Settings`/`Dev Tools` | 热键 / 设置 / 界面设置 / 开发者工具 | [自定] |
 | ⚠️ **绝不译** | 全部 `RTSA_Settings*` 键、`hotKeys`/`config`、`modID`（**同时是 `Config.ini` 的键** `confPointer.get("modID")`，且与局部变量同名 ⇒ patcher 会按标识符保护跳过）、音效事件名（sounds.json 的键）、第三方舰体/系统 id、`Point Defense (Area)` 等与原版比对的串 | [铁律 R7] |
 
+### 6.3 San-Iris（`Sikair/SanIris` 1.1.0，0.98a-RC8 汉化）
+
+> **2026-09 用户决策**（本表为权威，全 mod 必须同词）：
+
+| EN | ZH | 来源 / 约束 |
+|---|---|---|
+| `San-Iris`（**设计类型/制造商名**） | **圣艾瑞斯联邦** | [用户决策] ⚠️ **铁律 R10 关键项**：同一字符串同时是 ① `data/config/settings.json` 的 `designTypeColors` **键**、② `data/hullmods/hull_mods.csv` 与 `data/weapons/weapon_data.csv` 的 `tech/manufacturer` **值** —— 这两处**必须逐字一致**且键唯一 |
+| `San-Iris`（势力**显示名**） | **圣艾瑞斯联邦** | [用户决策] `.faction` 的 `displayName` |
+| `San-Iris Federation` / `The San-Iris Federation` / `the San-Iris Federation` | 圣艾瑞斯联邦（带冠词版与主名一致） | [用户决策] `.faction` 的 `displayNameLong*` |
+| `San Iris`（jar 常量，**无连字符**） | 圣艾瑞斯联邦 | [用户决策] ⚠️ 事件/情报文本里作者写作 `San Iris`，与 `San-Iris` **指同一势力**，须同词 |
+| `Eternal Empress` | 永恒女皇 | [自定] `.faction` 的 `ranks`+`posts` 同名（对话/称号显示） |
+| 舰名 / 武器名（~240 条） | **音译** | [用户决策] 逐条见 `_work\mod_work\SanIris\out\worklist\02_hulls_weapons.json` |
+| `Edel` / `Iris` / `Lily` / `Hyacinth`（星系与星球名） | **由用户自行翻译** | [用户决策] 我（AI）不预设汉化方案；译则须全 mod 同译（星球名 ↔ 市场名 ↔ 任务文案 ↔ 图鉴描述） |
+
+**易错点**：
+- `Aegirràn`（jar 常量，带重音符）与 CSV 里的 `Aegirran Frame` / `Aegirran Manufacturing` 指同一事物，**译名须一致**。
+- `hull_mods.csv` 里 `#Chitin Armor` / `#Offensive Targeting Array` 是**被 `#` 注释掉的整行**，译文必须保留开头 `#`。
+
 ## 7. 写作铁律摘要（详见 `iron-rules.md`）
 
 - 标点全角：，。；：？！（）——…；中文强调用 **`【】`/`《》`**，**禁用 `「」『』`**（缺字形 → `?`，铁律 R3）。
@@ -132,3 +150,21 @@
 
 `<skills>\shared\glossary.json`（`glossary` 映射 + `style_notes`）供脚本消费（`build_worklist2.js` 等）。
 **新增术语请同时更新 `.md`（人读，带来源）与 `.json`（脚本读）。**
+
+### 6.2 SCAV-CO Ship Works（sv，X-8 汉化）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `SCAV-CO` / `VACS-INC` | **保留英文品牌名**（designTypeColors 注册键 + tech/manufacturer + 舰名前缀三通道同步保留，R16） | [自定] |
+| `Ultima`（设计类型/武器商） | 终极（舰名"终极号"；designTypeColors 已注册键"终极"） | [自定] |
+| `d-mods` | D-插件 | [核心] |
+| `Transplutonics` | 稀有元素 | [核心] |
+| `Hardened Subsystems` | 硬化子系统 | [核心] |
+| `Integrated Point Defense AI` | 整合点防御 AI | [核心] |
+| `Advanced Targeting Core` | 先进目标定位核心 | [核心] |
+| `Safety Overrides` / `Unstable Injector` | 安全协议超驰 / 不稳定喷射器 | [核心] |
+| `Phase Skimmer` | 闪现 | [核心] |
+| `Hellbore` / `Heavy Mauler` / `Autopulse Laser` | 炼狱炮 / 重型撕裂者 / 自动脉冲激光 | [核心] |
+| `Volturnian lobster` | 蓝龙虾 | [核心] |
+| `Corvette`（designation） | 护卫艇 | [自定]（核心语料无该词） |
+| uiTags 分类词（`Shields/Weapons/.../Requires Dock`） | 护盾/武器/…/需要船坞 | [核心]（与核心 hull_mods.csv 同列用词逐字一致；该列为显示列） |

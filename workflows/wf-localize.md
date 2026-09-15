@@ -65,14 +65,19 @@
 5. 安装到 `mods\<Mod>\`，jar 备份 `*.orig`，装后做 SHA-256 比对。
 
 跑完立刻过一遍闸门（`-apply` §3）：`check_options_structure.js` / `scan_data_stragglers.js` /
-`scan_logic_keys.js` / `check_jar_patch_integrity.js` 是本轮新增的四道，**别漏**。
+`scan_logic_keys.js` / `check_jar_patch_integrity.js` 是四道常跑的，**别漏**。
+另两道**极易漏但代价高**：
+`check_designtype.js`（R16：设计类型名有**三通道** —— `settings.json` 的 `designTypeColors` **键** +
+`ship_data.csv`/`weapon_data.csv` 的 `tech/manufacturer` **全列**，三者都不是 recipe 列，漏一处就**静默不上色**）；
+`check_eol.js`（R17：整文件重写 CSV 必须**保持该文件自己的行尾风格**，硬编码 CRLF 会改风格且
+`cmp_csv_struct.js` 查不出来）。
 
 ## 阶段 4 · 验证（AI 做）
 
 执行 `starsector-mod-localization-verify`：
 
 - **G2** 内容完整（`check_content.js`）
-- **G3** 数据层字节安全（`check_encoding.js` / `check_csv_quotes.js` / **`check_options_structure.js`（R13）** / `check_rules_arg_quotes.js` / `check_font_glyphs.js` / `check_homoglyphs.js` / **`check_designtype.js`（R10 补充：分类名静默降级）** / `verify_all_data.js` / **`scan_data_stragglers.js`（R14）**）
+- **G3** 数据层字节安全（`check_encoding.js` / `check_csv_quotes.js` / **`check_eol.js`（R17 行尾风格）** / **`check_options_structure.js`（R13）** / `check_rules_arg_quotes.js` / `check_font_glyphs.js` / `check_homoglyphs.js` / **`check_designtype.js`（R16/R10：分类名静默降级）** / `verify_all_data.js` / **`scan_data_stragglers.js`（R14）** / **`cmp_csv_struct.js` + `cmp_csv_cells.js`（结构等价 + 差异格全登记）**）
 - **G4** jar 安全（`verify_identifiers.js` / **`scan_logic_keys.js`（R12）** / `check_u0001.js` / `verify_u0001_jar.js` / **`check_jar_patch_integrity.js`** / **`check_jar_stragglers.js`（对着交付 jar 跑；`scan_stragglers.js` 只吃 .class 目录，易扫到补丁前副本 → 假警报）** / `sweep_sentences.js`）
 - **G5** 引用与类加载（`check_refs.js` / `check_assets.js` / `check_sprites.js` / `LoadTest`）
 - **G6** 装船目检（游戏内逐路径）

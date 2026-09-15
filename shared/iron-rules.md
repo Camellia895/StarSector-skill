@@ -246,3 +246,74 @@ node <skills>\shared\scripts\check_install_source.js <modRoot> <EN原版备份�
 ```
 
 **校验**：`check_install_source.js`（自动从英文备份里挑"最长英文文本列"作探针）。
+
+---
+
+## R16 · 设计类型名有**三个通道**，recipe 只覆盖一个（**静默不上色/显示原值**）
+
+**事故（San-Iris 1.1.0 汉化）**：`tech/manufacturer` 只在 `hull_mods.csv` / `special_items.csv` 被 recipe 提取并译成
+「圣艾瑞斯联邦」，而**同一个设计类型名还从另外两处进入引擎**，两处都没进任何清单：
+
+| 通道 | 位置 | 谁覆盖 |
+|---|---|---|
+| ① 注册表**键** | `data/config/settings.json` 的 `designTypeColors` **键** | ❌ 不是任何 CSV 列 ⇒ 任何 recipe 都抓不到 |
+| ② 舰船行 | `data/hulls/ship_data.csv` 的 `tech/manufacturer`（本次 40 行） | ❌ 需要显式写进 recipe |
+| ③ 武器行 | `data/weapons/weapon_data.csv` 的 `tech/manufacturer`（本次 36 行） | ❌ 同上 |
+
+结果：键还是英文 `"San-Iris"`、值是中文「圣艾瑞斯联邦」⇒ 引擎**查不到注册项**，
+**不报错、不打日志**，直接把值当分类名显示**且不上色**（R10 的静默降级）。
+`check_designtype.js` 抓到了它 —— 这就是该闸门存在的理由。
+
+**强制做法**：
+
+1. 提取阶段**必须**用 `check_designtype.js` 反查，而不是"我觉得 recipe 覆盖了"：
+   ```powershell
+   node <skills>\shared\scripts\check_designtype.js <modRoot>
+   ```
+   **合格标准 = 0 问题**（键集合与全部 `tech/manufacturer` 取值精确匹配）。
+2. 设计类型名有 N 处出现就译 N 处，且**键与值必须逐字一致**；`settings.json` 的键用
+   **文本替换**改写（R8），不要序列化回写。
+3. 把"改设计类型名"做成注入器的**收尾一遍**（扫描 `settings.json` 键 + 两张 CSV 的
+   `tech/manufacturer` 全列），而不是靠人记得补 —— San-Iris 会话里这一步被漏过一次。
+
+> 另一条通道：`.skin`/`.ship` 的 `tech` 字段（本 mod 无 `.skin`，故 0 处）。
+> 删除/改名设计类型时键**必须唯一**（重复键 = 启动 fatal）。
+
+**校验**：`check_designtype.js`（0 问题）+ `verify_all_data.js`。
+
+## R17 · 数据层注入：**保持每个文件自己的行尾风格**（别硬编码 CRLF）
+
+**事故（San-Iris 1.1.0 汉化）**：注入器整文件重写 CSV 时硬编码 `\r\n`，而**该 mod 的 data 文件全部是 LF-only**
+（与**原版核心 CRLF 相反**）。结果 10 个 CSV 被改成 CRLF，`rules.csv` 更因多行引号单元格变成**混合行尾**
+（单元格内 LF + 物理行 CRLF）。
+`cmp_csv_struct` 当时**没报警**（它按解析结果比对，行尾被吞掉），是"与英文基线逐字节分类行尾"的
+专项审计才发现的 —— 说明"结构一致"不等于"字节风格一致"。
+
+**规范**：
+
+- 写回前**读原文件判断**：`const EOL = text.includes('\r\n') ? '\r\n' : '\n'`；**连带保留"文件是否以换行结尾"**
+  （否则每次注入都会多出一个尾行）。
+- **不要**照抄 `env.md` 的"写回 CSV 保持原 CRLF"当成无条件规则 —— 那句话的前提是**上游文件本身就是 CRLF**。
+  正确表述：**保持原文件风格**（原版核心与多数 mod 是 CRLF；个别 mod 全 LF）。
+- 审计手段：逐文件比较 `crlf 数 / 单独 LF 数 / 是否以换行结尾`，与英文基线**必须全等**
+  （`_work\mod_work\SanIris\tools\check_eol.js`）。
+
+**校验**：行尾审计脚本（0 变更）+ `cmp_csv_struct.js`。
+
+## R18 · 注入器的"格内子串替换"：needle 只能是**引号内的正文**
+
+**事故（San-Iris 1.1.0 汉化）**：`rules.csv` 的 `script` 列形如 `AddText "正文" marketFlavorTextColor`。
+注入器把 needle 取成了 `AddText "正文`（**带上了命令关键字与开引号**），替换后整格变成
+`"译文" marketFlavorTextColor` —— **`AddText` 关键字被吃掉**，命令失效。
+两轮修正才定位（第一轮误判成"译者漏抄 AddText"，实际是注入器自己吞掉的）。
+
+**规范**：
+
+1. needle **必须只是引号之间的正文**：从 `m[1]` 里用 `/^[\s\S]*?AddText\s+"/` 剥掉前缀，
+   先用 `stripped.includes(innerEn)` 断言能命中，再替换。
+2. 替换后**必须反向断言关键字仍在**：`if (!replaced.includes('AddText')) → 报错退出`。
+   这类"静默吃掉命令"不会抛异常，只会让游戏里少一段文本。
+3. 命令参数**禁引号**（R2）：译文里出现 `"` 直接拒绝写盘。
+4. 收尾跑 `check_rules_arg_quotes.js`，**判据是"奇数引号行 = 0"**（不是只看"弯引号 = 0"——
+   本次弯引号一直是 0，问题出在 ASCII 引号被吃）。
+

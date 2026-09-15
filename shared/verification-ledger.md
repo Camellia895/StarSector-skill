@@ -14,6 +14,9 @@
 | `check_jar_patch_integrity.js` | red | cond | **补丁洁净性**：类集合一致 + 映射外常量改动 = 0（补丁脚本退化成全量替换会立刻暴露） |
 | `check_homoglyphs.js` | yellow | base | 同形异义字符（西里尔/希腊伪拉丁）→ 字库缺字形显示 `?` + 英文检索静默失败 |
 | `check_designtype.js` | red | base | **设计类型/制造商注册表**：`tech`/`manufacturer` 值必须命中 `designTypeColors` 键，否则原值被当分类名显示（静默降级，症状=分类名还是英文）。查 CSV **与** `.skin`/`.ship` 的 `tech` 两处 |
+| `check_wing_data_schema.js` | red | base | **wing_data 表头硬需求**（2026-09-15 AI War 事故沉淀）：`FighterWingSpreadsheetLoader` 对 `role desc` 等 16 列 `getString` 硬读，缺列=启动崩溃。"缺列=默认"对 hulls/weapons/hullmods 成立、对 wing_data **不成立**；旧版 mod 升级必跑 |
+| `check_faction_shiproles.js` | red | base | **faction shipRoles 变体可解析**（2026-09-15 AI War 事故沉淀）：不存在的变体 id = faction 加载 NPE 启动崩溃；dead 角色键也会被解析。fallback 里是角色名不是变体，先剥掉再匹配；变体 id 按「文件内 variantId 字段」校验 |
+| `check_faction_known_lists.js` | red | base | **faction known\* 条目对照注册表**（2026-09-15 AI War 事故⑤沉淀）：复刻 verifyFactionData；id 填错（如类名而非 id）在读档/开局才炸，冒烟必须读档 |
 | `check_refs.js` | red | cond | 改过装配/舰船/武器/贴图引用 |
 | `LoadTest.java` | red | cond | 离线类加载/实例化 + 脚本类存在性（skill 自带脚本，见 `script-registry.md` F 节） |
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3）；零宽字符单列提示、不计命中 |

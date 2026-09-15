@@ -78,6 +78,15 @@ node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版�
 
 必须 **0 候选**才算提取完整。有候选 → 补提取（写专用提取脚本或扩 recipe）→ 重跑，**不要**靠目检文件。
 
+**反查设计类型名（铁律 R16，反例实测）**：`settings.json` 的 `designTypeColors` **键**不属于任何 CSV 列，
+**任何 recipe 都抓不到**；而同一个设计类型名还出现在 `ship_data.csv` 与 `weapon_data.csv` 的
+`tech/manufacturer` **全列**（不只是 `hull_mods.csv`）。只译 `hull_mods.csv` 会得到
+"键=英文 / 值=中文" ⇒ 引擎查不到注册项、**不报错**、直接把值当分类名显示且**不上色**。
+
+```powershell
+node <skills>\shared\scripts\check_designtype.js <modRoot>   # 必须 0 问题
+```
+
 > 配套技巧：`.skin`/`.ship` 这类结构化文件，先"列出全部字符串字段 + 出现次数"摸清有哪些字段，
 > 再决定哪些要译；**别只 grep `hullName`**（本项目就是这样漏掉 `descriptionPrefix` 的）。
 >

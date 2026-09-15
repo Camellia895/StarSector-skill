@@ -15,6 +15,7 @@
 
 | 情况 | 走法 |
 |---|---|
+| **目标准入版本 ≤0.8x（0.9 以下）** | 主体流程 + **必读 skill §7 专项**：三个 faction/wing 闸门（`check_wing_data_schema` / `check_faction_shiproles` / `check_faction_known_lists`）+ **读档冒烟**（verifyFactionData 在读档期跑） |
 | Java 源码 + jar | 主体流程（下 §2），编译探测 + jar↔源码一致性证明 |
 | Kotlin 源码 + jar | `starsector-mod-kotlin-rebuild` 的编译链；编译探测/一致性仍按主体流程 |
 | **只有 jar（无源码）** | 主体流程 §1.1（先只读审计 → 确认 API 真断 → 只替换少数类 → 才考虑整包重编译）；反编译用 `starsector-jar-decompile` |
@@ -76,4 +77,5 @@
 - [ ] `changelog.txt` 已更新；报告里区分"0.98 回归"与"上游一直就坏"
 - [ ] 有汉化 ⇒ 汉化已重新注入并通过 G4/G5
 - [ ] `starsector-mod-delivery` 四项齐备并打包自检
+- [ ] **（≤0.8x mod）**skill §7 三个专项闸门 PASS + **读档冒烟**通过（verifyFactionData 在读档期核对 known*，只进主菜单不够）
 - [ ] **游戏内**：新档生成内容 → 目标功能可用 → 日志无新增 `at data.scripts.` 栈帧

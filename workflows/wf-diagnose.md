@@ -26,6 +26,7 @@
 | 游戏内文本在某个引号处戛然而止，**无报错无日志** | rules script 命令参数内嵌引号（**R2**） | `check_rules_arg_quotes.js` → 参数内改 `【】` |
 | 个别字显示 `?`，无报错 | 缺字形（**R3**） | `check_font_glyphs.js` → 换同义常用字/改写法 |
 | 悬停 tooltip 即崩，`UnknownFormatConversionException` | 字面 `%` 未写 `%%`（**R4**） | 全量搜 `%` → 修 → 重跑 G3 |
+| **战斗中**（开火/导弹命中/切船）崩，`JSONException: JSONObject["range"] not found`，栈里有 `ProximityFuseAI.updateDamage` ← `<init>` | 某个 `.proj`/`.wpn` 写了 `behavior":"PROXIMITY_FUSE"` 却漏 `range`（引擎用**严格** `getDouble("range")` 读 `behaviorSpec` 本体；`optXxx` 的默认值救不了它）。**与汉化无关**（译的是显示文本，键不改），要先看是不是原版数据就有的老问题 | `run_projspeccheck.ps1 -AllMods`（`ProjSpecCheck.java`）→ 按 `PFAI-RANGE-MISSING` 报出的文件补 `"range":<数值>`；顺带用它排掉"引擎侧严格读法"类的其它漏键 |
 | 闪退，`NoSuchFieldError`/`NoSuchMethodError`（消息乱码） | 标识符被误译（**R7**） | `verify_identifiers.js` → 修映射 → `patchdir.js` 重打 |
 | 运行时报 `StringConcatException: Mismatched number of concat arguments` | `\u0001` 数量/位置被改（**R6**） | `check_u0001.js` → 修译文 → `verify_u0001_jar.js` |
 | 启动崩，`Duplicate key "xxx"`（settings.json） | JSON 键译后重复（**R10**） | 合并同义键，保持键唯一 |
