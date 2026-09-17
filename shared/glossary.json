@@ -257,7 +257,17 @@
   "time dilation": "时流",
   "Phase Grabber": "相位捕捉",
   "Onslaughts": "攻势级",
-  "hardflux": "硬幅能"
+  "hardflux": "硬幅能",
+  "retrofit": "改装",
+  "retrofitting": "改装",
+  "frame hull": "船体框架",
+  "source ship": "用于改装的舰船",
+  "target hull": "目标舰体",
+  "queued retrofits": "改装队列",
+  "commission": "雇佣协议",
+  "pristine": "全新的",
+  "bonus XP": "额外经验",
+  "S-mod": "S 插件"
  },
  "style_notes": [
   "沿用旧版汉化风格：正式、略带克苏鲁/深渊的阴郁气息",

@@ -43,6 +43,27 @@ node <skills>\shared\scripts\run_check.js --check=check_content.js --target=<Mod
 - [ ] 应同步的重复项一致（同 EN 按约定求同或求异，见 `content` §1）
 - [ ] 与旧版汉化的差异已记录（有意不沿用/有意修正）
 
+## 1.5 G2/G3 特例：**界面文本外置到 JSON 字符串表**的 mod（`data/strings/strings.json`）
+
+Starsector 1.1+ 生态（如 RetroLib 1.1.0、Roider Union 2.3.x）把**全部**玩家可见文本放进
+`data/strings/strings.json`，代码侧用 `getString(ns, key)` / `ExternalStrings.get("camelCaseKey")` **精确查找**。
+这类 mod 的汉化**只改一个 JSON**、不动 jar/CSV，风险全部集中在"键名/占位符/字节"三处，
+用一条命令代替上面 §1/§2 的 CSV 类检查：
+
+```powershell
+node <skills>\shared\scripts\run_check.js --check=verify_strings_json --target=<Mod> -- `
+     node <skills>\shared\scripts\verify_strings_json.js <EN基线strings.json> <mods\<Mod>\data\strings\strings.json> <命名空间> <worklist.json>
+```
+
+- [ ] **G1**：键集 + **键序**与英文基线一致（键名是代码查找键，改一个就是运行时 `N/A <id>`）；清单逐键覆盖
+- [ ] **G2**：空译文 0；**占位符集合逐键一致**（`$变量`/`%s`/`%%`/`\n`/`\u0001`/`[TOKEN]`/`{brace}`）；剥占位符后无连续英文词
+- [ ] **G3**：无 BOM；**CRLF 与单独 LF 计数 == 基线**（这类文件常是 CRLF-only，注入器写 LF 会造成整文件 diff）；
+      **其它命名空间未被误改**（同一个 `strings.json` 可能是多 mod 共用的合并表）
+- [ ] **闸门自证**：把**英文基线自己**当"汉化版"喂进去，必须报满屏英文残留并 exit 1；
+      全过就说明闸门是摆设（2026-09-17 RetroLib 实测：82 条英文全被报出）
+- [ ] 字面 `%` 的判据是**代码路径**而不是外观：走 `String.replace` 的表（如 `numberPercent = "[NUMBER]%"`）
+      **不写 `%%`**；只有 `String.format` 路径才按 R4 写 `%%`。写错前者会显示 `15%%`
+
 ## 2. G3 数据层字节安全
 
 ```powershell

@@ -61,6 +61,28 @@ node <skills>\shared\scripts\align_newjar_oldzh.js <新jar解包目录> <旧ZH j
    > 只有"新版本确实还在用的串"才进复用集；新版改写的文案（哪怕语义相近）一律重译。
    > 版本升级若还伴随**字符串外置化**（硬编码 → `strings.json`），旧译只能按"语义等价"复用，
    > 不能按常量位置复用。
+   >
+   > **第 4 种情形：旧译在 jar 里、新译在 JSON 字符串表里，且键名整体重构**（2026-09-17 RetroLib 1.0.1→1.1.1 实证）：
+   > 上游 1.1.0 把界面文案**全部外置到 `data/strings/strings.json`** 并把编号式键
+   > （`RetroLib_impl.BaseRetrofitPluginView_29`）改成语义化键（`RetroLib.sourcesTextLegalFree`）。
+   > 此时 `extract_old_map.js` / `align_newjar_oldzh.js` **两条都用不上**（jar 类虽同名，但新类的常量池里
+   > 只有"键名"、没有文案；按类 LCS 配出来的是键名对中文，毫无用处）。正确流程：
+   > 1. **旧 jar 里被译的中文常量本身就是要复用的语料**——用 `analyze_jar_strings.js` + 过滤 `asString && CJK`
+   >    抽出（RetroLib 实测 21 条：`- 需要 $cost 并耗时 $time 天`、`要求： $factionName - $repLevel` …）；
+   > 2. 与**新 `strings.json` 的英文值**做**语义配对**（人工/LLM 逐条判断，不按键名、不按位置），
+   >    配对依据是 1.1.1 的 `src/**`：`ExternalStrings.kt` 给出"键 → 语义"，`BaseRetrofitPluginView.kt`
+   >    给出"键 → 渲染位置/占位符消费顺序"（如 `%s` 是按序 `replaceFirst` 消费的高亮片段）；
+   > 3. **一旧对新多**是常态：旧版 37 条碎句 → 新版 82 条（合并碎句 + 按单复数展开 4 个变体）。
+   >    单复数的多个新键**共用同一句中文**（中文不分单复数），标注为 `old-migrated`；
+   >    真正新写的才记 `new`；
+   > 4. 产出仍按 `conventions.md` §4 的 worklist 形态（`locator` = `data/strings/strings.json#<ns>.<key>`），
+   >    **别忘 `line` 要用 `search(new RegExp('"key"\\s*:'))` 算**——表里 `:` 后空白不一致，按 `indexOf` 会错位；
+   > 5. jar **不需要补丁**：先量新 jar 的 CJK（`analyze_jar_strings.js` + CJK 过滤），
+   >    为 0 就说明新版本没留硬编码文案（RetroLib 实测 0/2201），交付说明里写清"不改 jar"及其理由。
+   >    剩下的英文（如 `ModPlugin` 抛的依赖缺失 `RuntimeException`）先判**是否玩家可见**：
+   >    `starfarer_obf.jar` 里搜已汉化的启动器文案（本项目实测核心 `GLModPickerV2` 已有
+   >    `错误：你并未安装该 MOD 所要求的前置 MOD。`）⇒ 启动器已用 `mod_info.dependencies` 拦住，
+   >    那条英文异常基本不可达，本地同类 mod 也一律留英文 ⇒ **有意不动 jar** 并记录。
 4. **空字符串 `""` 一律不进映射**（常是 `getDisplayName` 的空返回，重编译时位置漂移）。
 5. **映射键以 jar 常量原文为准**（逐字符，含弯引号/撇号与首尾空格），不做手工转写。
 
@@ -100,6 +122,14 @@ node <skills>\shared\scripts\align_newjar_oldzh.js <新jar解包目录> <旧ZH j
       （沿用等于把旧 bug 一起交付）；标记后交给上游重译
 - [ ] 旧译**文案随版本改动**的条目已识别（示例：1.3.2 `description` 与 1.6.0 英文语义不同 ⇒ 整条重译，不沿用）
 - [ ] 差异已记录（有意不沿用/有意修正，写进汉化说明或语料 note）
+- [ ] **旧译的"碎句"在新版被合并/拆分时，逐条确认语义边界**（RetroLib 实测：旧版把「- 获得 %s」同时当
+      "免费"与"返还舰体框架"两条用 ⇒ 新版拆成 `sourcesTextLegalFree`（`- %s` + 高亮）与
+      `sourcesTextFrameReturn`（`- 返还 %s`）时必须**分别给译文**，照抄会出现"返还 免费"）
+- [ ] **旧译的"名词短语"在新版被用作动作按钮时改成动作句式**（`Prioritize retrofits` 当按钮 ⇒「将改装提前」，
+      对话框标题仍可保留名词短语「选择要优先进行的改装」）
+- [ ] **旧译的空格/标点瑕疵被发现并修正**（RetroLib 实测：`…获得 $cost 。` 中英混排空格；沿用即交付 bug）
+- [ ] **旧译的关键术语误译被识破**（RetroLib 实测：`source ship` 被旧译成「原材料」，
+      实际是"可作为改装来源的舰船"；判据是读新版 `src/**` 里该串的渲染位置）
 
 > 质量判定标准见 `starsector-mod-localization-content` §1（原创译写，不照抄）。
 

@@ -264,3 +264,27 @@
 | `Onslaughts` | 攻势级 | [旧译沿用]（核心舰名"攻势"复数语境） |
 | `AI Network` / `Sync Rating` / `Human AI duo` | AI网络 / 同步率 / 人机羁绊（旧译语境，2.1 新系统待定稿） | [旧译参考] |
 | `hardflux` / `hard flux` | 硬幅能 | [核心对齐] |
+
+### 6.9 RetroLib（前置框架库，1.0.1→1.1.1 汉化迁移，2026-09-17）
+
+> 旧汉化作者：未知（`_work\mod_zh\Roider Union V2.1.1\RetroLib`）。RetroLib 为前置库、无内容，
+> 术语量小；**它是「舰船改装」这一玩法概念在 0.98a 的术语源头**，下属 mod（Roider Union 等）应沿用本表。
+> 迁移要点见 `starsector-mod-localization-migrate`：1.1.0 起上游做了**字符串外置化 + 键名整体重构**
+> （`RetroLib_impl.BaseRetrofitPluginView_29` → `RetroLib.sourcesTextLegalFree`），旧译只能**按语义配对**复用。
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `retrofit` / `retrofitting` / `convert`（舰船改装玩法） | 改装 | [核心]（核心 `rules.csv` 的 `refit` 作「改装舰船」；旧译一致） |
+| `RetroLib`（前置库名） | RetroLib | [社区]（保留原文，不意译） |
+| `hull`（船体/舰体） | 舰体 | [核心]（与「船体框架」区分：`hull` = 一艘舰的舰体本身） |
+| `frame hull`（改装产物：框架） | 船体框架 | [旧译沿用] |
+| `source (ship)`（改装来源） | 用于改装的舰船 / 原材料舰船 | [自定]（**旧译误作「原材料」已修正**——source 是"可作为改装来源的舰船"） |
+| `target (hull)`（改装目标） | 目标舰体 | [自定]（与 source 成对，避免与「型号」混淆） |
+| `queue` / `queued retrofits` | 队列 / 改装队列 | [旧译沿用] |
+| `commission` | 雇佣协议 | [核心]（核心 `rules.csv`：`commission revoked` → 「雇佣协议已被撤销」） |
+| `credits` | 星币 | [核心] |
+| `pristine`（改装后舰体状态） | 全新的 | [核心]（核心 `pristine` → 「完好/崭新」；此处指改装产物是全新出厂舰体） |
+| `bonus XP`（S 插件移除返还） | 额外经验 | [核心] |
+| `S-mod` / `permMod` | S 插件 / 永久插件 | [核心]（社区通用缩写，保留 `S`） |
+| `[NUMBER]` / `[REFUND]`（代码替换令牌） | **不译**（逐字保留） | [自定·铁律]（`Helper.TOKEN_NUMBER` / `TOKEN_REFUND` 精确匹配） |
+| `numberPercent` 值（`[NUMBER]%`） | `[NUMBER]%` | [自定·铁律]（代码走 `String.replace` 而非 `String.format` ⇒ 字面 `%` **不写 `%%`**；与铁律 R4 的适用条件不同） |

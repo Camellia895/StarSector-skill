@@ -59,3 +59,9 @@
 {"t":"2026-09-16T17:03:04.208Z","check":"check_designtype","target":"Kayse","exit":0,"hit":false,"probe":false,"note":""}
 {"t":"2026-09-16T17:03:04.363Z","check":"verify_identifiers","target":"Kayse","exit":0,"hit":false,"probe":false,"note":""}
 {"t":"2026-09-16T17:03:04.549Z","check":"scan_data_stragglers","target":"Kayse","exit":1,"hit":true,"probe":false,"note":""}
+{"t":"2026-09-17T11:32:41.925Z","check":"check_encoding","target":"RetroLib","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-17T11:32:42.091Z","check":"check_font_glyphs","target":"RetroLib","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-17T11:32:42.233Z","check":"check_homoglyphs","target":"RetroLib","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-17T11:35:30.555Z","check":"verify_strings_json","target":"RetroLib","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-17T11:35:30.720Z","check":"scan_jar_cjk_newjar","target":"RetroLib","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-17T11:35:30.880Z","check":"scan_jar_cjk_oldjar","target":"RetroLib","exit":1,"hit":true,"probe":true,"note":"旧汉化 jar 应有 21 条 CJK 字面量；报 0 说明工具失效"}

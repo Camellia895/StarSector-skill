@@ -49,6 +49,7 @@ Vayra's Sector 汉化（2026-09-16）沉淀了一对可直接改造的通用注�
 | rules.csv `text`/`script` | 只回填 `text` 列整格与 `script` 列 `AddText "…"`/`$var = "…"` 的**引号内文字**，保留 `AddText`/颜色参数/`$变量` | `migrate_rules_script.js` 思路；改完必跑 R2 校验 |
 | rules.csv `options` | **合成字段，必须结构级重建**（铁律 R13）：以英文原版的**行数 + 每行 optionId**为准，只替换标签；长式（`数字:optionId:标签`）保留数字前缀；多行之间用**真实换行**（不是字面 `\n`），由写入器按 RFC4180 加引号。**行数/optionId 不符就报错并保留原文，绝不猜** | 自写（本项目 `apply_data.js` 的 `translateOptions`）；改完必跑 `check_options_structure.js` |
 | 伪 JSON | **文本替换**式（`replaceOnce(path, 原片段, 译文片段)`），保持 `#` 注释与缩进原样 | `migrate_json.js`；**严禁** `ConvertTo-Json` 回写（铁律 R8） |
+| **JSON 字符串表**（`data/strings/strings.json` 这类"界面文本全外置"的表：`{"命名空间":{"camelCaseKey":"文本"}}`） | 按「键 JSON 串 + 冒号 + 值 JSON 串」做**正则文本替换**（冒号两侧空白用 `\s*`，保留原缩进/键序/行尾），**绝不 `JSON.stringify` 整体重写**；同一 `strings.json` 里可能并列**多个 mod 的命名空间**，只碰自己那个。替换前断言 needle **在文件内唯一**，否则报错退出 | 自写（范式见 `_work\mod_work\RetroLib\tools\build_zh_strings.js`：容忍空白的唯一性正则 + 生成后自查「可解析/键序一致/占位符集合一致/无 BOM/行尾计数」）；改完必跑 `verify_strings_json.js`（`-verify` §1.5） |
 | `.faction` 嵌套 | 按"行前缀 + 引号值"匹配（`"spaceSailor":{"name":"Page"}` → 换引号内值），`#` 注释行跳过 | `migrate_faction2.js` |
 | `.ship`/`.skin`/`.variant` | 替换 `hullName` / `displayName` 的值文本；**`.skin` 还有 `descriptionPrefix`（图鉴描述前缀，铁律 R14）与 `hullDesignation`（人可读短语才译）** | 直接用 `build_data_worklist.js` 的对应 kind 反查 locator |
 | 纯文本（`mission_text.txt` 等） | 整篇写回，保持段落结构 | — |
