@@ -17,6 +17,8 @@ Starsector 模组开发技能库：`skills` / `workflows` / `shared` 台账。
 先读 `00-索引.md` —— 它是唯一入口，给出「任务分类 → 该读哪个 wf → 该读哪几个 skill」的加载顺序，
 避免通读整个 `skills\` 目录。
 
+因此你只需要和ai说，参照.\_work\skills 汉化/汉化迁移/更新 .\mods\..
+
 ## 许可
 
 Copyright (C) 2026 Camellia895
