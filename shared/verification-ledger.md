@@ -7,6 +7,11 @@
 | `check_csv_quotes.js` | red | base | 弯引号拆列 → 启动崩溃（R1） |
 | `check_rules_arg_quotes.js` | red | cond | 仅当有 rules.csv；静默截断（R2） |
 | `verify_all_data.js` | red | base | 数据层易漏区/键唯一性（R10） |
+| `verify_strings_json.js` | red | base | **JSON 字符串表专项**（键集/键序/占位符集/CRLF 计数/弯引号/其它命名空间）。**动笔前先拿英文基线喂它，必须报满屏残留**，否则闸门是摆设 |
+| `cmp_csv_struct.js` | red | base | 注入结构等价性：基线 vs 注入后的物理行数/数据行数/单元格数/id 序列 |
+| `cmp_csv_cells.js` | red | base | 差异格核对：差异格必须全在待译清单内 → 未登记差异 = 0 |
+| `check_eol.js` | red | base | 行尾风格审计（R17）：按原始字节比 CRLF 数/单独 LF 数/结尾换行；`cmp_csv_struct.js` 查不出行尾变化 |
+| `scan_refs.js` | red | base | 标识符引用点全扫（枚举改名白名单覆盖 + 补丁后旧名残留硬门槛） |
 | `scan_data_stragglers.js` | red | base | **data 层提取完整性**：未被清单覆盖的人可读英文 = 0。G1（英文原版）与 G3（注入后）各跑一次 |
 | `check_options_structure.js` | red | base | **options 结构等价**（rules/zgrstuff）：段数与 optionId 序列一致、无字面 `\n`；坏了启动崩溃而列数检查看不见 |
 | `scan_logic_keys.js` | red | base | **逻辑键误译**（显示文本与查找键字面相同）：保留键被译 = 启动 Fatal（本项目实测 `LunaSettings.getBoolean("Nightcross",…)`） |
@@ -18,6 +23,7 @@
 | `check_faction_shiproles.js` | red | base | **faction shipRoles 变体可解析**（2026-09-15 AI War 事故沉淀）：不存在的变体 id = faction 加载 NPE 启动崩溃；dead 角色键也会被解析。fallback 里是角色名不是变体，先剥掉再匹配；变体 id 按「文件内 variantId 字段」校验 |
 | `check_faction_known_lists.js` | red | base | **faction known\* 条目对照注册表**（2026-09-15 AI War 事故⑤沉淀）：复刻 verifyFactionData；id 填错（如类名而非 id）在读档/开局才炸，冒烟必须读档 |
 | `check_refs.js` | red | cond | 改过装配/舰船/武器/贴图引用 |
+| `check_faction_file.js` | red | cond | `.faction` 必填键/资产/登记（缺 `names` = 启动崩） |
 | `LoadTest.java` | red | cond | 离线类加载/实例化 + 脚本类存在性（skill 自带脚本，见 `script-registry.md` F 节） |
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3）；零宽字符单列提示、不计命中 |
 | `check_content.js` | yellow | base | 空译文/占位符/字段结构（skill 自带脚本） |

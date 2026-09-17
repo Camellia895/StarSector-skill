@@ -191,3 +191,17 @@ faction 显示名/舰队名/官职名、`tips.json`、`descriptions.csv`…）�
 3. 需要别的 skill 的能力时**引用它**，不要内联它的步骤。
 4. 引用语法统一：`<skills>\shared\env.md`、`<skills>\shared\scripts\xxx.js`、
    skill 名直接用其 `name`（如 `starsector-mod-localization-extract`）。
+
+## 8. 技能库自身的维护
+
+**要往本库加/改东西时，读 `skills\skill-authoring\SKILL.md`**（唯一权威），它规定：
+
+- 分层归属判据（事实 → `shared\`；编排 → `workflows\`；方法 → `skills\`）；
+- `SKILL.md` 标准卡与 description 的**可路由性**要求（能力 + 触发 + 排除）；
+- **新建 skill 的三条门槛**（有独立触发场景 / 不是既有 skill 的补充 / 有可复用方法或脚本）；
+- 新建时必须同步的 7 处（索引、workflow 点名、脚本登记、校验档位表、互指、提交…），漏一处即悬挂引用；
+- 持续演化四问（同一个坑第二次 → 固化；路由错 → 修 description；校验多次命中 → 升档；长期空转 → 先探针）；
+- 改完的**体检命令**（frontmatter 一致性、JS 语法、悬挂脚本引用、档位表两处一致）。
+
+**三条铁律**：① 同一事实只写一份；② 不删只归档（`_archive\`）；③ 改动必须自检通过才算完成。
+
