@@ -214,3 +214,53 @@
 | `Volturnian lobster` | 蓝龙虾 | [核心] |
 | `Corvette`（designation） | 护卫艇 | [自定]（核心语料无该词） |
 | uiTags 分类词（`Shields/Weapons/.../Requires Dock`） | 护盾/武器/…/需要船坞 | [核心]（与核心 hull_mods.csv 同列用词逐字一致；该列为显示列） |
+
+### 6.7 No Such Organization - Phase Ships（kayse_phaseships，0.4.0 汉化迁移）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `No Such Org` / `No Such Organization`（势力名/designTypeColors 键/tech 列） | 无此组织 / 无此组织（键与 CSV 值逐字一致，R16） | [旧译沿用]（0.3.2 砒霜瓜子） |
+| `Nusquam`（星系+恒星名，createStarSystem 共享常量） | 乌有之乡（拉丁语"乌有"；旧存档仍显英文名，新游戏起中文） | [自定] |
+| `Tombstone`（行星+市场名） | 墓碑 | [自定] |
+| `Ossum`（气态巨星；Ossum Relay=藏骨中继站） | 藏骨（谐 ossuary 藏骨堂） | [自定] |
+| `Boneyard`（行星+市场名） | 骸骨地 | [自定] |
+| `The Ring`（小行星带） | 环带 | [自定] |
+| `Tombstone Portal`（跳跃点） | 墓碑之门 | [自定] |
+| `Grim` / `Grime`（舰名双关） | 狰狞 / 污秽（"违规改装的脏狰狞"，描述有交代） | [旧译沿用]+[自定] |
+| `No Such Audition`（酒馆任务名） | 无此试镜 | [自定] |
+| `Phase Disrupted!` / `Phase Coils Disabled!` | 相位受扰！/ 相位线圈失效！ | [核心对齐]（相位线圈） |
+| `READY` / `NO TARGET` / `NO VALID TARGET`（系统 HUD） | 就绪 / 无目标 / 目标无效 | [自定] |
+| `Requires Phase Field` / `Requires Phase Coils and Phase Field` | 需要安装相位场 / 需要安装相位线圈与相位场 | [核心对齐]（phasefield=相位场） |
+| `Lament` / `Requiem` / `Funeral`（Nexerelin 复仇舰队三级） | 挽歌 / 安魂 / 葬仪 | [自定] |
+| 舰名系列（0.3.2 旧译，沿用） | Barrow=古冢、Pyre=柴薪、Poltergeist=吵闹鬼、Haunt=鬼屋、Ghoulie=小尸鬼、Dullahan=无头骑士、Bansidhe=报丧女鹰、Azrael=死亡天使、Necromancer=死灵法师、Corpse=腐尸、Ghost=妖鹭、Maggot=蛆虫、Deathknight=亡灵骑士 | [旧译沿用] |
+
+### 6.8 Epta Consortium（seven_nexus，1.6.SO4→2.1.2 汉化迁移，2026-09-16）
+
+> 旧译作者：砒霜瓜子、Klize1917（1.6.SO4）。以下词条自旧译迁移抽取，翻译新增内容时**必须沿用**，
+> 保证 designTypeColors / tech 列 / 代码 getDesignTypeColor 字面量三处一致（R16）。
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `Epta Consortium` / `Epta`（势力+全 mod 主名） | Epta财团 | [旧译沿用] |
+| `Epta Tech`（designTypeColors 键/tech 列/代码字面量） | Epta科技 | [旧译沿用]（R16 三处联动） |
+| `Zeta Computers` | Zeta计算 | [旧译沿用] |
+| `Takeshido`（ Bushido 势力/designType） | 武士道 | [旧译沿用] |
+| `Low Tech?` | 主宰纪元? | [旧译沿用]（问号是作者原名的一部分，保留） |
+| `seven phase` / `seven white` | 七企相位 / 七企纯白 | [旧译沿用] |
+| `Exotic` | 珍奇科技 | [旧译沿用] |
+| `Syzygy Acutators`（mod 原文即拼错，指 Syzygy Actuators） | 融合体执行器 | [旧译沿用] |
+| `Protectors Garrison` | 保卫者警备队 | [旧译沿用] |
+| `Kantina Combine` | 坎蒂纳联合体 | [旧译沿用] |
+| `Shooting Stars` | 流星公司 | [旧译沿用] |
+| `Chutnam Security` | 楚特南安保 | [旧译沿用] |
+| `AdProSec` / `Anodyne Indefatigable` / `Anodyne` | 不译（保留原文；旧译即如此） | [旧译沿用] |
+| `Decimus (Maximus)` / `Ashley` / `Nate` / `Rose` / `Triela` / `Gia` | 人名不译，保留原文（旧译惯例） | [旧译沿用] |
+| `mothball` / `standard mothball` | 封存 / 标准封存 | [旧译沿用] |
+| `Zero Flux Speed Boost (ZFSB)` | 零幅能加速（提升） | [旧译沿用] |
+| `time dilation`（AI 网络/相位时流） | 时流 | [旧译沿用] |
+| `Phase Grabber` | 相位捕捉 | [旧译沿用] |
+| `Field of Fire 7` / `FoF`（对话中的虚构游戏） | 《火力全开7》 | [旧译沿用] |
+| `LPC`（fighter LPC） | 不译（保留 LPC） | [旧译沿用] |
+| `Onslaughts` | 攻势级 | [旧译沿用]（核心舰名"攻势"复数语境） |
+| `AI Network` / `Sync Rating` / `Human AI duo` | AI网络 / 同步率 / 人机羁绊（旧译语境，2.1 新系统待定稿） | [旧译参考] |
+| `hardflux` / `hard flux` | 硬幅能 | [核心对齐] |

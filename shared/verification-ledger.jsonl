@@ -53,3 +53,9 @@
 {"t":"2026-09-15T17:28:25.526Z","check":"check_designtype.js","target":"Ifed Legacy","exit":0,"hit":false,"probe":false,"note":"无 tech 列/无 designTypeColors，0 问题"}
 {"t":"2026-09-15T17:28:25.526Z","check":"JsonProbe(org.json)","target":"Ifed Legacy(mod_info/.ship/.variant/sounds)","exit":0,"hit":false,"probe":false,"note":"全 OK；independent.faction 严格解析失败=上游固有宽松风格，与备份逐字节一致，引擎宽容读取，未动"}
 {"t":"2026-09-15T17:28:25.526Z","check":"apply_zh.js","target":"Ifed Legacy","exit":0,"hit":false,"probe":false,"note":"197/197 注入；修复：mod_info 多条目共用 text 变量致后者覆盖前者（name 曾被还原英文）"}
+{"t":"2026-09-16T17:03:03.731Z","check":"check_encoding","target":"Kayse","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-16T17:03:03.879Z","check":"verify_all_data","target":"Kayse","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-16T17:03:04.056Z","check":"check_font_glyphs","target":"Kayse","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-16T17:03:04.208Z","check":"check_designtype","target":"Kayse","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-16T17:03:04.363Z","check":"verify_identifiers","target":"Kayse","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-16T17:03:04.549Z","check":"scan_data_stragglers","target":"Kayse","exit":1,"hit":true,"probe":false,"note":""}

@@ -80,3 +80,5 @@ LazyLib 3.0.0（`mods\LazyLib\jars\internal\Kotlin-Runtime.jar` 提供 kotlin-st
 - ❌ **不要联网搜"0.98a 改了什么"**：本机 `starfarer.api.zip` 是权威文档，`starfarer_obf.jar` 是权威行为；网页信息常过期且不可验证（本机对 forum 返回 403）。
 - ❌ 不要为了"和别的 mod 对齐"改数据 —— 先用反汇编确认引擎是否读它（`starsector-engine-diagnose`）。
 - ❌ 不要在游戏运行时替换 jar（Windows 文件锁）。
+- ❌ **不要在压缩包（jar/zip）字节流上 grep 字符串**：条目是 deflate 压缩的，搜不到 ≠ 不存在；
+  先解包再查，否则会把假阴性当证据（2026-09-16 Kayse 实测：据此误判 uiTags 为死列，靠 glossary §6.6 先例纠正）。
