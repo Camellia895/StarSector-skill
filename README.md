@@ -2,6 +2,17 @@
 
 Starsector 模组开发技能库：`skills` / `workflows` / `shared` 台账。
 
+## 下载
+
+[![下载](https://img.shields.io/github/v/release/Camellia895/StarSector-skill?style=for-the-badge&label=%E4%B8%8B%E8%BD%BD&color=2ea44f)](https://github.com/Camellia895/StarSector-skill/releases/latest)
+
+- **最新 Release 页面**（推荐）：<https://github.com/Camellia895/StarSector-skill/releases/latest>
+- **直接下载压缩包**：
+  <https://github.com/Camellia895/StarSector-skill/releases/latest/download/StarSector-skill-v2026.09.17.zip>
+
+> 压缩包名带版本号，所以直接下载链接里的文件名需与最新 Release 的附件名一致；
+> 每次发新版若改了文件名，记得同步更新这一行。
+
 ## 内容
 
 | 目录 | 内容 |
