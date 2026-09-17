@@ -10,7 +10,7 @@ Starsector 模组开发技能库：`skills` / `workflows` / `shared` 台账。
 | `workflows\` | 任务流程（`wf-*.md`，写清步骤、闸门、产出） |
 | `shared\` | 共享台账：环境、铁律、术语表、脚本登记表、验证账本 |
 | `reference\` | SSTLib API 文档等参考资料 |
-| `notes\`、`_archive\` | 笔记与归档（只归档不删除） |
+| `notes\`、`_archive\` | 用户注释与归档（只归档不删除） |
 
 ## 入口
 
