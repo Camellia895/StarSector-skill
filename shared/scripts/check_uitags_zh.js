@@ -69,6 +69,9 @@ function scan(modDir) {
       const iId = header.indexOf('id');
       if (i < 0) continue;
       for (const r of rows) {
+        // 注释行/模板行：`#` 开头（或任一格含 `#`，如 `# Accelerated Shields,…` 模板行）——引擎跳过，本闸门也跳过
+        if (/^\s*#/.test(String(r.cells[0] === undefined ? '' : r.cells[0]))) continue;
+        if (r.cells.some(c => String(c).includes('#'))) continue;
         const raw = String(r.cells[i] || '').trim();
         if (!raw) continue;
         checked++;

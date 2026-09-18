@@ -37,7 +37,13 @@ cd C:\game\StarSector.v0.9.8a-RC8\_work\skills\shared\scripts
 node survey_uitags.js "C:\game\StarSector.v0.9.8a-RC8\mods"
 # 单个 mod 体检（有英文标签则 exit 1）
 node check_uitags_zh.js "C:\game\StarSector.v0.9.8a-RC8\mods\<Mod>" --json="C:\game\StarSector.v0.9.8a-RC8\_work\mod_work\<Mod>\out\uitags_before.json"
+# ★可见性审计（决定"值不值得译"）：逐行列出 hidden/hiddenEverywhere + name/desc
+node audit_uitags_visibility.js "C:\game\StarSector.v0.9.8a-RC8\mods"
 ```
+
+> **判据：这一行引擎到底读不读**。`hull_mods.csv` 里 `#` 开头的行（含上游空白模板
+> `data\config\hull_mods.csv` 里注释掉的示例行）**引擎整行忽略**，不该进结论——已固化为铁律 **R21**，
+> 闸门/注入器/审计三处都已跳过。另外 `src\` 下的同名 CSV 不参与运行，别去改。
 
 同时确认"这个 mod 是否真的汉化过"（避免去改英文原版 mod 的分类）：
 
@@ -137,9 +143,14 @@ node "$sk\check_eol.js" (Join-Path $bk (Split-Path $mod -Leaf)) "$mod\data\hullm
 
 ## 附：一次真实战役的数据（2026-09-18，作为量级参照）
 
-- 全库 27 个含 `hull_mods.csv` 的 mod，**17 个有英文标签、共 113 处**；
-- 实际写盘 **16 个 mod / 98 行 / 113 个标签**（1 个 mod 的标签是作者自定中文，无需改）；
-- 典型中招：`EptaConsortium`（15 行）、`Random-Assortment-of-Things`（30 行）、`Nightcross`（18 行）、
-  `人之领相位研究所`（9 行）、`Kayse Phase Ships`（6 行）、`Roider Union`（6 行）；
-- 全部 16 个 mod 复核结果：差异格 > 0、**EOL 一致**、结构一致、非词表标签 0；
-- 未改的 23 处全部是作者自定标签（`DEVTOOL`×10、`Unique`×9、`Utility`×4）。
+- 全库 27 个含 `hull_mods.csv`（**含 `data\config\hull_mods.csv` 等非标准位置**）的 mod，
+  **19 个有英文核心分类标签**；另有 3 个只有作者自定英文标签；
+- 写盘 **20 个 mod / 117 行 / 132 个标签**（含第二轮：`Utility→通用辅助`、`Unique→独特`、
+  TreasureHunt 的 `Logistics/Requires Dock`、AoTD-VoK 的 5 处）；
+- 典型中招：`Random-Assortment-of-Things`(30 行)、`Nightcross`(22)、`EptaConsortium`(15)、
+  `人之领相位研究所`(9)、`the_vass`(9)、`Kayse Phase Ships`(6)、`Roider Union`(6)、`AoTD-VoK`(5)；
+- 全部 20 个 mod 复核：差异格 > 0、**EOL 字节级一致**、结构一致、非词表标签 0；
+- 保留未改：`EptaConsortium` 的 `DEVTOOL`×10（全隐藏 + `DEBUG: You should never see this in game`）、
+  Navarchy 的小写 `phase`×1（自定标签 + deprecated 隐藏船插）、6 个 mod 的自定中文分类；
+- **两个坑**：① 整体重建 CSV 会抹平混合行尾（R17）⇒ 必须字节级定点替换；
+  ② `#` 注释/模板行会被 CSV 解析成数据造成假命中（**R21**，实测 TreasureHunt/Trails 各 1 处）。

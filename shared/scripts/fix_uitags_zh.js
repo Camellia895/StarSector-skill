@@ -117,22 +117,45 @@ const changes = [];
 const skipped = [];
 let touched = 0, scannedCells = 0, changedRows = 0;
 
+// 找出 mod 下**所有** hull_mods.csv（含非标准位置，如 data\config\hull_mods.csv 的模板/覆盖文件）
+function findAllHullMods(modRoot) {
+  const out = [];
+  const stack = [modRoot];
+  while (stack.length) {
+    const d = stack.pop();
+    let ents = [];
+    try { ents = fs.readdirSync(d, { withFileTypes: true }); } catch { continue; }
+    for (const e of ents) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) { if (e.name !== '.git') stack.push(p); continue; }
+      if (e.name === 'hull_mods.csv') out.push(p);
+    }
+  }
+  return out;
+}
+
 for (const modRoot of mods) {
-  const csvPath = path.join(modRoot, 'data', 'hullmods', 'hull_mods.csv');
   const modName = path.basename(modRoot);
-  if (!fs.existsSync(csvPath)) { console.log(`skip  ${modName}  (无 data/hullmods/hull_mods.csv)`); continue; }
+  const csvPaths = findAllHullMods(modRoot);
+  if (!csvPaths.length) { console.log(`skip  ${modName}  (未找到 hull_mods.csv)`); continue; }
+  for (const csvPath of csvPaths) {
+  const relPath = path.relative(modRoot, csvPath).replace(/\\/g, '/');
   const text = fs.readFileSync(csvPath, 'utf8');
   const records = splitRecords(text);
   if (!records.length) { console.log(`skip  ${modName}  (空文件)`); continue; }
   const header = cellSpans(text, records[0]).map(sp => inner(text.slice(sp.start, sp.end)));
   const iUi = header.indexOf('uiTags'), iId = header.indexOf('id');
-  if (iUi < 0) { console.log(`skip  ${modName}  (表头无 uiTags 列)`); continue; }
+  if (iUi < 0) { console.log(`skip  ${modName}/${relPath}  (表头无 uiTags 列)`); continue; }
 
   const edits = [];   // {start, end, text}
   let n = 0;
   for (let ri = 1; ri < records.length; ri++) {
     const spans = cellSpans(text, records[ri]);
     if (spans.length <= iUi) continue;
+    // 注释行/模板行：`#` 开头（或任一格含 `#`，如 `# Accelerated Shields,…`）——引擎跳过，本脚本也跳过
+    const firstCell = spans.length ? inner(text.slice(spans[0].start, spans[0].end)) : '';
+    if (/^\s*#/.test(firstCell)) continue;
+    if (spans.some(sp => inner(text.slice(sp.start, sp.end)).includes('#'))) continue;
     const raw = text.slice(spans[iUi].start, spans[iUi].end);
     const val = inner(raw);
     if (!val.trim()) continue;
@@ -146,10 +169,10 @@ for (const modRoot of mods) {
       if (/[\u4e00-\u9fff]/.test(core)) return p;           // 已是中文 ⇒ 不动
       if (MAP[core]) {
         changed = true;
-        changes.push({ mod: modName, file: 'data/hullmods/hull_mods.csv', line: ri + 1, id, from: core, to: MAP[core], cell: val });
+        changes.push({ mod: modName, file: relPath, line: ri + 1, id, from: core, to: MAP[core], cell: val });
         return p.replace(core, MAP[core]);
       }
-      skipped.push({ mod: modName, file: 'data/hullmods/hull_mods.csv', line: ri + 1, id, tag: core, cell: val });
+      skipped.push({ mod: modName, file: relPath, line: ri + 1, id, tag: core, cell: val });
       return p;
     });
     if (changed) {
@@ -157,19 +180,20 @@ for (const modRoot of mods) {
       n++; changedRows++;
     }
   }
-  if (!n) { console.log(`clean ${modName}  (无需改动)`); continue; }
+  if (!n) { console.log(`clean ${modName}/${relPath}  (无需改动)`); continue; }
   let out = text;
   for (const e of edits.sort((a, b) => b.start - a.start)) out = out.slice(0, e.start) + e.text + out.slice(e.end);
-  // 自检：行数/结构不变、且除了目标格以外字节完全一致（用记录数 + 长度差核对）
+  // 自检：记录数不变
   const after = splitRecords(out);
   const okStruct = after.length === records.length;
-  console.log(`${DRY ? '[dry] ' : ''}${modName}: 改 ${n} 行 uiTags  结构一致=${okStruct}`);
-  if (!okStruct) { console.error(`!! ${modName} 自检失败，放弃写入`); process.exit(1); }
+  console.log(`${DRY ? '[dry] ' : ''}${modName}/${relPath}: 改 ${n} 行 uiTags  结构一致=${okStruct}`);
+  if (!okStruct) { console.error(`!! ${modName}/${relPath} 自检失败，放弃写入`); process.exit(1); }
   if (!DRY) {
     if (BACKUP) {
-      const dir = path.join(backupDir, modName);
+      const isStd = relPath === 'data/hullmods/hull_mods.csv';
+      const dir = path.join(backupDir, modName, isStd ? '' : 'bypath');
       fs.mkdirSync(dir, { recursive: true });
-      const bp = path.join(dir, 'hull_mods.csv');
+      const bp = path.join(dir, isStd ? 'hull_mods.csv' : relPath.replace(/[\\/]/g, '__') + '.csv');
       if (!fs.existsSync(bp)) fs.copyFileSync(csvPath, bp);
     }
     fs.writeFileSync(csvPath, out, { encoding: 'utf8' });
@@ -187,6 +211,7 @@ for (const modRoot of mods) {
       console.log(`      同步探针 ${path.basename(jp)}`);
     }
     touched++;
+  }
   }
 }
 

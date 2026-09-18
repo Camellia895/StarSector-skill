@@ -361,3 +361,37 @@ jar 里有两类"同一中文决策必须同时落到多个常量"的成对文�
 - **第三方常量内联**：编译时 classpath 上的其它 mod 的 `static final String` 会被原样内联
   （The Vass 内联了本机中文版 Console Commands 的 `ERROR_CAMPAIGN_ONLY`，jar 里出现现成中文）。
   这类串跳过即可，别当 bug。
+
+## R21 · CSV 闸门必须跳过 `#` 注释行（否则"模板行"被解析成数据 ⇒ 假命中）
+
+**事故（2026-09-18 船插分类全库普查）**：`TreasureHunt` 与 `Trails of Tooth and Claw` 的
+`data\config\hull_mods.csv` 是**上游发的空白模板**，全文只有表头 + 3 行 `#` 注释 + 1 行示例：
+
+```
+name,id,tier,…
+# Add your hullmods here. One left commented out for reference.
+# See: https://starsector.fandom.com/wiki/Hull_mods.csv
+# Accelerated Shields,advancedshieldemitter,0,,,"defensive, shields, merc, standard",Shields,3000,…
+```
+
+引擎的 CSV 读取器把 `#` 开头的行**整行当注释跳过**；而 `<skills>\shared\scripts\csvlib.js`
+（RFC4180 状态机）会把这 3 行**解析成 3 条数据记录**，于是
+`uiTags` 列取到示例行里的 `Shields` ⇒ `check_uitags_zh.js` 把两个 mod 报成"分类未汉化"（各 1 处假命中）。
+这两行**永远不会被显示**（整行被引擎忽略），照它去改是纯粹的误报。
+
+**强制做法**：
+
+1. 所有**读 CSV 做字段级判定**的闸门/注入器，遍历记录前先跳过注释行：
+   物理行以 `#` 开头（允许前导空白）⇒ 整行注释；**并且**若该行任一单元格含 `#`
+   （示例行被解析后 `# Add your hullmods here…` 落在第 1 格，甚至散落在中间格）⇒ 同样按注释处理。
+   本库已封装：`<skills>\shared\scripts\uitags_lib.js` 的 `readCsvNoComments()`；
+   `check_uitags_zh.js` / `fix_uitags_zh.js` / `audit_uitags_visibility.js` 均内联了同一判据。
+2. 反过来说，**"引擎忽略 ≠ 可以不管"**：注释掉的示例行是**上游文档**，不需要汉化，但也不该被误报。
+3. 判定假命中时先看**引擎会不会读**：`#` 行、`hull_mods.csv` 之外的模板、`src\` 下的同名 CSV
+   （如 `Domain Explorarium Expansion\src\data\hullmods\hull_mods.csv`）都不参与运行。
+
+**校验**：改完跑一遍 `check_uitags_zh.js <modRoot>` 应报"全部通过"（而不是"可疑 1"）；
+`fix_uitags_zh.js --dry` 的"未覆盖英文标签"列表里不应出现注释行内容。
+
+> 同类陷阱（历史）：R14 的"反向网要排除 deliberate skip"、R16 的假阳性（core+mod 合并注册表）——
+> **闸门报警先定性，再动手**。本条的判据是"这一行引擎到底读不读"。
