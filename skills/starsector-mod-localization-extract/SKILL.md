@@ -109,6 +109,8 @@ node <skills>\shared\scripts\check_designtype.js <modRoot>   # 必须 0 问题
 11. **mission 类可能在 jar 里**：先按 §3 实证 jar 类集合——`data\missions\<id>\MissionDefinition.class` 若已在 jar 中则走常量池（**不必**改 `.java`）；仅当该类不在 jar、被运行时 Janino 编译时才改源码。任务舰船名（`addToFleet` 第 4 参）、`setFleetTagline`/`addBriefingItem` 均属可见文本。
 12. **缺依赖启动弹窗**：`onApplicationLoad` 抛 `ClassNotFoundException` 的 message（"MagicLib is required…"、"You can download … at http://…"）只在缺依赖时弹给安装者——属 UI 文本（正文译、URL 保留），别当开发日志跳过。
 13. **舰船显示名/分类的真正来源是 `data\hulls\ship_data.csv`**：0.95a+ 引擎以该表 `name` 列作舰船显示名、`designation` 作舰级分类、`tech/manufacturer` 作制造商行。**只改 `.ship` 的 `hullName` ≠ 舰名已汉化**（事故：全舰 `.ship` 已译但游戏内仍英文）。designation 取值见 `<skills>\shared\glossary.md` §3。
+14. **★`hull_mods.csv` 的 `uiTags`（船插分类显示列）**：引擎把该列的值（英文逗号切分）**直接当装配界面/百科的船插分类标签显示，不查任何注册表** ⇒ 英文标签就是英文，**不报错、不打日志**。**该列的权威词表 = 核心中文 `starsector-core\data\hullmods\hull_mods.csv` 同列**（`Weapons→武器`、`Special→特殊`、`Logistics→后勤`、`Requires Dock→需要船坞`、`Defenses→防御`、`Shields→护盾`、`Engines→引擎`、`Fighters→战机`、`Phase→相位`、`Support→支援`）。**留空合法**（= 该船插无分类，别猜）；作者自定的分类（`Unique`/`DEVTOOL`/`Utility`/`基础`…）保留原样，除非确认要汉化。
+    **2026-09-18 全库普查**：27 个有 `hull_mods.csv` 的 mod 里 **17 个**存在英文标签、共 **113 处**（Kyeltziv/Epta/Nightcross/RAT/人之领相位研究所…）——多为**迁移/重译时被上游英文原文覆盖**，属"汉化过的 mod 又变回英文"的高频复发点。工具：`<skills>\shared\scripts\survey_uitags.js`（全库普查）、`fix_uitags_zh.js`（定点注入，字节级、保留混合行尾）、`check_uitags_zh.js`（闸门）。
 
 ## 3. jar 层提取（仅当字符串硬编码进 jar）
 

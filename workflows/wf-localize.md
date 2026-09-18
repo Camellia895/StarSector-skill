@@ -72,6 +72,10 @@
 `ship_data.csv`/`weapon_data.csv` 的 `tech/manufacturer` **全列**，三者都不是 recipe 列，漏一处就**静默不上色**）；
 `check_eol.js`（R17：整文件重写 CSV 必须**保持该文件自己的行尾风格**，硬编码 CRLF 会改风格且
 `cmp_csv_struct.js` 查不出来）。
+再加一道**专治"船插分类显示列"**的闸门：
+`check_uitags_zh.js`（`hull_mods.csv` 的 `uiTags` 是**显示列**，引擎不查任何注册表 ⇒ 英文标签就是分类名英文；
+**迁移/重译时极易被上游英文原文覆盖**，2026-09-18 全库普查 17/27 个 mod 中招，共 113 处。
+只处理这一个问题的**独立提示词**见 `workflows\prompt-船插分类汉化.md`）。
 
 ## 阶段 4 · 验证（AI 做）
 

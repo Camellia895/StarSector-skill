@@ -19,6 +19,7 @@
 | `check_jar_patch_integrity.js` | red | cond | **补丁洁净性**：类集合一致 + 映射外常量改动 = 0（补丁脚本退化成全量替换会立刻暴露） |
 | `check_homoglyphs.js` | yellow | base | 同形异义字符（西里尔/希腊伪拉丁）→ 字库缺字形显示 `?` + 英文检索静默失败 |
 | `check_designtype.js` | red | base | **设计类型/制造商注册表**：`tech`/`manufacturer` 值必须命中 `designTypeColors` 键，否则原值被当分类名显示（静默降级，症状=分类名还是英文）。查 CSV **与** `.skin`/`.ship` 的 `tech` 两处 |
+| `check_uitags_zh.js` | red | base | **船插分类显示列**（`hull_mods.csv` 的 `uiTags`）：该列是**显示列**，引擎直接把值当分类标签显示、**不查表**，英文标签=分类名变英文且无任何报错。词表以核心中文同列为准（武器/特殊/后勤/需要船坞/防御/护盾/引擎/战机/相位/支援）。2026-09-18 Kyeltziv 1.10.7 迁移把中文 uiTags 覆盖回英文，`check_designtype`/`verify_all_data`/`scan_data_stragglers` 三闸门全漏检 ⇒ 新增本闸门 |
 | `check_wing_data_schema.js` | red | base | **wing_data 表头硬需求**（2026-09-15 AI War 事故沉淀）：`FighterWingSpreadsheetLoader` 对 `role desc` 等 16 列 `getString` 硬读，缺列=启动崩溃。"缺列=默认"对 hulls/weapons/hullmods 成立、对 wing_data **不成立**；旧版 mod 升级必跑 |
 | `check_faction_shiproles.js` | red | base | **faction shipRoles 变体可解析**（2026-09-15 AI War 事故沉淀）：不存在的变体 id = faction 加载 NPE 启动崩溃；dead 角色键也会被解析。fallback 里是角色名不是变体，先剥掉再匹配；变体 id 按「文件内 variantId 字段」校验 |
 | `check_faction_known_lists.js` | red | base | **faction known\* 条目对照注册表**（2026-09-15 AI War 事故⑤沉淀）：复刻 verifyFactionData；id 填错（如类名而非 id）在读档/开局才炸，冒烟必须读档 |

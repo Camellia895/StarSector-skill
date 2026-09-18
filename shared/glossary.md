@@ -30,6 +30,8 @@
 | `automated ship` / `AI core` | 自动化舰船 / AI 核心 | [核心] |
 | `Alpha/Beta/Gamma Core` | 阿尔法/贝塔/伽马核心 | [核心] |
 | `salvage` / `derelict` | 打捞 / 残骸 | [核心] |
+| `Close Support`（武器角色词） | **密接支援** | [核心]（**不是**「支援密接」——2026-09-18 Kyeltziv 1.10.7 迁移错序修正 5 处；同类还有 `Fire Support` 火力支援） |
+| `hullmod` 分类标签（`hull_mods.csv` 的 `uiTags` 显示列） | 武器 / 特殊 / 后勤 / 需要船坞 / 防御 / 护盾 / 引擎 / 战机 / 相位 / 支援 | [核心]（逐字照抄核心中文同列；该列**引擎直接显示、不查表** ⇒ 单独闸门 `check_uitags_zh.js`，专项提示词 `workflows\prompt-船插分类汉化.md`） |
 
 ## 2. 性格（引擎常量值，**只译显示名，值不译**）
 
@@ -288,3 +290,13 @@
 | `S-mod` / `permMod` | S 插件 / 永久插件 | [核心]（社区通用缩写，保留 `S`） |
 | `[NUMBER]` / `[REFUND]`（代码替换令牌） | **不译**（逐字保留） | [自定·铁律]（`Helper.TOKEN_NUMBER` / `TOKEN_REFUND` 精确匹配） |
 | `numberPercent` 值（`[NUMBER]%`） | `[NUMBER]%` | [自定·铁律]（代码走 `String.replace` 而非 `String.format` ⇒ 字面 `%` **不写 `%%`**；与铁律 R4 的适用条件不同） |
+
+### 6.12 Kyeltziv Technocracy（kyeltziv，1.10.7 汉化修复，2026-09-18）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `Kyeltziv Technocracy`（势力名/designTypeColors 键/tech 列） | 凯尔捷夫技术官僚（中英双键都在 settings.json，R16） | [社区]（沿用 1.9） |
+| **船插分类显示列** `hull_mods.csv` → `uiTags`：`Special/Defenses/Weapons/Shields/Engines/Fighters/Logistics/Requires Dock/Phase/Support` | **特殊/防御/武器/护盾/引擎/战机/后勤/需要船坞/相位/支援** | [核心]（必须与核心中文同列**逐字一致**；该列是**显示列**，引擎不查表 ⇒ 英文就是英文，闸门 `check_uitags_zh.js`） |
+| 武器角色词 `primaryRoleStr`：`Close Support` | **密接支援**（**不是**「支援密接」——1.10.7 迁移错序，2026-09-18 修正 5 处） | [核心] |
+| 百科武器页「机载」分类 | **机载**（`CodexDataV2.FIGHTER_WEAPON`，核心已译）；判定 = `AIHints.SYSTEM` **且** `primaryRoleStr` 以 `(Fighter)` 结尾 | [核心]（`starfarer.api.zip` 源码实证） |
+| 战机专用武器名后缀 | **`（机载）`**（社区惯例，如 Emergent Threats「费米子解耦器 (机载)」）；核心 vanilla 用 `(战机型)` | [社区]/[核心] |
