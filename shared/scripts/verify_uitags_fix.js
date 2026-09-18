@@ -42,11 +42,13 @@ for (const modRoot of mods) {
     const rel = path.relative(modRoot, a);
     // 备份布局（fix_uitags_zh.js）：标准位置存 <mod>/hull_mods.csv；非标准位置存 <mod>/<相对路径中的 \ → __>__hull_mods.csv
     const flat = rel.replace(/[\\/]/g, '__') + '.csv';
+    const isStd = rel.replace(/[\\/]/g, '/') === 'data/hullmods/hull_mods.csv';
     const cands = [
-      path.join(backupDir, name, rel),
-      path.join(backupDir, name, 'hull_mods.csv'),
-      path.join(backupDir, name, 'bypath', flat),
+      path.join(backupDir, name, rel),             // 新布局：<mod>/<相对路径>
+      path.join(backupDir, name, 'bypath', flat),  // 非标准位置（扁平化相对路径）
     ];
+    // 老布局（<mod>/hull_mods.csv）只对**标准位置**成立，否则会拿主文件去比 data\config\ 模板
+    if (isStd) cands.push(path.join(backupDir, name, 'hull_mods.csv'));
     const b = cands.find(p => fs.existsSync(p));
     if (!b) continue;   // 该文件未改过（无备份）
     any = true;
@@ -54,15 +56,24 @@ for (const modRoot of mods) {
     const eb = eol(tb), ea = eol(ta);
     const eolSame = eb.crlf === ea.crlf && eb.lf === ea.lf;
     const pb = parseCsv(tb), pa = parseCsv(ta);
-    const structSame = pb.header.length === pa.header.length && pb.rows.length === pa.rows.length
-      && pb.rows.every((r, i) => r.cells.length === pa.rows[i].cells.length);
     const iUi = pa.header.indexOf('uiTags'), iId = pa.header.indexOf('id');
+    const structSame = pb.header.length === pa.header.length && pb.rows.length === pa.rows.length
+      && pb.rows.every((r, i) => pa.rows[i] && r.cells.length === pa.rows[i].cells.length);
+    // 按 id 索引比对（不按行号）：备份与当前记录数不同也不会越界/错配
+    const byId = new Map();
+    for (const r of pb.rows) {
+      const id = String(r.cells[iId] === undefined ? '' : r.cells[iId]).trim();
+      if (id && !byId.has(id)) byId.set(id, r);
+    }
     let diffs = 0; const badTags = [];
-    for (let i = 0; i < pa.rows.length; i++) {
-      const vb = String(pb.rows[i].cells[iUi] || ''), va = String(pa.rows[i].cells[iUi] || '');
-      if (vb === va) continue;
+    for (const ra of pa.rows) {
+      const id = String(ra.cells[iId] === undefined ? '' : ra.cells[iId]).trim();
+      if (!id) continue;                       // 空 id 行（分区注释/空行）跳过：它们不是船插条目
+      const rb = byId.get(id);
+      const va = String(ra.cells[iUi] || '');
+      const vb = rb ? String(rb.cells[iUi] || '') : null;
+      if (vb !== null && vb === va) continue;
       diffs++;
-      const id = String(pa.rows[i].cells[iId] || '').trim();
       for (const t of va.split(',')) {
         const s = t.trim();
         if (!s) continue;

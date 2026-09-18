@@ -68,10 +68,14 @@ node survey_mods_lang.js "C:\game\StarSector.v0.9.8a-RC8\mods"   # CJK 占比 < 
 | `Require Dock` | 需要船坞 | 上游拼写变体（漏 s），语义同 `Requires Dock` |
 | `Logistic` | 后勤 | 上游拼写变体（漏 s） |
 
-**不在表里的英文标签**属两种情况，**默认都不改**：
-1. 作者自定分类：`Unique` / `DEVTOOL` / `Utility` / `Test` … ⇒ 保留原文，**列给用户定夺**
-   （`DEVTOOL` 这类是功能分组，汉化反而破坏作者的归类；`Utility`≠`Support`，不要合并）。
-2. 拼写变体（确认语义等于表中某项）⇒ 用 `--ext-map` 显式追加，不要偷偷改。
+**不在表里的英文标签**（作者自定分类）属两种情况，**默认先列给用户定夺，不要自己决定**：
+1. **清晰可译**（实测已确认的做法）：`Utility`→**通用辅助**、`Unique`→**独特**、`DEVTOOL`→**开发工具**
+   （`DEVTOOL` 是"开发工具"分组，实测 10 处全是 `hidden + hiddenEverywhere` + `desc = "DEBUG: You should never see this in game."`；
+   用户口径"尽量汉化"下也照译）。
+2. **不该译 / 不能合并**：小写 `phase` 这类与核心词**大小写不同**的自定标签（改成核心的 `相位` 会与核心分类合并，
+   可能不是作者本意，且往往只服务 1 个 deprecated 隐藏船插）⇒ 保留；
+   `Utility`≠核心 `Support`（支援），**不要合并**；纯专有名词（无明确含义）保留原文。
+3. 决定要译的，一律用 `--ext-map` 显式追加映射，**不要偷偷改**。
 
 ### 4. 注入（**用定点替换，不要整体重建文件**）
 
@@ -127,7 +131,8 @@ node "$sk\check_eol.js" (Join-Path $bk (Split-Path $mod -Leaf)) "$mod\data\hullm
 
 1. ❌ 不查核心词表就自创中文分类名。
 2. ❌ 填/猜空的 `uiTags`。
-3. ❌ 汉化作者自定标签（`DEVTOOL`/`Unique`/`Utility`…）而不先问用户。
+3. ❌ 汉化作者自定标签（`DEVTOOL`/`Unique`/`Utility`…）却不先在报告里列出来给用户确认
+   （默认**先报后改**；用户明确说"都译"才直接译，译法见 §3）。
 4. ❌ 整体 parse→写回 CSV（混合行尾会被抹平，R17）。
 5. ❌ 动 `.csv.json` 之外的开发残留、动 jar、动 `settings.json`（那是 R16 的 `designTypeColors`，另一个问题）。
 6. ❌ 把备份放进 mod 目录（`_work\mod_bak\` 才是备份区）。
@@ -145,12 +150,14 @@ node "$sk\check_eol.js" (Join-Path $bk (Split-Path $mod -Leaf)) "$mod\data\hullm
 
 - 全库 27 个含 `hull_mods.csv`（**含 `data\config\hull_mods.csv` 等非标准位置**）的 mod，
   **19 个有英文核心分类标签**；另有 3 个只有作者自定英文标签；
-- 写盘 **20 个 mod / 117 行 / 132 个标签**（含第二轮：`Utility→通用辅助`、`Unique→独特`、
-  TreasureHunt 的 `Logistics/Requires Dock`、AoTD-VoK 的 5 处）；
-- 典型中招：`Random-Assortment-of-Things`(30 行)、`Nightcross`(22)、`EptaConsortium`(15)、
+- 写盘 **20 个 mod / 133 行 / 142 个标签**（第一轮核心词 113；第二轮 `Utility→通用辅助`、`Unique→独特`、
+  TreasureHunt 的 `Logistics/Requires Dock`、AoTD-VoK 的 5 处；第三轮 `DEVTOOL→开发工具` 10 处）；
+- 典型中招：`Random-Assortment-of-Things`(30 行)、`Nightcross`(22)、`EptaConsortium`(25)、
   `人之领相位研究所`(9)、`the_vass`(9)、`Kayse Phase Ships`(6)、`Roider Union`(6)、`AoTD-VoK`(5)；
 - 全部 20 个 mod 复核：差异格 > 0、**EOL 字节级一致**、结构一致、非词表标签 0；
-- 保留未改：`EptaConsortium` 的 `DEVTOOL`×10（全隐藏 + `DEBUG: You should never see this in game`）、
-  Navarchy 的小写 `phase`×1（自定标签 + deprecated 隐藏船插）、6 个 mod 的自定中文分类；
+- 保留未改：Navarchy 的小写 `phase`×1（自定标签 + deprecated 隐藏船插）、6 个 mod 的自定中文分类、
+  2 个未汉化的英文 mod（`SecondInCommand`、`Trails of Tooth and Claw`）；
 - **两个坑**：① 整体重建 CSV 会抹平混合行尾（R17）⇒ 必须字节级定点替换；
   ② `#` 注释/模板行会被 CSV 解析成数据造成假命中（**R21**，实测 TreasureHunt/Trails 各 1 处）。
+- **交付环节**：20 个 mod 已 git 留档（10 个为此新建仓库；`EptaConsortium` 工作树里 65 个无关改动**未**混入）；
+  9 个有交付 zip 的已按原包名/原内部文件夹名重新打包，并逐条目名 + 包内 `hull_mods.csv` 的 SHA-256 核对。
