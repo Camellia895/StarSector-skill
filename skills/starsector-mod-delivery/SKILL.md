@@ -1,6 +1,6 @@
 ---
 name: starsector-mod-delivery
-description: Starsector（远行星号）mod 完成汉化或修复后的交付打包——四项准备（①结构介绍文件 项目说明.md ②AI 工作区 ai\skills 与 ai\脚本，汉化 mod 另加 ai\en + ai\zh 中英对照语料与 README_汉化说明.md ③本地 git 仓库并提交 ④deliver.ps1 打包 zip）与交付前验证清单。zip 名取 mod_info.json 中文名（自动清洗 Windows 非法字符），内部嵌套一个 mod 文件夹，自动排除 .git/out/源码等开发残留，空目录写目录条目保结构，条目名 UTF-8。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
+description: Starsector（远行星号）mod 完成汉化或修复后的交付打包——四项准备（①结构介绍文件 项目说明.md ②AI 工作区：`ai\skills\` 只放一份**「征兵广告」告示**并给技能库与论坛链接（**不再逐包复制 skill**）、`ai\脚本\` 放本项目脚本、汉化 mod 另有 `ai\en`+`ai\zh` 语料与 `ai\zh\` 下的**中英对照 Excel 表**（从 `worklist\zh\` 原样搬运）、`ai\README_汉化说明.md` ③本地 git 仓库并提交 ④deliver.ps1 打包 zip）与交付前验证清单。zip 名取 mod_info.json 中文名（自动清洗 Windows 非法字符），内部嵌套一个 mod 文件夹，自动排除 .git/out/源码等开发残留，空目录写目录条目保结构，条目名 UTF-8。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
 ---
 
 # 交付打包
@@ -25,13 +25,26 @@ description: Starsector（远行星号）mod 完成汉化或修复后的交付�
 
 | 目录 | 内容 |
 |---|---|
-| `ai\skills\` | 本 mod 开发/维护用到的 skill（完整目录：`SKILL.md` + `scripts/` 等）。从 `<skills>\skills\` 复制需要的若干个 |
+| `ai\skills\` | ★**只放一份「征兵广告」告示，不打包任何 skill**。用模板 `<skills>\skills\starsector-mod-delivery\templates\ai-skills-招募告示.md` 复制为该目录下的 md。告示里给出**技能库仓库链接**（https://github.com/Camellia895/StarSector-skill）与**论坛链接**（https://www.fossic.org/thread-21212-1-1.html），并鼓励下一位接手者接手翻译。**为什么不再塞 skill**：整套技能库已开源托管在 GitHub，逐包复制 `SKILL.md` + `scripts/` 只会让每个 mod 包臃肿几十倍，而且随库更新必然过期 |
 | `ai\脚本\` | 本项目的脚本/工具（校验、翻译、打包、测试），从 `_work\mod_work\<Mod>\tools\` 复制 |
 | `ai\en\` + `ai\zh\` | **汉化对照语料**（做过汉化时推荐必带）：`en` 纯英文原文、`zh` 对应译文，条目逐条对齐（含 `file`/`id`/`field`/`en`/`zh` 定位与 `note` 上下文；jar 常量用 `c` 键） |
+| `ai\zh\` 内的 **Excel 对照表** | ★**把译者放在 `_work\mod_work\<Mod>\worklist\zh\` 里的 `.xlsx` 原样复制进 `ai\zh\`**（命名如 `<Mod>_中英对照总表.xlsx`）。**只搬运、不生成、不转换**——这是译者自己做的表格，AI 不得凭空造一份；`worklist\zh\` 里没有就跳过，并在交付说明里写明"未提供对照表" |
 | `ai\README_汉化说明.md` + 术语表 | 决策记录（有意不沿用/有意修正）、术语表快照（来源 = `<skills>\shared\glossary.md`） |
 
-语料来源 = `-extract` 产出的 `worklist_*.json`（已填），整体复制入包，供协作者/AI 审校对照、后续版本复用术语与句式。
+语料来源 = `-extract` 产出的 `worklist_*.json`（已填，**以 `worklist\zh\` 里的回传件为准**），整体复制入包，
+供协作者/AI 审校对照、后续版本复用术语与句式。
 纯数据类汉化可只带 en/zh 清单；若同时有 jar 补丁，jar 映射条目（`c`→`zh`）同样归档。
+
+### 2.1 交付前的 `ai\` 清单（照抄核对）
+
+```
+ai\
+├─ skills\              ← 只有一份招募告示（无任何 skill 目录）
+├─ 脚本\                ← 本项目脚本
+├─ en\                  ← 英文原文清单
+├─ zh\                  ← 中文译文清单 + 中英对照总表.xlsx（有就搬，没有就跳过）
+└─ README_汉化说明.md    ← 决策记录 + 术语表快照
+```
 
 ## 3. 本地 git
 
@@ -67,7 +80,9 @@ powershell -ExecutionPolicy Bypass -File "<skills>\skills\starsector-mod-deliver
 ## 5. 交付前验证清单
 
 - [ ] 结构介绍文件存在，内容与实际结构/版本/依赖一致
-- [ ] `ai\skills\`、`ai\脚本\` 齐；汉化 mod 另有 `ai\en\`、`ai\zh\`、`README_汉化说明.md`、术语表
+- [ ] `ai\skills\` **只有一份招募告示**（含技能库 + 论坛两个链接），**没有任何 skill 目录**
+- [ ] `ai\脚本\` 齐；汉化 mod 另有 `ai\en\`、`ai\zh\`、`README_汉化说明.md`、术语表
+- [ ] **`worklist\zh\` 里若有 `.xlsx`，已原样复制进 `ai\zh\`**；没有则在交付说明中写明"未提供对照表"
 - [ ] git 仓库干净，最近提交含本次改动（不需要版本管理则注明）
 - [ ] 解压 zip 到临时目录：顶层**只有一个文件夹**，内容与 `mods\<Mod>\`（除排除项外）一致
 - [ ] `mod_info.json` 在 zip 内且 **UTF-8 无 BOM**，中文名/描述正常

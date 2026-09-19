@@ -156,6 +156,7 @@
 | `<skills>\shared\verification-ledger.md` | **校验记账本机制 + 档位表**（人读；`ledger_report.js` 的档位来源） |
 | `<skills>\shared\verification-ledger.jsonl` | 校验运行记账（append-only，一行一次运行） |
 | `<skills>\skills\starsector-mod-delivery\templates\项目说明.md` | mod 结构介绍文件模板 |
+| `<skills>\skills\starsector-mod-delivery\templates\ai-skills-招募告示.md` | **`ai\skills\` 的「征兵广告」告示模板**：交付时复制为该目录下的 md。含技能库链接（https://github.com/Camellia895/StarSector-skill）与论坛链接（https://www.fossic.org/thread-21212-1-1.html）。**取代旧的"逐包复制 skill"要求** |
 | `<skills>\skills\starsector-mod-localization-extract\templates\zh\README.md` | **`worklist\zh\` 回传说明模板**：交付给译者时复制进交付包的 `zh\`（讲清"填好另存到 `zh\`、文件名保持一致、只填 `zh` 字段"） |
 | `<skills>\reference\SSTLib_API文档\*.html` | SSTLib API 文档（层级树/速查表/指南） |
 | `<game>\_work\语料库\parallel\core_parallel.plain.jsonl` | 核心中英平行语料 15,033 对（术语取证） |

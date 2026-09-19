@@ -126,8 +126,9 @@
 
 ## 阶段 5 · 交付
 
-`starsector-mod-delivery`：结构介绍文件 → `ai\skills`/`ai\脚本` → `ai\en`/`ai\zh` + `README_汉化说明.md` + 术语表 →
-git 提交 → `deliver.ps1` 打包。
+`starsector-mod-delivery`：结构介绍文件 → `ai\skills\`（**只放一份「征兵广告」告示 + 技能库/论坛链接，不复制任何 skill**）
+→ `ai\脚本\` → `ai\en`/`ai\zh` + **`ai\zh\` 里的中英对照 Excel（从 `worklist\zh\` 原样搬运，有就搬）** +
+`README_汉化说明.md` + 术语表 → git 提交 → `deliver.ps1` 打包。
 
 ## 阶段 6 · 留档（供下次复用）
 

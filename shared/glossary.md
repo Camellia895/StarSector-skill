@@ -320,3 +320,18 @@
 | `Derelict`（武器名形容词，如 Derelict Cannon/Lance） | 开拓者 | [旧译沿用]（旧译「开拓者加农炮」） |
 | 武器 tooltip 覆写列用词 `Fast/Very Fast/None/Average` | 较快 / 非常快 / 无 / 中等 | [核心]（核心 weapon_data 同列用词） |
 | `Missile Rainer`（作者生造词） | 导弹倾泻 | [自定·建议]（待用户确认） |
+
+### 6.14 号星行远 RotcesRats（rotcesrats，0.3.4 汉化，2026-09-19）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `RotcesRats`（mod 显示名/zip 名） | **号星行远** | [用户决策]（launchers/zip/文件夹名，合法字符已校验） |
+| `Pirate` / `Midline` / `Low Tech` / `High Tech` / `Luddic Path`（tech 列，两表同词） | 海盗 / 中线技术 / 低端技术 / 高新技术 / 卢德左径 | [核心]（核心 ship_data 同列实证；核心 designTypeColors 已注册中文键，`check_designtype` 须带 core 参数验证） |
+| `Combat Freighter`（designation） | **武装商舰** | [核心·同列实证]（核心 ship_data 同列；修正底稿 §3 的「武装货船」） |
+| `Corvette` / `Gun Cruiser`（designation） | 护卫艇 / 火炮巡洋舰 | [自定] / [自定·建议] |
+| `Close Support`（primaryRoleStr） | **密接支援** | [核心]（§1 同源，二次确认） |
+| `Ecsort`（变体词，原文拼写错误） | 护卫 | [自定]（按 Escort 处理，勿照抄） |
+| `It's the Circus`（Itano 系统状态，jar 常量×2 类） | 马戏开演了 | [自定]（撇号=直引号 U+0027，`c` 键逐字符） |
+| 舰名 47 条 | 意译（艾伊斯/轰鸣者…），ship_data↔.ship↔任务单舰名三处同词 | [用户决策]（全表见 `mods\RotcesRats\ai\zh\`） |
+| 变体角色词 29 个（Standard/Assault/…） | 一套自定词，全 mod 同译 | [自定]（见 mod glossary §0.6） |
+| `changelog.txt` | 不存在，未新建 | [流程]（易漏区 16） |
