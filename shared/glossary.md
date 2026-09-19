@@ -300,3 +300,23 @@
 | 武器角色词 `primaryRoleStr`：`Close Support` | **密接支援**（**不是**「支援密接」——1.10.7 迁移错序，2026-09-18 修正 5 处） | [核心] |
 | 百科武器页「机载」分类 | **机载**（`CodexDataV2.FIGHTER_WEAPON`，核心已译）；判定 = `AIHints.SYSTEM` **且** `primaryRoleStr` 以 `(Fighter)` 结尾 | [核心]（`starfarer.api.zip` 源码实证） |
 | 战机专用武器名后缀 | **`（机载）`**（社区惯例，如 Emergent Threats「费米子解耦器 (机载)」）；核心 vanilla 用 `(战机型)` | [社区]/[核心] |
+
+### 6.13 TVVFW 万泽时代（TVVFW，1.2→1.3 汉化迁移，2026-09-19）
+
+> 旧译（1.2，外部中文版）质量高，已按 id/field 配对复用。1.3 把 1.2 的自创设计类型
+> （`Low Tech?` 等）改回原版值 ⇒ 旧纪元名（主宰纪元/核心纪元/扩展纪元）弃用，改用核心词。
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `TVVFW` / `Tinyverse - The Wanzer Age`（mod 显示名） | 万泽时代：Tinysaurus的原版万泽扩展 | [旧译沿用] |
+| `Wanzer` | 万泽 | [旧译沿用] |
+| `Scarrebiron` | 斯卡利比昂 | [旧译沿用+统一]（旧译舰名作「斯卡利布昂」，与描述/武器名的「斯卡利比昂」不一致；1.3 迁移统一为「比昂」） |
+| `White Glint` | 白色闪光 | [旧译沿用] |
+| `Isomer` / `Phantomsia` / `Persona (MS-19)` / `Paradagism` / `Golem` / `Alseides` | 异构式 / 三一之影 / MS-19 异闻录 / 范例式 / 魔像 / 奥赛德斯 | [旧译沿用] |
+| `Custodian`（1.3 新舰/武器前缀） | 监护者 | [自定·建议]（待用户确认；1.3 新增） |
+| `Outpost`（1.3 新舰 carrier_outpost） | 前哨站 | [自定·建议]（待用户确认） |
+| `Low Tech` / `Midline` / `High Tech`（1.3 tech 列已标准化；1.2 为 `Low Tech?` 等自创名） | 低端技术 / 中线技术 / 高新技术 | [核心]（核心 designTypeColors 中英双键齐备；旧纪元名 主宰纪元/核心纪元/扩展纪元 **1.3 起弃用**，取代 §6.8 存档的 `Low Tech?→主宰纪元?`） |
+| `Explorarium` / `Remnant`（tech 列） | 开拓者 / 余辉 | [旧译沿用=核心]（与核心 ship_data 同列逐字一致） |
+| `Derelict`（武器名形容词，如 Derelict Cannon/Lance） | 开拓者 | [旧译沿用]（旧译「开拓者加农炮」） |
+| 武器 tooltip 覆写列用词 `Fast/Very Fast/None/Average` | 较快 / 非常快 / 无 / 中等 | [核心]（核心 weapon_data 同列用词） |
+| `Missile Rainer`（作者生造词） | 导弹倾泻 | [自定·建议]（待用户确认） |

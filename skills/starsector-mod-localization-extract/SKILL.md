@@ -205,10 +205,40 @@ node <skills>\shared\scripts\build_jar_worklist.js <candidates.json> <outTransla
 - **被排除的区域 + 理由**（原独立审计文件的内容并入此处）；
 - 各 shard 条目数之和 = 实际条目总数（供任务②算分流比例，见 `conventions.md` §3）。
 
+### 4.3 ★回传约定：交付时必须**建好 `worklist/zh/` 空文件夹**（给译者放成品）
+
+交付包顶上必须有这个子文件夹，**并在交付说明里告诉译者怎么用**（别只建个空目录不解释）：
+
+```
+worklist\
+├─ 01_data.json          ← 待译清单（原件，译者不要改）
+├─ 02_structured.json
+├─ 03_rules_missions.json
+├─ 04_jar.json
+├─ 05_misc.json
+├─ worklist_index.json   ← 分片索引 + 条目数 + 被排除区域
+├─ glossary.md           ← 基于本 mod 修正后的术语表
+└─ zh\                   ← ★译者把**汉化后的产物**放这里（交付前建成空目录）
+    └─ README.md         ← 用法说明（模板见 templates\zh\README.md）
+```
+
+**回传规则（必须写进交付说明）**：
+
+1. **只填 `zh` 字段，其余字段一律不动**；"有意保留原文" = 让 `zh` 与 `en`/`c` **逐字相同**。
+2. 填好后**另存到 `zh\`**，**文件名与上一级清单保持一致**（AI 靠文件名配对"已译产物 ↔ 待译清单"）。
+3. **允许只回传完成的那几份**（不必 5 份全齐）；AI 按已到位的最新的处理。
+4. **不得增删条目/改顺序**；发现遗漏**告诉 AI 补进上一级清单**，不要在 `zh\` 里自行新增
+   （否则条目对不上，注入会失败）。
+5. **`zh\` 内的文件不计入"交付文件 ≤10 份"的上限**——那是回传产物，不是交付物。
+
+> 落地模板：`<skills>\skills\starsector-mod-localization-extract\templates\zh\README.md`
+> （含 JSON 字段说明与目录示意图，复制进交付包的 `zh\` 即可；也可以用等价的说明替代）。
+
 ## 5. 闸门 G1（提取完整）通过标准
 
 - [ ] 每个 section 都有清单文件；`worklist_index.json` 条目数之和 = 各分片实际条目数
 - [ ] **交付文件总数 ≤ 10**（正常 ≤ 8）：shard ≤ 5 + index + `glossary.md` + `spec`；超出必须合并并说明
+- [ ] **已建好 `worklist\zh\`**（含用法说明，见 §4.3），且交付说明里写了"填完另存到 `zh\`、文件名保持一致"
 - [ ] `glossary.md` 已按本 mod 修正（专名/自造译名都在其中），不是直接照搬共享术语表
 - [ ] **data 层反向网 0 候选（§1.5，最高优先级）**：
       `node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版目录> <worklistDir>`

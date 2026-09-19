@@ -158,8 +158,21 @@ faction 显示名/舰队名/官职名、`tips.json`、`descriptions.csv`…）�
 ```
 
 - **`locator` 必须唯一且可回填**（注入脚本只认它）；jar 层条目用 `c` 键存 **jar 常量原文（逐字符）**并替代 `en`。
-- `zh` 留空 = 待译；`source` 标明该条是"新增"还是"旧译迁移"。
+- `zh` 留空 = 待译；**「有意保留原文」= `zh` 与 `en`/`c` 逐字相同**（注入脚本据此跳过该条）。
+- `source` 标明该条是"新增"还是"旧译迁移"。
 - 允许**拆成多份**清单（按文件/section/目录分片），但每份都要能被同一注入流程消费；分片索引写在 `worklist_index.json`。
+  分片数量与交付文件总数的上限见 `skills\starsector-mod-localization-extract` §4.1（**shard ≤5、总交付 ≤10 份**）。
+
+### 4.1 ★回传约定：`worklist\zh\` 放译好的产物
+
+交付给译者的清单放在 `mod_work\<Mod>\worklist\`；**译者把填好的产物另存到 `worklist\zh\`**：
+
+- **文件名与上一级清单保持一致**（AI 靠文件名把"已译产物"与"待译清单"配对）；
+- **只填 `zh`，其余字段一律不动**；允许只回传完成的那几份；
+- **不得增删条目或改顺序**（发现遗漏让 AI 补进上一级清单，不要自行新增）；
+- **注入时以 `zh\` 里的版本为准**；`zh\` 内的文件**不计入**"交付文件 ≤10 份"的上限（那是回传产物）。
+
+> 落地模板：`<skills>\skills\starsector-mod-localization-extract\templates\zh\README.md`（复制进交付包的 `zh\`）。
 
 ## 5. 闸门（Gate）：每个都要有可复现的命令与通过标准
 

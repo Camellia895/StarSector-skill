@@ -65,3 +65,15 @@
 {"t":"2026-09-17T11:35:30.555Z","check":"verify_strings_json","target":"RetroLib","exit":0,"hit":false,"probe":false,"note":""}
 {"t":"2026-09-17T11:35:30.720Z","check":"scan_jar_cjk_newjar","target":"RetroLib","exit":0,"hit":false,"probe":false,"note":""}
 {"t":"2026-09-17T11:35:30.880Z","check":"scan_jar_cjk_oldjar","target":"RetroLib","exit":1,"hit":true,"probe":true,"note":"旧汉化 jar 应有 21 条 CJK 字面量；报 0 说明工具失效"}
+{"t":"2026-09-19T13:42:37.720Z","check":"check_encoding.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T13:42:37.852Z","check":"check_csv_quotes.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T13:42:38.007Z","check":"check_font_glyphs.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T13:51:08.707Z","check":"check_eol.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T13:51:08.867Z","check":"scan_data_stragglers.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T14:30:11.458Z","check":"check_encoding.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T14:30:11.640Z","check":"check_csv_quotes.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T14:30:11.882Z","check":"check_font_glyphs.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T14:30:12.107Z","check":"check_homoglyphs.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T14:30:12.288Z","check":"check_eol.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T14:30:22.997Z","check":"scan_data_stragglers.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t":"2026-09-19T14:30:23.177Z","check":"verify_all_data.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}

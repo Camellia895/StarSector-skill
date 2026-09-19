@@ -48,6 +48,14 @@
 | 7 | `glossary.md` | **基于本 mod 修正后的术语表**（在 `shared\glossary.md` 上增补本 mod 专名，沿用其来源标注格式） |
 | 8 | `starsector-mod-localization-spec` | **写作规范 skill，给原文路径即可**（`<skills>\skills\starsector-mod-localization-spec\SKILL.md`），不要复制内容 |
 
+交付包顶上还要**建好 `worklist\zh\` 空文件夹**（+ 用法说明）——译者把**汉化后的产物**放进其中。
+目录形态、回传规则与落地模板见 `starsector-mod-localization-extract` §4.3；要点：
+
+- **只填 `zh`，其余字段不动**；"有意保留原文" = `zh` 与 `en`/`c` **逐字相同**；
+- 填好后**另存到 `zh\`**，**文件名与上一级清单保持一致**（AI 靠文件名配对"已译产物 ↔ 待译清单"）；
+- 允许只回传完成的那几份；**不得增删条目或改顺序**（发现遗漏让 AI 补进上一级清单）；
+- `zh\` 内的文件**不计入** ≤10 份的上限。
+
 > **宁可单个文件条目多，也不许多开文件**：每多一个文件，译者就多一次"这个文件是干嘛的"开销。
 > 严禁因"类别多"就加文件；确实超过 10 份时先合并小类，并在 `worklist_index.json` 里说明合并了什么。
 
@@ -74,13 +82,18 @@
 
 ## 阶段 3 · 注入（AI 做，用户译完后）
 
+**0. 先收产物**：从 `worklist\zh\` 取译者回传的已填清单（文件名与上一级待译清单一致）。
+**以 `zh\` 里的版本为准**；下一级同名文件只是待译原件。
+若 `zh\` 里只有部分分片 → **只处理已到位的那几份**，其余明确告知"还没收到，本次不注入"
+（不要拿空 `zh` 去注入——空值会写出空字符串，比漏译更糟）。
+
 执行 `starsector-mod-localization-apply`：
 
 1. 自检：空 `zh` = 0；字段结构未被改。**「有意保留原文」的约定写法 = `zh` 与 `en`/`c` 逐字相同**（逻辑键、引擎 ENUM 等），注入会自动跳过。
 2. **★前置断言**（铁律 R15，**写入前必做**）：
    `node <skills>\shared\scripts\check_install_source.js <modRoot> <EN原版备份>`
    不通过 = 目标目录已汉化过 → **先还原英文原版再注入**（否则合成字段被追加 → 一行变两行 → 启动崩溃）。
-3. 数据层按结构类型回填（CSV 状态机 / **rules `options` 结构级重建（R13）** / 伪 JSON 文本替换 / `.faction` / 变体 / 舰名 / 任务源码）。
+3. 数据层按结构类型回填（CSV 状态机 / **rules `options` 结构级重建（R13）** / 伪 JSON 文本替换 / `.faction` / 变体 / 舰名 / 任务源码 / **`mod_info` 的 name·description** / **changelog 的 `changelog@<行号>` 分段块**）。
 4. 若 jar 层有条目：`patchdir.js` + `rezip.js`（**铁律 R7 标识符绝不可译**、**R12 逻辑键绝不可译**、R9 正斜杠），必要时同步 `out\production`。
 5. 安装到 `mods\<Mod>\`，jar 备份 `*.orig`，装后做 SHA-256 比对。
 
