@@ -54,10 +54,16 @@
 ## 2. 阶段 2 · 提取新内容并算 R（AI 做）
 
 1. 执行 `starsector-mod-localization-extract`，产出新版完整 worklist。
+   **产出必须遵守 §4.1 交付契约**：shard ≤ 5 份 + `worklist_index.json`（含被排除区域及理由）
+   + 基于本 mod 修正的 `glossary.md` + 指向 `starsector-mod-localization-spec`（共 ≤ 8 份，至多 10 份）。
 2. **diff 出"待译新条目"**：`en` 未变 → 复用旧 `zh`；`en` 变了 / 新增 / 新版新增文件里的条目 → 待译（`source:"new"`）。
-3. **算 R**：按 §0 口径统计条目数（分子 = 待译新条目，分母 = 需汉化总条目），
-   把统计过程与 `excluded_entries.json` 一起留档（用户要能复核数字）。
-4. 按 R 进入 §3 的对应档。
+3. **`mod_info.json` 与 `changelog.txt` 每次都要单独过一遍**（易漏区 15/16，新版常改动它们）：
+   - `mod_info.json` 的 `name`/`description`：上游改版常改 `description`；**旧译能对齐就复用，改动了就进待译**；
+   - `changelog.txt`：新版通常在顶部**加了新版本条目**（→ 新条目进待译），旧条目**已中文的不要重译**；
+     注意与 `wf-game-update` 第 10 步区别——那里是"新增条目"，这里是"翻译已有条目"。
+4. **算 R**：按 §0 口径统计条目数（分子 = 待译新条目，分母 = 需汉化总条目），
+   `mod_info`/`changelog` 的待译条目**计入分子与分母**；统计过程与被排除区域一起留档（用户要能复核数字）。
+5. 按 R 进入 §3 的对应档。
 
 > 若**完全没有旧汉化** ⇒ R = 100% ⇒ 落 ③ 档；但这种情况通常应直接走 `wf-localize.md`（首次汉化），
 > ③ 档的意义是"有旧汉化但新内容已占多数"。
@@ -76,9 +82,12 @@
 
 1. 旧译迁移注入。
 2. **AI 翻译新条目**：先读 `starsector-mod-localization-spec`（格式铁律），
-   界面/功能文本按 `-content`，对话/叙事按 `translation-voice`，术语查 `shared\glossary.md`。
+   界面/功能文本按 `-content`，对话/叙事按 `translation-voice`，术语查**本 mod 修正后的 `glossary.md`**。
    > 注意 `translation-voice` 的"程序使用限制"：**长文本（对话/人物/叙事）必须逐段理解后亲自写**，
    > 不得用机器翻译或模板拼接；界面/功能短文本可批量处理但同样要过 `-content` 的自检清单。
+   > **`mod_info.json`（`name`/`description`）与 `changelog.txt`（条目正文）在这一步一并译完**（易漏区 15/16）：
+   > `name` 注意不要用 `\/:*?"<>|` 与首尾空白/点（会变成交付 zip 名与文件夹名）；
+   > changelog 保留版本号、日期与原有分段/项目符号结构。
 3. 注入 + 生成
    **交检阅包**：`新译对照清单`（`locator` / `en` / `zh` / `note`，标出与旧译的差异）+
    `旧译不沿用的条目`（含理由）+ 完整中文版。

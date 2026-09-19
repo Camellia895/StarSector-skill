@@ -55,7 +55,7 @@
 | `Persean League` / `Persean` | 英仙座联盟 / 英仙座 | [核心] |
 | `Luddic Church` / `Luddic Path` | 卢德教会 / 卢德左径 | [核心] |
 | `Sindrian Diktat` | 辛达强权 | [核心] |
-| `Pirates` / `Independent` | 海盗 / 独立势力 | [核心] |
+| `Pirates` / `Independent` | 海盗 / 非势力团体 | [核心]（`independent.faction` 四显示字段 + `descriptions.csv` + `rules.csv` 十处一致；⚠️ 旧表作「独立势力」系误读——核心数据中「独立势力」仅 1 处，译的是形容词语境 "rising independent **power**"，非势力名。形容词用法照常「独立＋名词」：独立舰队/独立世界/独立政体；个别语境：`independent trade` 民间贸易、`independent operator` 自由人/个体商户/独立经营者） |
 | `Domain` / `Domain-era` | 人之领 / 人之领时代 | [核心] |
 | `Persean Sector` | 英仙座星域 | [核心] |
 | `hyperspace` / `gate` | 超空间 / 星门 | [核心] |

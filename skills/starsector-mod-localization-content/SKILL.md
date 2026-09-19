@@ -29,6 +29,8 @@ description: Starsector（远行星号）mod 汉化"内容层"（译文本身）
 | 层 | 典型位置 | 处理 |
 |---|---|---|
 | 数据层 UI | `hull_mods.csv` 的 name/desc/short/tech、variants `displayName`、faction/rules/strings | 直接改文件（写法见 `-spec` §2） |
+| **mod 元信息** | `mod_info.json` 的 **`name`/`description`**（启动器列表与详情直接显示） | **要译**；`id`/`version`/`gameVersion`/`author`/`dependencies` 不译。`name` 注意别含 `\/:*?"<>|` 与首尾空白/点——它会被用作交付 zip 名与文件夹名 |
+| **changelog** | `changelog.txt` 的条目正文 | **要译**；保留版本号、日期与原有分段/项目符号结构；已中文的条目不要重写 |
 | jar 层 UI | 代码里 `addMessage`/界面字符串/`getUnapplicableReason` | 源码级改后整模块重编译，或常量池补丁（见 `-apply` §2） |
 | 日志 | `LOGGER.*`（写 `starsector.log`） | 建议与界面文本同译保持一致；**保留 id/常量原文** |
 | 注释/文档 | 配置 json 的 `#` 注释、README | 面向玩家的配置注释建议译；开发者说明可留原文 |

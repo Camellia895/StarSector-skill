@@ -1,6 +1,6 @@
 ---
 name: starsector-mod-localization-extract
-description: Starsector（远行星号）mod 汉化的第一阶段——把 mod 里所有玩家可见文本提取成"待译清单 worklist"交给人工/AI 翻译。覆盖摸底判定（strings 表 vs 硬编码在 jar/源码）、data 层 recipe 化提取（CSV/伪 JSON/faction/装配变体/LunaLib 设置/tips/舰名/任务文本）、jar 层常量池提取与源码字面量对齐（含编译期折叠、注释夹折叠、Kotlin ${} 片段）、易漏区 13 条清单、按 section 拆多份清单与 worklist_index.json。不含翻译、不含注入（那两步见 starsector-mod-localization-apply / wf-localize）。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
+description: Starsector（远行星号）mod 汉化的第一阶段——把 mod 里所有玩家可见文本提取成"待译清单 worklist"交给人工/AI 翻译。覆盖摸底判定（strings 表 vs 硬编码在 jar/源码）、data 层 recipe 化提取（CSV/伪 JSON/faction/装配变体/LunaLib 设置/tips/舰名/任务文本/**mod_info 与 changelog 元信息**）、jar 层常量池提取与源码字面量对齐（含编译期折叠、注释夹折叠、Kotlin ${} 片段）、易漏区 16 条清单、**交付契约（给译者的文件总数 ≤10 份：shard ≤5 + index + 修正后 glossary.md + 指向 -spec）**。不含翻译、不含注入（那两步见 starsector-mod-localization-apply / wf-localize）。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
 ---
 
 # 提取：生成待译清单（worklist）
@@ -56,6 +56,13 @@ node <skills>\shared\scripts\build_data_worklist.js <modRoot> <recipe.json> <out
 | `jsonDirObjects` | 目录内多份 JSON（`glob`）按 `keys` 抓（如通缉令 `description`/`dialog`） |
 | `missionDir` | `data\missions\*`：`descriptor.json` 的 title/description + `mission_text.txt` |
 | `wholeText` | 任意纯文本整篇（如 `mission_text.txt`） |
+| `modInfo`（**kinds 已内置**） | `mod_info.json` 的 `name`/`description`；写法 `{"kind":"modInfo"}`。**自动排除** `id`/`version`/`gameVersion`/`author`/`dependencies` 等标识与版本字段（铁律 R12）；**已中文的值自动跳过**（`includeZh:true` 可强制全量） |
+| `changelog`（**kinds 已内置**） | `changelog.txt` 条目正文；写法 `{"kind":"changelog"}`。按**空行分段**切块，逐块成条并保留行号（`field` = `changelog@<行号>`，用于唯一定位）；**已中文的块自动跳过** |
+
+> **`modInfo` / `changelog` 是必查两项**（易漏区 15/16），不是"有就查"：启动器列表与 mod 详情里
+> 玩家直接看到它们。两者都归到 `05_misc` shard（见 §4.1 分片原则）。
+> 两个 kind 已实现在 `build_data_worklist.js` 内，**实测**：`CustomizableStarSystems` → 15 条（含 13 条 changelog 分段）、
+> 已中文的 `Templars` → 0 条。
 
 ## 1.5 提取完整性闸门（**必跑**；recipe 有盲区，别只靠 recipe）
 
@@ -111,6 +118,19 @@ node <skills>\shared\scripts\check_designtype.js <modRoot>   # 必须 0 问题
 13. **舰船显示名/分类的真正来源是 `data\hulls\ship_data.csv`**：0.95a+ 引擎以该表 `name` 列作舰船显示名、`designation` 作舰级分类、`tech/manufacturer` 作制造商行。**只改 `.ship` 的 `hullName` ≠ 舰名已汉化**（事故：全舰 `.ship` 已译但游戏内仍英文）。designation 取值见 `<skills>\shared\glossary.md` §3。
 14. **★`hull_mods.csv` 的 `uiTags`（船插分类显示列）**：引擎把该列的值（英文逗号切分）**直接当装配界面/百科的船插分类标签显示，不查任何注册表** ⇒ 英文标签就是英文，**不报错、不打日志**。**该列的权威词表 = 核心中文 `starsector-core\data\hullmods\hull_mods.csv` 同列**（`Weapons→武器`、`Special→特殊`、`Logistics→后勤`、`Requires Dock→需要船坞`、`Defenses→防御`、`Shields→护盾`、`Engines→引擎`、`Fighters→战机`、`Phase→相位`、`Support→支援`）。**留空合法**（= 该船插无分类，别猜）；作者自定的分类（`Unique`/`DEVTOOL`/`Utility`/`基础`…）保留原样，除非确认要汉化。
     **2026-09-18 全库普查**：27 个有 `hull_mods.csv` 的 mod 里 **17 个**存在英文标签、共 **113 处**（Kyeltziv/Epta/Nightcross/RAT/人之领相位研究所…）——多为**迁移/重译时被上游英文原文覆盖**，属"汉化过的 mod 又变回英文"的高频复发点。工具：`<skills>\shared\scripts\survey_uitags.js`（全库普查）、`fix_uitags_zh.js`（定点注入，字节级、保留混合行尾）、`check_uitags_zh.js`（闸门）。
+15. **★`mod_info.json`（启动器列表/详情 直接显示，属**玩家可见文本**）**：译 `name` 与 `description`。
+    **不译**：`id`（改了会丢存档兼容）、`version`、`gameVersion`、`author`、`dependencies`、
+    `modPlugin`/`jars` 等一切标识与版本字段（铁律 R12）。
+    - `name` 影响**交付 zip 的文件名与解压后的文件夹名**（`deliver.ps1` 取它，见 `starsector-mod-delivery`）——
+      译名要能当文件夹名用：避免 `\/:*?"<>|` 与首尾空白/点。
+    - 若 `description` 较长，按 `starsector-mod-localization-content` 的分层（写清定位 + 特色，不逐字直译）。
+    - 另有 `*.version`（如 `<ModId>.version`）与 `modFiles` 清单里的元信息，同样只在**有可见文案**时才动。
+16. **★`changelog.txt`（mod 列表里可查看，属**玩家可见文本**）**：译**条目正文**，
+    **保留原文件结构与分隔符**（版本段落头、`---`/空行/`•` 等项目符号、缩进）。
+    - **版本号与日期原样保留**（`1.2.0`、`2026-09-18`）。
+    - 上游常中英混排或中途改成英文：**只补/改正文英文**，已中文的条目不要重写。
+    - 若 mod 无 `changelog.txt`：不要新建（那不是汉化工作；只有作者改版本时才由 `wf-game-update` 加条目）。
+    - 与 `wf-game-update` 第 10 步的"加新版本条目"是两件事：那里**新增**条目，这里**翻译**已有条目。
 
 ## 3. jar 层提取（仅当字符串硬编码进 jar）
 
@@ -154,20 +174,46 @@ node <skills>\shared\scripts\build_jar_worklist.js <candidates.json> <outTransla
 
 > 翻译键一律取 **jar 常量原文**：弯引号/撇号（U+2018–U+201D）与首尾空格要逐字符保留，否则键不命中。
 
-## 4. 输出：拆成多份 worklist
+### 4.1 ★交付契约：交给上游的文件总数**至多 10 份**（硬约束）
 
-- 量小时一份；量大时**按 section / 目录 / 文本类型拆多份**（如 `01_data_hullmods.json`、`02_rules_text.json`、`03_jar_ui.json`、`04_missions.json`），每份都能被同一注入流程消费。
-- 生成 `worklist_index.json`：列出全部分片、各自条目数、覆盖范围，便于上游逐片推进与**统计条目数**（任务2 分流要用，见 `conventions.md` §3）。
-- 生成 `excluded_entries.json`：被排除的 locator + 理由，口径可复核。
-- 每条含 `zh:""` 待填、`source:"new"`；已从旧版迁移的条目则 `zh` 预填、`source:"old-migrated"`。
+提取的产出是**给译者的一小包东西**，不是一堆散清单。宁可单文件条目多，也不许多开文件——
+每个文件都要译者单独打开、单独理解上下文。
+
+| # | 交付物 | 形式 | 约束 |
+|---|---|---|---|
+| 1–5 | **待译清单 shard** | `worklist/01_*.json` … | **shard ≤ 5 份** |
+| 6 | `worklist_index.json` | 分片索引 + 条目数 + **被排除区域及理由** | 1 份（合并统计与审计，不另建审计文件） |
+| 7 | `glossary.md` | **基于本 mod 修正后的术语表** | 1 份（在 `<skills>\shared\glossary.md` 基础上增补/纠正本 mod 专名，沿用其来源标注格式） |
+| 8 | `starsector-mod-localization-spec` | skill 目录（`SKILL.md` 一份） | 1 份（**原文路径交付**，不复制内容，避免双份漂移） |
+
+**总计 ≤ 8 份；即使上游坚持要分得更细，也以 10 份为上限。**
+
+分片原则（**按载体类型分，不按小节分**）：
+
+1. `01_data` —— data 层 CSV / 伪 JSON 的可见文本
+2. `02_structured` —— `.ship` / `.skin` / `.variant` / `.faction` 等结构化文件
+3. `03_rules_missions` —— rules、任务、简报、叙事长文
+4. `04_jar` —— jar 常量池（含 `\u0001` recipe 条目）
+5. `05_misc` —— 其余（`mod_info` / changelog / 配置注释 / tips…）
+
+> **禁止**因"类别多"就继续加文件。单个 shard 条目多不是问题（几千条也能一次读完结构）；
+> 文件数多才是问题。确实超过 10 份时，**先合并小类**，并在 `worklist_index.json` 说明合并了哪些。
+
+### 4.2 `worklist_index.json`（第 6 份）要装什么
+
+- 每个 shard：文件名 / 条目数 / 覆盖的文件或区域；
+- **被排除的区域 + 理由**（原独立审计文件的内容并入此处）；
+- 各 shard 条目数之和 = 实际条目总数（供任务②算分流比例，见 `conventions.md` §3）。
 
 ## 5. 闸门 G1（提取完整）通过标准
 
 - [ ] 每个 section 都有清单文件；`worklist_index.json` 条目数之和 = 各分片实际条目数
+- [ ] **交付文件总数 ≤ 10**（正常 ≤ 8）：shard ≤ 5 + index + `glossary.md` + `spec`；超出必须合并并说明
+- [ ] `glossary.md` 已按本 mod 修正（专名/自造译名都在其中），不是直接照搬共享术语表
 - [ ] **data 层反向网 0 候选（§1.5，最高优先级）**：
       `node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版目录> <worklistDir>`
       → 必须 0 候选。**只靠 recipe 不算通过**（recipe 有盲区，实测漏的正是"没想到的字段"）。
-- [ ] §2 的 13 个易漏区**逐条**有交代（纳入 recipe 或写明"不存在/故意跳过"）
+- [ ] §2 的 16 个易漏区**逐条**有交代（纳入 recipe 或写明"不存在/故意跳过"）
 - [ ] **结构化文件要"看全部字段"而不是 grep 已知字段**：`.ship`/`.skin`/`.variant`/`.faction` 先列出
       所有字符串字段+出现次数，再判哪些是可见文本（本项目因只 grep `hullName` 而漏掉 `descriptionPrefix`）
 - [ ] jar 层候选已分类，`skip` 项有 `category` 与理由（留档审计）

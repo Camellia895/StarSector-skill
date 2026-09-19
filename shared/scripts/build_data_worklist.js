@@ -36,7 +36,9 @@
 //           "keys":[{"key":"description","note":"通缉令简介"},{"key":"dialog","note":"对话"}] },
 //         { "kind":"missionDir", "dir":"data/missions",
 //           "descriptorKeys":["title","description","difficulty"], "missionText":true },
-//         { "kind":"wholeText", "file":"data/missions/x/mission_text.txt", "id":"x", "note":"..." }
+//         { "kind":"wholeText", "file":"data/missions/x/mission_text.txt", "id":"x", "note":"..." },
+//         { "kind":"modInfo" },                          // mod_info.json 的 name/description（标识/版本字段自动排除）
+//         { "kind":"changelog" }                         // changelog.txt 条目正文（按空行分段；已中文的块自动跳过）
 //       ] }
 //   ]
 // }
@@ -285,6 +287,56 @@ function kWholeText(rule) {
   add({ file: norm(file), id: rule.id || path.basename(file), field: 'text', line: 1, en: txt, zh: '', note: rule.note || '整文件文本' });
 }
 
+// mod_info.json 的可见文本：只取 name / description。
+// ⚠️ 绝不取 id / version / gameVersion / author / dependencies 等标识与版本字段（铁律 R12）。
+// name 会被 deliver.ps1 用作交付 zip 名与解压文件夹名 ⇒ note 里提醒译者别用非法字符。
+const TRANSLATABLE_MODINFO = [
+  { key: 'name', note: '启动器列表与详情显示的 mod 名；会被用作交付 zip 名与文件夹名，勿含 \\/:*?"<>| 与首尾空白/点' },
+  { key: 'description', note: '启动器详情的 mod 简介（玩家可见）' },
+];
+function kModInfo(rule) {
+  const file = rule.file || 'mod_info.json';
+  const p = path.join(MOD, file);
+  if (!fs.existsSync(p)) return;
+  const raw = fs.readFileSync(p, 'utf8').replace(/^\uFEFF/, '');
+  const obj = parseJsonLoose(raw);
+  for (const f of TRANSLATABLE_MODINFO) {
+    const v = obj[f.key];
+    if (typeof v !== 'string' || v.trim() === '') continue;
+    // 已中文（如上游自带中文名/简介）⇒ 不再进清单，避免制造"填一遍原样"的无用条目
+    if (!rule.includeZh && /[\u4e00-\u9fff]/.test(v)) continue;
+    add({ file: norm(file), id: rule.id || obj.id || path.basename(MOD), field: f.key, line: findLineOf(raw, '"' + f.key + '"'), en: v, zh: '', note: f.note });
+  }
+}
+
+// changelog.txt 的条目正文：按"空行分段"切块，逐块成条，保留版本号/日期行（保持原结构）。
+// 已知 cjk 的块不再产出（避免把已中文的条目塞回清单），可用 rule.includeZh=true 强制全量。
+function kChangelog(rule) {
+  const file = rule.file || 'changelog.txt';
+  const p = path.join(MOD, file);
+  if (!fs.existsSync(p)) return;
+  const raw = fs.readFileSync(p, 'utf8').replace(/^\uFEFF/, '');
+  const lines = raw.split('\n').map(l => (l.endsWith('\r') ? l.slice(0, -1) : l));
+  const blocks = [];
+  let cur = [], start = 0;
+  const push = () => { if (cur.length) blocks.push({ line: start, text: cur.join('\n').trim() }); cur = []; };
+  lines.forEach((l, i) => {
+    if (l.trim() === '') { push(); return; }
+    if (!cur.length) start = i + 1;
+    cur.push(l);
+  });
+  push();
+  const hasCJK = s => /[\u4e00-\u9fff]/.test(s);
+  for (const b of blocks) {
+    if (!b.text) continue;
+    if (!rule.includeZh && hasCJK(b.text)) continue;   // 已中文 → 跳过
+    // ⚠️ field 里带行号：changelog 多个条目会共享同一 (file, id)，只靠 id+field 无法区分，
+    //    而清单 schema 规定"回填以 id+field 为准、行号仅参考" ⇒ 把行号嵌进 field 才能唯一定位。
+    //    回填实现按 `field` 的 `changelog@<行号>` 取原行号，把 zh 替换回**该行所在空行分段块**。
+    add({ file: norm(file), id: rule.id || path.basename(file), field: 'changelog@' + b.line, line: b.line, en: b.text, zh: '', note: rule.note || 'changelog 条目正文；保留版本号/日期与原有分段与项目符号（按空行分段回填）' });
+  }
+}
+
 const HANDLERS = {
   csv: kCsv,
   hullNames: kHullNames,
@@ -299,6 +351,8 @@ const HANDLERS = {
   jsonDirObjects: kJsonDirObjects,
   missionDir: kMissionDir,
   wholeText: kWholeText,
+  modInfo: kModInfo,
+  changelog: kChangelog,
 };
 
 for (const sec of RECIPE.sections) {

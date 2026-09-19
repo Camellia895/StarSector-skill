@@ -53,6 +53,8 @@ Vayra's Sector 汉化（2026-09-16）沉淀了一对可直接改造的通用注�
 | `.faction` 嵌套 | 按"行前缀 + 引号值"匹配（`"spaceSailor":{"name":"Page"}` → 换引号内值），`#` 注释行跳过 | `migrate_faction2.js` |
 | `.ship`/`.skin`/`.variant` | 替换 `hullName` / `displayName` 的值文本；**`.skin` 还有 `descriptionPrefix`（图鉴描述前缀，铁律 R14）与 `hullDesignation`（人可读短语才译）** | 直接用 `build_data_worklist.js` 的对应 kind 反查 locator |
 | 纯文本（`mission_text.txt` 等） | 整篇写回，保持段落结构 | — |
+| `mod_info.json`（易漏区 15） | 只换 **`name`/`description`** 的**值文本**；`id`/`version`/`gameVersion`/`author`/`dependencies` 等**一个都不能碰**（铁律 R12）。⚠️ 注入后 `name` 会成为 `deliver.ps1` 的 zip 名与解压文件夹名 ⇒ 检验它不含 `\/:*?"<>|`、无首尾空白/点 | `migrate_json.js` 思路（文本替换） |
+| `changelog.txt`（易漏区 16） | 清单里 `field` = **`changelog@<行号>`**：按该行号定位**空行分段块**，整块替换为 `zh`。**保留版本号、日期与原有分段/项目符号结构**；块之间用真实换行 | 自写；改完自查"版本号与日期数量与原文一致" |
 | 运行时编译源码（不在 jar 的 `.java`） | 只替换**字符串字面量内容**，保持 Java 语法、引号、`\n` | `translate_missions.js` |
 
 **写回后立刻跑**（闸门 G3）：

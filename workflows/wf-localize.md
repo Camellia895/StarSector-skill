@@ -32,26 +32,45 @@
   `node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版目录> <worklistDir>` → **必须 0 候选**；
 - 结构化文件（`.ship`/`.skin`/`.variant`/`.faction`）**先列出全部字符串字段**再判哪些要译，别只 grep 已知字段
   （实测：只 grep `hullName` 会漏掉 `.skin` 的 `descriptionPrefix`——图鉴描述前缀）；
-- 逐条核对**易漏区 13 条**；
-- 按 section 拆成**多份** worklist + `worklist_index.json` + `excluded_entries.json`。
+- 逐条核对**易漏区 16 条**；
+- 按 §4.1 的**交付契约**收敛产出：**待译清单 shard ≤ 5 份** + `worklist_index.json`（含条目数与**被排除区域及理由**）。
 
 **闸门 G1**（定义见 `shared\conventions.md` §5）：提取完整 —— 含上面反向网 **0 候选**。
 
 ## 阶段 2 · 交给用户汉化（**本流程的关键交接点**）
 
-向用户交付的**必须包含**（缺一项都会让用户多问一轮）：
+### 2.1 交付包：**文件总数至多 10 份**（正常 8 份，硬约束）
 
-1. **清单文件路径**（多份就列全部）+ 每份覆盖范围与**条目数**；
+| # | 交付物 | 说明 |
+|---|---|---|
+| 1–5 | `worklist/01_data.json` … `05_misc.json` | **待译清单 shard，上限 5 份**（按载体类型分：data / structured / rules_missions / jar / misc） |
+| 6 | `worklist_index.json` | 分片索引 + 各片条目数 + **被排除区域及理由** |
+| 7 | `glossary.md` | **基于本 mod 修正后的术语表**（在 `shared\glossary.md` 上增补本 mod 专名，沿用其来源标注格式） |
+| 8 | `starsector-mod-localization-spec` | **写作规范 skill，给原文路径即可**（`<skills>\skills\starsector-mod-localization-spec\SKILL.md`），不要复制内容 |
+
+> **宁可单个文件条目多，也不许多开文件**：每多一个文件，译者就多一次"这个文件是干嘛的"开销。
+> 严禁因"类别多"就加文件；确实超过 10 份时先合并小类，并在 `worklist_index.json` 里说明合并了什么。
+
+### 2.2 交付时必须说明的事（缺一项都会让用户多问一轮）
+
+1. **清单文件路径**（≤5 份）+ 每份覆盖范围与**条目数**，并给出**总条目数**；
 2. **定位方式说明**：每条 = `locator` / `file` / `id` / `field` / `line`(参考) / `en` / `zh`(留空) / `note`(上下文)，
-   **只填 `zh`，其余字段不动**（否则注入会失败）；
-3. **术语与风格入口**：`shared\glossary.md`（已含核心译名与铁律摘要）；
-4. **动笔前必读**：`starsector-mod-localization-spec`（占位符 `%`→`%%`、`\u0001`、CSV 引号、禁 `「」` 用 `【】`）；
+   **只填 `zh`，其余字段不动**（否则注入会失败）；**「有意保留原文」= `zh` 与 `en`/`c` 逐字相同**；
+3. **术语以第 7 份 `glossary.md` 为准**（已含本 mod 专名；共享表只作底稿）；
+4. **动笔前必读第 8 份 `starsector-mod-localization-spec`**：占位符 `%`→`%%`、`\u0001` 数量与位置、
+   CSV 引号、禁 `「」` 用 `【】`、`${}` 后接汉字等格式铁律；
 5. **长文本特别说明**：对话/人物/叙事类条目按 `starsector-translation-voice` 处理（可脱离原文句式）；
-6. **故意不译的区域**及理由（如 LunaSettings Radio 选项值、引擎常量、原版副本角色表）；
-7. **建议翻译顺序**：先术语密集区（hullmods / ship_data / faction）建立术语一致性，再 rules/任务/对话。
+6. **元信息与 changelog 也在范围内**（易漏区 15/16，都归 `05_misc`）：
+   - `mod_info.json` 的 **`name` / `description`** 要译（启动器列表与详情直接显示）；
+     `id`/`version`/`gameVersion`/`author`/`dependencies` 等**不译**；
+     `name` 会被 `deliver.ps1` 用作**交付 zip 名与解压文件夹名**，故避免 `\/:*?"<>|` 与首尾空白/点。
+   - `changelog.txt` 的**条目正文**要译，**保留版本号、日期与原有分段/项目符号结构**；已中文的条目不要重写。
+7. **故意不译的区域**及理由（如 LunaSettings Radio 选项值、逻辑键与引擎 ENUM、原版副本角色表）；
+8. **建议翻译顺序**：先术语密集区（hullmods / ship_data / faction）建立术语一致性，再 rules/任务/对话。
 
 > 用户身份是**译者**：AI 不得代填正文（`translation-voice` 的"程序使用限制"）。
-> AI 在阶段 2 的职责是：答疑、补术语、按需再切片或拆分清单。
+> AI 在阶段 2 的职责是：答疑、补术语（更新第 7 份）、按需**在已交付的分片内**补条目——
+> **补条目不要新建第 6 个 shard**，加进最接近的那一片并同步 `worklist_index.json`。
 
 ## 阶段 3 · 注入（AI 做，用户译完后）
 
