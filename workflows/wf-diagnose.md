@@ -4,6 +4,11 @@
 > 需要读：`shared\iron-rules.md`（每条症状对应哪条铁律）、`shared\env.md`（日志/编码/`-noverify`）、
 > `skills\starsector-engine-diagnose\SKILL.md`（离线复现与反汇编方法）。
 
+> **本文件只是症状索引**（该读哪张表、跑哪个脚本）。要"**动手修**"时按情况转：
+> - 崩的是**我们自己刚改**的东西 → `wf-smoke-first.md` 阶段 2；
+> - 崩的**不是**我们改的、且 `gameVersion` 与 0.98a **无代差** → `wf-mod-fix.md`（烟测驱动的修复循环）；
+> - `gameVersion` **远低于** 0.98a（有代差）→ `wf-game-update.md`。
+
 ## 0. 先做三件事
 
 1. **读日志**（`<game>\starsector-core\starsector.log`，**`-Encoding Default`** 读，GBK）：

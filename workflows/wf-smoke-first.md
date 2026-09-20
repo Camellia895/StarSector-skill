@@ -68,6 +68,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 
 循环直到 PASS。**每修一个指纹就重跑一次**，不要攒着一起测 —— 攒着会分不清是哪条修好的、哪条又引入的新问题。
 
+> **先判归属再动手**：如果指纹指向的东西**不是我们这次改的**（文件 mtime 是原作者时间戳、
+> 数据自洽闸门 0 问题），那这不是"收尾关口"的事，而是**修 mod 本身** ⇒ 转
+> `workflows\wf-mod-fix.md`（烟测驱动的修复循环，含归属判定与最小修复手法）。
+> 反过来，若 `mod_info.json` 的 `gameVersion` 与 0.98a 有代差 ⇒ 转 `workflows\wf-game-update.md`。
+
 ### 常见分支
 
 | 情况 | 处理 |

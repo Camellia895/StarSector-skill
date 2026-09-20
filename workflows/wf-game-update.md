@@ -5,6 +5,13 @@
 > 需要读：`shared\env.md`、`shared\iron-rules.md`、`shared\conventions.md`、
 > `skills\starsector-mod-game-upgrade\SKILL.md`（主体执行手册）。
 
+> **前提判据（先看这一条再决定进哪个流程）**：读 `mod_info.json` 的 `gameVersion`。
+> - **远低于 0.98a**（0.7x/0.8x/0.9x）⇒ 本流程（先审计、再动手、最后升版本号+changelog）。
+> - **就是 0.98/0.98a 却跑起来崩**，且崩溃涉及的**不是**我们改过的文件 ⇒ **不要走本流程**，
+>   转 `workflows\wf-mod-fix.md`（烟测驱动的失败循环：只做最小修复、不重编译、不升版本号）。
+> - 是**我们自己刚改过的东西**崩了 ⇒ 转 `workflows\wf-smoke-first.md`。
+> 三条路的前提不同，混用会白忙：本流程赌的是"有代差、要大修"，`wf-mod-fix` 赌的是"只坏了某处、要小修"。
+
 ## 0. 原则
 
 **该改的都改了、不该改的一个都没动、每一步都有实证。**

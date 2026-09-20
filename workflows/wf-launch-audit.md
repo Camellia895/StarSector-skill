@@ -1,11 +1,14 @@
 # wf-launch-audit · 按日志指纹查表定位与修复（窄版）
 
-> **定位**：**不是**流程入口，而是**查表手册**。入口是 `wf-smoke-first.md`（先烟测 → 失败才来这里）。
-> 触发：`wf-smoke-first.md` 阶段 2 报出 `[R#]` 指纹，或用户说"启动崩了/看日志"。
+> **定位**：**不是**流程入口，而是**查表手册**（公共依赖）。调用它的有三处：
+> - `wf-smoke-first.md` 阶段 2（**我们自己刚改过**的东西崩了）；
+> - `wf-mod-fix.md` 阶段 B1（**修一个跑不通的 mod**，含归属判定与最小修复手法）；
+> - `wf-diagnose.md`（症状索引里的启动崩溃分支）。
 > 需要读：`shared\env.md`（日志 GBK、环境毒点）、`shared\iron-rules.md`、必要时 `skills\starsector-engine-diagnose\SKILL.md`。
 >
 > **本文件只做两件事**：① 把指纹翻译成"根因 + 该跑哪个闸门"；② 给该闸门的定位/修复命令。
 > **不做全量校验**——全量在烟测跑通之后，由 `wf-smoke-first.md` 阶段 3 调 `starsector-mod-localization-verify`。
+> **也不管归属与修复循环**——"这是谁的锅、要不要替作者补数据、修到什么时候停"见 `wf-mod-fix.md`。
 
 ## 0. 铁则：**不要把日志读进上下文**
 
