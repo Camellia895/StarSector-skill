@@ -75,6 +75,16 @@ if (-not (Test-Path -LiteralPath $modCheck)) { Write-Output "SMOKE-ENV-FAIL: 缺
 $ids = ($ModIds -join ',')
 Write-Output "== 烟测开始 ==  mod=$ids  newGame=$([bool]$NewGame)  timeout=${TimeoutSec}s"
 
+# 刷新"用户原始列表"快照为【当前】enabled_mods.json（实测教训：快照只写一次会陈旧，
+# ModCheck 结束时用陈旧快照恢复 → 建档阶段 -KeepMods 拿到的是几十个旧 mod 甚至不含目标 mod）
+$canon = Join-Path $mc 'results\enabled_mods.user_original.json'
+$emNow = Join-Path $game 'mods\enabled_mods.json'
+if ((Test-Path -LiteralPath $emNow) -and -not $KeepEnabled) {
+  New-Item -ItemType Directory -Force -Path (Split-Path $canon) | Out-Null
+  Copy-Item -LiteralPath $emNow -Destination $canon -Force
+  Write-Output '  已刷新 user_original 快照 = 当前 enabled_mods.json'
+}
+
 # ---------------- 第 1 段：加载到主菜单 ----------------
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 $mcArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$modCheck,'-ModIds',$ids,'-TimeoutSec',$TimeoutSec,'-Quiet')

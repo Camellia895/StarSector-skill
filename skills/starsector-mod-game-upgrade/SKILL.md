@@ -297,6 +297,18 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 29. **faction 数据校验发生在读档/开局期，不在启动期**：`CoreLifecyclePluginImpl.verifyFactionData`
     逐条核对 knownShips/knownHullMods/knownFighters/knownWeapons 对注册表，id 填错（如
     knownHullMods 填类名而非小写 id）= 读档时 RuntimeException ⇒ **冒烟必须读一次档**，只进主菜单不够（§7.2）。
+30. **`NoSuchMethodError` 消息完整可读 = API 签名漂移，不是标识符误译**：返回类型也进 JVM 描述符——
+    `spawnEmpArc`/`spawnEmpArcPierceShields` 返回 `CombatEntityAPI`→`EmpArcEntityAPI`（0.9a），参数一字未变
+    也全断（FlowerGod 7 个类实测）。修法＝对 0.98a API **原样重编译**（源码零改动），源码赋值处靠向上转型兼容。
+31. **模块变体只认变体文件顶层 `modules` 键**（对象 `{槽位:变体id}` 或数组 `[{"槽位":变体id}]`）：
+    0.8 时代把模块变体塞进 `weaponGroups` 的 `MODULE1/2` 槽＝按武器规格查表 ⇒ `Weapon spec [X] not found!`（HullVariantSpec 反汇编实证）。
+    槽位 key 必须与父舰 `.ship` 的模块槽 id 一致；`FleetMemberAPI.get/setModuleVariant` 已删，改走 `member.getVariant().get/setModuleVariant`。
+32. **原版船的槽位会跨版本重做**：0.8a hyperion 6 槽 → 0.98a 3 槽，mod 旧变体引用幽灵槽 =
+    `Slot id [WS 006] not found on hull [hyperion]`（崩溃点在主菜单标题演习战）。`check_refs` 查不出
+    （只对 id 引用），用 `check_variant_slots.js`（变体 weaponGroups 槽位 × 船体 `weaponSlots`，含 .skin 链解析）。
+33. **隐性库依赖靠 javac 兜底**：grep class 常量池扫 `org/lazywizard` 之类会漏（FlowerGod 实测漏报 LazyLib，
+    `lazylib.combat.CombatUtils` 直至编译期才暴露）⇒ 依赖扫描只能当预检，**重编译 + API 审计通过才算数**；
+    审计脚本本身要把 **mod jar 自身 + 全部库 jar 放进 classpath**，否则同 jar 内部类引用全成假阳性（FG_GarbageShipCollection 40+ 条）。
 
 ## 4. 反模式
 

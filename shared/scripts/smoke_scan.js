@@ -45,6 +45,8 @@ const PATTERNS = [
   // —— 引用断链（**启动崩溃**）：平时是 WARN 级噪音，一旦以 RuntimeException 冒上来就致命 ——
   { name: '引用断链：武器 spec 缺失（启动崩溃）', re: /RuntimeException: Weapon spec .* not found/, rule: 'R5/引用', gate: 'check_refs.js + check_assets.js', fatal: true, why: '某个 .variant/.wpn 装备了不存在的武器 id（汉化误改 csv 的 id 列或漏该武器行也会造成）' },
   { name: '引用断链：舰体 spec 缺失（启动崩溃）', re: /RuntimeException: (Ship hull|Hull) spec .* not found/, rule: '引用', gate: 'check_refs.js', fatal: true, why: '.variant/.skin 指向不存在的 hull id' },
+  // —— mod 自身代码缺陷（与汉化无关，但会崩；修法见 starsector-jar-code-fix）——
+  { name: 'mod 代码：军官技能对无 FleetMember 的舰船 NPE（战斗部署 setCaptain 路径）', re: /NullPointerException[\s\S]{0,600}?applyPersonalToStats[\s\S]{0,300}?setCaptain/, rule: '代码修复', gate: '—（重编译：技能 apply/unapply 判空 stats.getFleetMember()，见 starsector-jar-code-fix）', fatal: true, why: '其他 mod 调 Ship.setCaptain（如部署期同步）会对无 fleet member 的舰船应用个人技能；2026-09-20 Nightcross NAFulldiveOfficer 实测' },
   // —— 环境类（假阳性高发，别当汉化的错）——
   { name: '环境：StackMapTable（本机 API jar 被改过，游戏自带 -noverify 无感）', re: /VerifyError|StackMapTable/, rule: 'env.md §4', gate: '—（离线程序需加 -noverify）', fatal: false, why: '自己写的离线验证程序会看到假崩溃' },
   { name: '环境：类版本不匹配', re: /UnsupportedClassVersionError/, rule: 'env.md §4', gate: '—', fatal: true, why: '编译目标 class 版本高于游戏 JRE' },

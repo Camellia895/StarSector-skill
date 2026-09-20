@@ -271,9 +271,41 @@ for (Field f : k.getDeclaredFields()) if (f.getName().startsWith("$SwitchMap")) 
 （不匹配直接放弃）；`prerelease` 标记、发布日期、变更规模决定优先级；
 **发布包永远优先于仓库源码** —— 实测仓库 `main` 可能连**正式版**都落后（RTSAssist 仓库 83 个源文件 vs 发布包 147 个）。
 
-## 5. 与其它 skill 的衔接
+## 5. 已汉化 jar 的**代码修复**重编译（修 bug 不丢汉化）
+
+触发：jar 内 Java 代码有 bug 要改（典型：技能/插件 NPE 防御，`wf-mod-fix` 归属=mod 自身缺陷），而 jar 已被常量池补丁汉化。**重编译整类会替换其全部常量** ⇒ 直接编译英文源码 = **静默回退该类全部汉化**。原则：改代码的同时**把 jar 里已汉化的 Utf8 常量回填进源码**，让重编译产物天然带汉化，再证明"唯一差异=本次修复"。
+
+流程（闸门脚本 `dump_utf8.js` / `diff_utf8_multiset.js` / `cmp_build.js` 已入 `shared\scripts\`）：
+
+1. **备份** jar + 涉改源码 → `_work\mod_bak\<Mod>_<版本>_<日期>_pre_fix\`（conventions §1.2）。
+2. **等价性证明（动刀前，防止源码≠jar）**：纯净源码 `javac --release <N> -g -encoding UTF-8` 重编译 →
+   `cmp_build.js <旧class解包目录> <新build目录> <旧jar> <新build目录>`，通过标准 **diff=0**。
+   - class major 用 `javap -v` 看（**别用 od 手数 minor/major，易读反**：Nightcross 2.1.4 实为 61 而非 52）；
+     `--release` 必须**与 jar 现状一致**——env.md 的 `--release 8` 是新编译底线，对已是 61 的 jar 保 61 才能
+     字节码等价，且 `var`/模式匹配 instanceof/indy 拼接只有 ≥10/16/9 才合法（`-g` 对齐 LVT）。
+3. **提取已汉化串**：`dump_utf8.js` 分别 dump 旧 jar 解包目录与纯净编译产物 →
+   `diff_utf8_multiset.js <old.json> <en.json> --out=zh_strings.json`；old-only 集 = 需回填的中文。
+   用**多重集差**而非逐位对齐：补丁工具重打过常量池尾部，顺序不可信。
+4. **回填源码**：普通串整串替换；indy **recipe** 按 `\u0001` 切片对回源码拼接字面量的位置
+   （`\u0001` 的数量与位置是语义，铁律 R6）；**汉化可能调整过数字在句中的位置**
+   （实测 `% damage…` → `因 ECM…提高 \u0001%`），源码拼接顺序必须跟着改，
+   否则运行时显示 "5因 ECM…"；`static final` 参与的拼接已被折叠成单常量，整串替换即可。
+5. **改 bug 本体**：最小修复。判空类守卫 `if (x == null) return;`；unapply 里先做 stats-only 的
+   `unmodify` 再判空（stats 清理不依赖 member）。
+6. **三闸门**：① `diff_utf8_multiset.js <old> <final>` = **0 差异**（汉化零丢失）；
+   ② `cmp_build.js <旧解包> <final>` 差异**逐行核实**仅为本次修复（守卫=新增 `ifnull/ifnonnull+return`，其余 23/27 类应逐字节同）；
+   ③ LoadTest（游戏 JRE + `-noverify` + logs 属性，§3 第 6 条细则）全绿。
+7. **装回**：流式打包的旧 jar（unzip 报 `bad CRC`、本地头 CRC=0）会让 `jar uf` 抛 `invalid entry CRC`
+   ⇒ 解包→覆盖新类→`jar cfM` 全量重建（先删掉解包带出的 `.idea/` 等 IDE 目录）；
+   装回后用闸门 ①② 对 **live jar** 复跑一遍作收尾证据。
+
+> 实例全程：`_work\mod_work\Nightcross\out\fixlog-npe-fulldive-2026-09-20.md`（NAFulldiveOfficer
+> 战斗部署 NPE，30 条中文串含 9 条 recipe 零丢失，27/27 类加载）。
+
+## 6. 与其它 skill 的衔接
 
 - 文本位置判定与清单产出 → `starsector-mod-localization-extract`（§0 摸底 / §3 jar 层提取）。
 - 注入与安装的通用流程 → `starsector-mod-localization-apply`（本 skill 是它在"Java 硬编码文本"场景的展开）。
 - 需要真的改逻辑/整包重编译 → `starsector-mod-kotlin-rebuild`（Kotlin 按模块编译）与 `starsector-mod-game-upgrade`（编译探测）。
 - 崩溃排查（改错标识符 → `NoSuchFieldError`）→ `wf-diagnose.md` + `starsector-engine-diagnose`。
+- 修 mod 自身代码 bug（NPE/逻辑错误）的触发与归属判定 → `wf-mod-fix.md`（其修复手法表指入本 skill §5）。
