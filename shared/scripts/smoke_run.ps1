@@ -66,7 +66,7 @@ $mc   = Join-Path $game '_work\explore\modcheck'
 if (-not (Test-Path -LiteralPath $mc)) { Write-Output "SMOKE-ENV-FAIL: 找不到 modcheck 项目: $mc"; exit 2 }
 $modCheck = Join-Path $mc 'ModCheck.ps1'
 $drivePs1 = Join-Path $mc 'drive.ps1'
-$newGame  = Join-Path $mc 'NewGame.ps1'
+$newGamePs1 = Join-Path $mc 'NewGame.ps1'   # ⚠️ 不能叫 $newGame —— 会与 [switch]$NewGame 参数冲突（实测报"无法把 String 转成 SwitchParameter"）
 if (-not $LogPath) { $LogPath = Join-Path $game 'starsector-core\starsector.log' }
 $scanJs = Join-Path $PSScriptRoot 'smoke_scan.js'
 
@@ -89,12 +89,14 @@ if ($rc1 -ne 0) {
   elseif ($rc1 -eq 3) { Write-Output '  → 超时未到主菜单' }
   elseif ($rc1 -eq 4) { Write-Output '  → 进程崩溃/异常退出' }
   else { Write-Output "  → 未知返回码 $rc1" }
-} elseif ($NewGame) {
+} 
+# 加载失败就不必再建存档（实测：否则会拿完整 mod 列表去跑 NewGame，崩在别的 mod 上，污染指纹归属）
+if ($rc1 -eq 0 -and $NewGame) {
   # ---------------- 第 2 段：自动创建存档（更深一层）----------------
   $sw2 = [System.Diagnostics.Stopwatch]::StartNew()
   & powershell -NoProfile -ExecutionPolicy Bypass -File $drivePs1 boot -KeepMods | Out-Null
   $rcb = $LASTEXITCODE
-  if ($rcb -eq 0) { & powershell -NoProfile -ExecutionPolicy Bypass -File $newGame | Out-Null; $rcn = $LASTEXITCODE }
+  if ($rcb -eq 0) { & powershell -NoProfile -ExecutionPolicy Bypass -File $newGamePs1 | Out-Null; $rcn = $LASTEXITCODE }
   else { $rcn = $rcb }
   $sw2.Stop()
   Write-Output ("[2/2] 自动建存档: boot={0} newgame={1}  用时 {2:N0}s" -f $rcb, $rcn, $sw2.Elapsed.TotalSeconds)

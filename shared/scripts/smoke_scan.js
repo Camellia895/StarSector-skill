@@ -55,14 +55,30 @@ const PATTERNS = [
   { name: '噪音：缺 mod 依赖弹窗', re: /(is required|Missing mod|requires mod)/i, rule: '—', gate: 'check mod_info.dependencies', fatal: false, why: '缺前置，属安装问题不是汉化问题' },
 ];
 
-// ---------------- 扫描（流式，逐行）----------------
+// ---------------- 会话切分 ----------------
+// ⚠️ 日志可能含**多次启动**（未轮转时是追加的）。统计必须只算**最后一次会话**，
+//    否则旧会话的崩溃指纹会与本次混在一起（实测：手动跑出来的崩溃与本次崩溃同时被报出，
+//    让人误以为本次有多个问题）。
+//    切分法（同 find_crash.js 思路）：规则行首的毫秒时间戳 `^\d+ \[`，每次新启动会**回退**。
+const SESSION_LINE = /^\s*\d+ \[/;
+const tsOf = s => { const m = /^\s*(\d+) \[/.exec(s); return m ? Number(m[1]) : null; };
 const text = fs.readFileSync(file, 'latin1');          // 字节级读取：GBK 也能匹配 ASCII 指纹
 const lines = text.split('\n');
+let sessionStart = 0;
+let prevTs = null;
+for (let i = 0; i < lines.length; i++) {
+  const t = tsOf(lines[i]);
+  if (t === null) continue;
+  if (prevTs !== null && t < prevTs - 1000) sessionStart = i;   // 时间戳显著回退 ⇒ 新会话
+  prevTs = t;
+}
+
+// ---------------- 扫描（流式，逐行；只统计最后一次会话）----------------
 const hits = new Map();                                 // name -> {count, samples:[{line,text}]}
 let fatalCount = 0;
 let errorCount = 0;
 
-for (let i = 0; i < lines.length; i++) {
+for (let i = sessionStart; i < lines.length; i++) {
   const raw = lines[i];
   const s = raw.replace(/\r$/, '');
   if (/\bFATAL\b/.test(s)) fatalCount++;
@@ -104,7 +120,8 @@ if (JSON_OUT) {
 // ---------------- 人读输出：一屏以内 ----------------
 console.log('===== 烟测日志指纹 =====');
 console.log(`${file}`);
-console.log(`判定: ${verdict}   FATAL=${fatalCount}  ERROR=${errorCount}  (文件 ${(text.length / 1048576).toFixed(1)} MB，未整篇读入)`);
+const sessInfo = sessionStart > 0 ? `，只统计最后一次会话（L${sessionStart + 1} 起）` : '';
+console.log(`判定: ${verdict}   FATAL=${fatalCount}  ERROR=${errorCount}  (文件 ${(text.length / 1048576).toFixed(1)} MB，未整篇读入${sessInfo})`);
 
 if (!fatalHits.length && !fatalCount) {
   console.log('\n未命中任何致命指纹。');
