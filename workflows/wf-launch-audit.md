@@ -1,130 +1,82 @@
-# wf-launch-audit · 汉化后"启动崩溃 / 首屏异常"排查
+# wf-launch-audit · 按日志指纹查表定位与修复（窄版）
 
-> **任务分类 ④**（`wf-localize` 的后置救火流程，也用于验收别人的汉化产物）。
-> 触发词："游戏启动就崩"、"Fatal: null"、"进不去游戏"、"报错了看看日志"。
-> 需要读：`shared\env.md`（§3 日志是 GBK、§4 环境毒点）、`shared\iron-rules.md`（R12/R13/R15）、
-> `skills\starsector-engine-diagnose\SKILL.md`（需要引擎级复现时）。
-
-## 0. 铁则：先定位**是哪个 mod、哪一行**，再看别的
-
-**不要**通读日志（40MB 起步）。按下面顺序定向切：
-
-```powershell
-# ① 先看有没有 Fatal / ExceptionInInitializerError（汉化崩多半在"资源加载期"）
-Select-String -Path starsector-core\starsector.log -Pattern 'FATAL|ExceptionInInitializerError|Caused by' -Encoding Default
-
-# ② 抓最内层的 Caused by 与其下第一行 `at data.scripts...` —— 那就是本 mod 的入口
-#    例：Caused by: java.lang.NullPointerException: ... LunaSettings.getBoolean(...) is null
-#        at data.scripts.campaign.plugins.NA_SettingsListener.<clinit>
-```
-
-> **日志编码**：`starsector.log` 是 **GBK/ANSI**，必须 `-Encoding Default` 才不乱码（`env.md` §3）。
-> 中文命中（如 `Could not find mod 夜十字`）只有用 Default 读才看得见——**英文仍可读，中文会乱**，
-> 所以别用 `-Encoding UTF8` 下结论说"没有中文"。
+> **定位**：**不是**流程入口，而是**查表手册**。入口是 `wf-smoke-first.md`（先烟测 → 失败才来这里）。
+> 触发：`wf-smoke-first.md` 阶段 2 报出 `[R#]` 指纹，或用户说"启动崩了/看日志"。
+> 需要读：`shared\env.md`（日志 GBK、环境毒点）、`shared\iron-rules.md`、必要时 `skills\starsector-engine-diagnose\SKILL.md`。
 >
-> 会话切分与 ERROR 聚合可用 `<skills>\shared\scripts\find_crash.js`（多会话大日志）。
+> **本文件只做两件事**：① 把指纹翻译成"根因 + 该跑哪个闸门"；② 给该闸门的定位/修复命令。
+> **不做全量校验**——全量在烟测跑通之后，由 `wf-smoke-first.md` 阶段 3 调 `starsector-mod-localization-verify`。
 
-## 1. 按"最内层异常"查表
+## 0. 铁则：**不要把日志读进上下文**
 
-| 日志特征 | 判定 | 处置 |
+`starsector.log` 起步几十 MB，**整篇读既慢又爆上下文**。正确做法：
+
+```powershell
+# ① 先出指纹（一屏以内，自动指回 R# 与闸门）
+node <skills>\shared\scripts\smoke_scan.js <game>\starsector-core\starsector.log
+
+# ② 只有需要"上下文几行"时才定向取（脚本给出行号，用行号区间读）
+node <skills>\shared\scripts\smoke_scan.js <log> --json      # 机读，含 samples 的行号
+# 读日志必须 -Encoding Default（GBK；用 UTF8 会把中文读成乱码 ⇒ 误判"没有中文报错"）
+Select-String -Path <log> -Pattern 'FATAL|ExceptionInInitializerError|Caused by' -Encoding Default
+```
+
+多会话大日志的会话切分：`node <skills>\shared\scripts\find_crash.js <log>`。
+
+## 1. 指纹 → 根因 → 闸门（与 `smoke_scan.js` 的 PATTERNS 一一对应）
+
+| 日志特征（`smoke_scan.js` 的指纹名） | 判定（铁律） | 处置 |
 |---|---|---|
-| `Could not find mod <中文名>` + `getBoolean(...) is null` + `ExceptionInInitializerError` | **R12 逻辑键误译**（mod id 被当显示文本译了） | 见 §2 |
-| `NumberFormatException: For input string: "<选项id>"` + `at ...campaign.rules.Rules.o00000` | **R13 options 结构损坏** | 见 §3 |
-| 一行变两行 / `options` 里 `id:id:标签` | R13 **或 R15**（对已汉化目录二次注入） | 见 §3 + `check_install_source.js` |
-| `Duplicate key "<中文>"` | R10 `designTypeColors` 键译重了 | `verify_all_data.js` → 合并同义键 |
-| **无任何报错**，但界面某处照旧显示英文（典型：舰船图鉴的**分类/制造商**名还是英文原文） | **R10 补充：`designTypeColors` 未注册** —— 引擎查不到不报错，**把该值原样当分类名显示**（静默降级） | `check_designtype.js <modRoot> <core>`；**务必同时查 CSV 与 `.skin`/`.ship` 的 `tech`**（只改 CSV 会漏第二处） |
-| `UnknownFormatConversionException` | R4 字面 `%` 未写 `%%` | 修该 tooltip 字段 |
-| `BootstrapMethodError: StringConcatException` | R6 `\u0001` 数量被改 | `check_u0001.js` |
-| `JSONObject["options"] not found` | R1 弯引号拆列 | `check_csv_quotes.js` |
-| `NoSuchFieldError`/`NoSuchMethodError`（消息乱码） | R7 标识符被改 | `verify_identifiers.js` |
-| 文本在引号处截断（无报错） | R2 rules 参数内嵌引号 | `check_rules_arg_quotes.js` |
-| 个别字显示 `?` | R3 缺字形 | `check_font_glyphs.js` |
-| 残留扫描报几十~几百条英文（**假警报**） | 扫的是**补丁前**的解包副本（`scan_stragglers.js` 只吃 `.class` 目录） | 改用 `check_jar_stragglers.js` **直接对交付 jar 跑** |
+| `ExceptionInInitializerError` / `Could not find mod …` / `getBoolean(…) is null` | **R12 逻辑键误译**（显示文本与查找键在常量池里字面相同） | `scan_logic_keys.js <patch_map.json> <原classDir> <modId>`；在清单里把这些条的 `zh` 改成**与原文逐字相同**后重注入 |
+| `NumberFormatException: For input string: "<选项id>"` | **R13 options 结构损坏** | `check_options_structure.js <modRoot> <enBackupRoot>`；按英文结构重建（见 §2） |
+| `JSONObject["options"] not found`（或 `"id"`/`"trigger"` 缺键） | **R1**（CSV 被弯引号拆列）或 **R15**（对已汉化目录二次注入） | 先 `check_install_source.js <modRoot> <EN备份>` 判 R15；再 `check_csv_quotes.js` + `TestCsv.java` 判 R1 |
+| `RuntimeException: Weapon spec [X] not found!` / `(Ship hull\|Hull) spec [X] not found!` | **引用断链**（`.variant`/`.wpn`/`.skin` 指向不存在的 id；汉化误改 csv 的 id 列或漏行也会造成） | `check_refs.js <modDir> <游戏根>` + `check_assets.js`；**注意**：同名信息平时是 WARN 级噪音，**只有以 `RuntimeException` 冒上来才是致命** |
+| `NoSuchFieldError` / `NoSuchMethodError`（消息乱码） | **R7 标识符被译** | `verify_identifiers.js <classDir>` |
+| `StringConcatException` / `BootstrapMethodError` | **R6 `\u0001` 数量漂移** | `check_u0001.js <mapping.json>` |
+| `UnknownFormatConversionException` | **R4 字面 `%` 未写 `%%`** | 修该 tooltip 字段；`check_content.js` |
+| `Duplicate key "…"` | **R10 `designTypeColors` 键重复** | `verify_all_data.js` → 合并同义键 |
+| `JSONObject text must begin with …` / `Expected … at character …` | **R19 伪 JSON 未转义引号或 BOM** | `JsonProbe.java`（用游戏 `org.json` 复核，别用严格解析器判死刑 —— R8） |
+| **无任何报错**，但界面某处照旧英文（典型：图鉴的**分类/制造商**名） | **R16/R10 补充：`designTypeColors` 未注册**（引擎查不到不报错，把原值当分类名显示） | `check_designtype.js <modRoot> <core>`；**务必同时查 CSV 与 `.skin`/`.ship` 的 `tech`** |
+| **无任何报错**，船插**分类标签**是英文 | **`uiTags` 是显示列**，引擎不查表 | 见 `workflows\prompt-船插分类汉化.md` + `check_uitags_zh.js` |
+| 文本在引号处截断（无报错） | **R2 rules 参数内嵌引号** | `check_rules_arg_quotes.js <rules.csv>` |
+| 个别字显示 `?` | **R3 缺字形** | `check_font_glyphs.js <data目录>` |
+| `VerifyError` / `StackMapTable`（**离线程序**报的） | **环境**：本机 `starfarer.api.jar` 被改过；游戏自带 `-noverify` 无感 | 自己的验证程序加 `-noverify`（`env.md` §4）——**不是 mod 的问题** |
+| `UnsupportedClassVersionError` | **环境**：编译目标 class 版本高于游戏 JRE | mod 用 `--release 8`、验证程序 `--release 17` |
+| `Error while initializing plugin` / WARN 级 `spec … not found` | **噪音**（原版与别的 mod 也有，`verdict=PASS` 时也会出现） | 先判**归属**（把 `[id]` 一起匹配）再决定，别算到目标 mod 头上 |
+| 残留扫描报几十~几百条英文（**假警报**） | 扫的是**补丁前**的解包副本（`scan_stragglers.js` 只吃 `.class` 目录） | 改用 `check_jar_stragglers.js` 直接对**交付 jar** 跑 |
 
-## 2. R12（逻辑键误译）的定位与修复
+> 表里没有的指纹：往 `smoke_scan.js` 的 `PATTERNS` 加一行（`rule` 指回铁律编号、`gate` 指回脚本），
+> 并在此表补一行 —— **两处同步**，否则下次还是会靠猜。
 
-**定位**：
+## 2. R13 / R15 修复要点（最常见的两个启动崩）
 
-```powershell
-# 目标 mod 的补丁映射 + 英文原版解包目录 + 保留键名单（mod id、引擎常量、spec id…）
-node <skills>\shared\scripts\scan_logic_keys.js <patch_map.json> <原classDir> <modId> [其它保留键...]
-```
-
-- **A 类**（保留键被译）→ 必错，照单修。
-- **B 类**（键查找上下文里"像 id"的常量被译）→ 逐个看源码调用点：是 `getBoolean/getModSpec/
-  isModEnabled/addSettingsListener` 的实参就保留原文；是 `addPara/setName` 的显示文本就翻译正确。
-
-**修复**：在**待译清单**里把这些条目的 `zh` 改成**与原文逐字相同**（约定 = 「有意保留原文」），
-注入脚本会自动跳过；然后重新打补丁 + 重装。
-
-**顺带必须查**：`getMergedSpreadsheetDataForMod("id", CSV, "<modId>")` 这类调用拿错 modID
-**不抛异常**，只静默返回空数组 → 表现为"白名单/配置没生效"。所以同类键要一起排查，别只修崩的那一个。
-
-## 3. R13 / R15（options 结构 / 二次注入）的定位与修复
-
-```powershell
-node <skills>\shared\scripts\check_options_structure.js <modRoot> <enBackupRoot>
-# 需要在确认"该 id 全项目无引用"后接受改写时：
-node <skills>\shared\scripts\check_options_structure.js <modRoot> <enBackupRoot> --renamed=FROM:TO
-```
-
-修复要点（**以英文结构为基准重建，不要手工拼**）：
-
-1. 从**英文原版**取该行的 `options`，按真实换行切段，得到 `optionId` 序列与长式外层编号；
+1. 从**英文原版**取该行的 `options`，按真实换行切段 → 得到 `optionId` 序列与长式外层编号；
 2. 从译文里按 `optionId` **回收中文标签**（译文可能写成 `id:标签` 或 `id:id:标签`）；
-3. 逐段输出 `optionId:标签`（长式补回 `数字:` 前缀）；**行数/optionId 不符就报错保留原文**；
-4. 多行之间用**真实换行**（不是字面 `\n`），由写入器按 RFC4180 加引号。
+3. 逐段输出 `optionId:标签`（长式补回 `数字:` 前缀）；**行数/optionId 不符就报错保留原文，绝不猜**；
+4. 段间用**真实换行**（不是字面 `\n`），由写入器按 RFC4180 加引号。
 
-若是 **R15**（二次注入）导致，先恢复英文原版再重注入，并**加上前置断言**：
+若是 **R15**（对已汉化目录二次注入）：先还原英文原版再重注入，并**加上前置断言**
+`check_install_source.js <modRoot> <EN原版备份>`。
 
-```powershell
-node <skills>\shared\scripts\check_install_source.js <modRoot> <EN原版备份目录>
-```
+## 3. 修完只跑**与该指纹相关**的闸门（不要在这里做全量）
 
-## 4. 修完必须重跑这一组（缺一层都可能是"修了又崩"）
+改完立刻回到 `wf-smoke-first.md` 阶段 1 **重跑烟测**——烟测比重跑一堆闸门更快也更可信
+（闸门是"抽样检查"，烟测是"真跑一遍游戏"）。
 
-```powershell
-# 结构类
-node <skills>\shared\scripts\check_options_structure.js <modRoot> <enBackupRoot>
-node <skills>\shared\scripts\scan_logic_keys.js <patch_map.json> <原classDir> <保留键...>
-node <skills>\shared\scripts\scan_data_stragglers.js <modRoot> <enBackupRoot> <worklistDir>
-# 字节/内容类
-node <skills>\shared\scripts\check_encoding.js <modRoot>\data
-node <skills>\shared\scripts\check_csv_quotes.js <每个 csv>
-node <skills>\shared\scripts\check_rules_arg_quotes.js <modRoot>\data\campaign\rules.csv
-node <skills>\shared\scripts\check_font_glyphs.js <modRoot>\data
-node <skills>\shared\scripts\verify_all_data.js <modRoot>\data
-# jar 类（动过 jar 时）
-node <skills>\shared\scripts\verify_identifiers.js <classDir>
-node <skills>\shared\scripts\check_u0001.js <patch_map.json>
-node <skills>\shared\scripts\verify_u0001_jar.js <原jar> <补丁jar>
-```
+只有当**烟测连续通过**后，才进 `wf-smoke-first.md` 阶段 3 做全量校验。
 
-**引擎级复现（判定"这个文件到底会不会让引擎崩"）**：
+## 4. 交回用户时
 
-```powershell
-# 复刻：读 UTF-8 → 归一化弯引号 → 引擎 com.fs.starfarer.loading.G.o00000 解析
-javac --release 17 -cp "<core>\starfarer_obf.jar;<core>\starfarer.api.jar;<core>\json.jar" -d <out> TestCsv.java
-java -noverify -Dcom.fs.starfarer.settings.paths.logs=<tmp> -cp "<jars>;<out>" TestCsv <file.csv>
-# 判据：行数与"缺键数"必须与英文基线**完全相同**
-```
+1. 说清**根因**（哪条铁律、哪个字段、为什么）；
+2. 给出**证据**：`smoke_scan.js` 那两行输出（指纹名 + 日志行号）+ 相关闸门的通过输出；
+3. 说清**防复发**：新增/复用了哪道闸门，下次在哪一步会被拦住；
+4. 提醒**用户亲测路径**（模组列表 / 改装 tooltip / 图鉴 / 情报对话 / 战斗 HUD）。
 
-> 想**看解析后的字段值**（而不是只听行数），写一个打印 `keys()` 的小探针即可——
-> 本项目实测过它能把"引号被吞掉"这类问题变成可见证据（正常 12 个引号 vs 被吞到 1 个）。
+## 5. 复盘纪律
 
-## 5. 交回用户时
+每次崩完问一句：**"这类错误，我原来的闸门为什么没拦住？"**
 
-1. 说清**根因**（哪条铁律、哪个字段、为什么会这样）；
-2. 给出**证据**（日志的 2 行 + 校验命令的通过输出）；
-3. 说清**防复发**（新增了哪道闸门、下次在哪一步就会拦住）；
-4. 提醒**用户亲测的路径**（模组列表 / 改装 tooltip / 图鉴 / 情报对话 / 战斗 HUD）。
-
-## 6. 复盘纪律
-
-每次崩完，问一句：**"这类错误，我原来的闸门为什么没拦住？"**
-
-- 若是"闸门盲区"（如 R12/R13：列数检查看不出结构坏、R7 管不到字符串键）→ **补一道新闸门**并登记
-  `shared\script-registry.md` D 节 + `shared\verification-ledger.md`；
-- 若是"工具自身 bug"（如引号检查误报、修复脚本把中文覆盖成英文）→ 修工具 + 在脚本头部注释里写清
-  **事故形态**，避免下一个人再踩；
-- 别把结论只留在项目的 `_work\mod_work\<Mod>\` 里——**会随项目一起被遗忘**，要进 skill 库。
+- 闸门盲区（如 R12/R13：列数检查看不出结构坏）→ **补一道新闸门**，登记 `script-registry.md` D 节 + `verification-ledger.md` §8（两处必须一致）；
+- 工具自身 bug → 修工具，并在脚本头部注释写清**事故形态**；
+- **只把结论留在 `_work\mod_work\<Mod>\` 会随项目被遗忘** → 要进 skill 库；
+- 新指纹 → 同步加进 `smoke_scan.js` 的 `PATTERNS` 与本文 §1 表。

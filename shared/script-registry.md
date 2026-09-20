@@ -123,6 +123,19 @@
 | `ledger_report.js` | 聚合账本 → 升降档/退役候选/需探针/需修复 报告 | `node ledger_report.js [--json] [--check=<名>]` |
 | `sync_to_mod.js` | **把 skills 库的当前状态快照进交付 mod 的 `ai\`**（各 skill 的 SKILL.md/自带脚本、shared 文档含 `glossary.md`→`core-glossary.md` 改名、`workflows\*`、共享脚本 → `ai\脚本\`）。**只增改不删**，以免误删 `ai\脚本` 中不属于 skills 库的一次性诊断脚本。交付前跑一次，否则包里是旧文档旧脚本 | `node sync_to_mod.js <skillsDir> <modAiDir> [--dry]` |
 
+## D4. 冒烟测试（自动跑一遍游戏：入口 + 日志指纹）
+
+> 流程见 `workflows\wf-smoke-first.md`；**先烟测、PASS 后才做全量校验**。
+> 输出刻意极简（6–10 行）——**不要把 `starsector.log` 读进上下文**。
+
+| 脚本 | 用途 | 用法 |
+|---|---|---|
+| `smoke_run.ps1` | **烟测统一入口**（包装 `<game>\_work\explore\modcheck\`）：改 `enabled_mods.json` 只启用目标 mod → 启动等主菜单（`-NewGame` 则继续自动建 `save_autotest_*`）→ 关游戏并**恢复 mod 列表** → 跑日志指纹。退出码 0=PASS/1=FAIL/2=环境/3=超时/4=崩溃 | `powershell -File smoke_run.ps1 -ModIds <id> [-NewGame] [-KeepEnabled] [-TimeoutSec 420] [-NoScan]` |
+| `smoke_scan.js` | **日志指纹扫描**（省上下文的核心）：只回答"有没有致命信号 + 是哪个已知指纹"，输出**指纹名 + 铁律编号 `R#` + 该跑的闸门 + 日志行号**，不整篇读日志 | `node smoke_scan.js <starsector.log> [--json] [--context=N]`；退出码 0=干净 / 1=命中 |
+
+> 加新指纹 = 往 `smoke_scan.js` 的 `PATTERNS` 加一行（`rule` 指铁律编号、`gate` 指闸门脚本），
+> **并同步** `workflows\wf-launch-audit.md` §1 的表——两处必须一致，否则下次还会靠猜。
+
 ## E. 诊断（引擎行为复现）
 
 | 脚本 | 用途 | 用法 |
