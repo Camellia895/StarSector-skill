@@ -25,6 +25,7 @@
 |---|---|---|
 | `analyze_jar_strings.js` | 解包 jar 常量池分析，给出**补丁安全分类**（`asString` = 被 `CONSTANT_String` 引用 ⇒ 真实字面量候选；`asId` = 被标识符条目引用 ⇒ 禁改） | `node analyze_jar_strings.js <jarDir> <jar_constants.json>` |
 | `extract_jar_constants.js` | 提取 jar 内全部 Utf8 常量（去重）→ `{ "常量": ["相对/类.class", ...] }` | `node extract_jar_constants.js <jarDir> [outJson]`（默认 `<jarDir>/../jar_constants.json`） |
+| `dump_utf8.js` | 提取 class 目录里全部 Utf8 常量，**按类分组、保持常量池顺序** → `{ "rel/Name.class": ["utf8", ...] }`（与 `extract_jar_constants.js` 的区别：不去重、逐类有序，供 `diff_utf8_multiset.js`/`cmp_build.js` 做"重编译保汉化"比对；自解析 class 字节，不依赖 javap） | `node dump_utf8.js <classDir> <out.json>` |
 | `scan_jar_sources.js` | jar 常量 ↔ 源码字面量对齐，产出**带上下文**的候选（含 Java/Kotlin、编译期折叠、注释夹折叠、`${}` 片段） | `node scan_jar_sources.js <srcDir> <jar_constants.json> <candidates.json>` |
 | `scan_jar_cjk.js` | ★**旧汉化 jar 复用面取证 / 新 jar 硬编码残留取证**（汉化迁移第 0 步）：过滤出「被 `CONSTANT_String` 引用且含 CJK」的真实字面量 = **真被译过的串**（不是常量总数）。旧 jar 用来看"到底有多少旧译可复用"；新 jar 用来证明「**CJK=0 ⇒ 文案已外置、本次不需要常量池补丁**」（写进交付说明）。附单类模式（`--class=` 列出一个类的全部常量并标 `[str]/[id]`）与 `--grep=` 速查。2026-09-17 RetroLib 实证：旧 **21** 条 / 新 **0** 条 | `node scan_jar_cjk.js <解包class目录> [--class=<rel>] [--grep=<子串>] [--json=<out>]`（**有 CJK 字面量则 exit 1**，可直接喂 `run_check.js`） |
 | `build_worklist2.js` | 由 jar 常量 + 源码字面量生成工作清单（**旧版 dormant**；注释夹折叠处理不如 `scan_jar_sources.js`，新任务别用） | `node build_worklist2.js <srcDir> <jarConstants.json> [outJson]` |
@@ -63,6 +64,8 @@
 
 | 脚本 | severity | tier | 用途 | 闸门 |
 |---|---|---|---|---|
+| `diff_utf8_multiset.js` | red | cond | **重编译保汉化闸门**：两份 `dump_utf8.js` 输出做逐类多重集差。重建前跑=提取"已汉化待回填串"（含 indy recipe）；重建后跑必须 **0 差异**（= jar 汉化零丢失）。**别逐位对齐**：补丁工具会重排常量池尾部（2026-09-20 Nightcross 实测，30 条含 9 条 recipe） | G4（代码修复重编译场景） |
+| `cmp_build.js` | red | cond | **重编译字节码等价闸门**：两侧 class 目录逐类跑 `javap -c` 归一化对比（去 `#索引`、`// String` 注释内容；保留数值注释以抓折叠常量变化）。动刀前纯净源码 vs 原 jar 必须 **diff=0**（证明源码≠jar 漂移不存在）；修复后差异必须**逐行核实=本次改动**（如判空守卫=新增 `ifnull/ifnonnull+return`） | G5（编译/重编译场景） |
 | `check_java_residue.js` | red | cond | **Janino 源码 mod 提取完整性**（与 `extract_java_strings.js` 不同的解析路径）：未被清单覆盖的含英文字面量 = 0。2026-09 实测：提取器行注释状态机不随换行退出 → 每文件首个 `//` 之后全漏，独立复查网抓回 79 条真实 UI 文本 | G1/G4 |
 | `check_java_equiv.js` | red | cond | **Janino 源码注入等价性证明**：把每个 .java 的字面量内容替换为占位符后骨架逐字节对比（只许字面量内容变）+ 字面量数一致 + 词法完整性（无未闭合字面量/注释）。G4/G5 在源码层的替代闸门（无 jar 可 LoadTest） | G4 |
 | `verify_identifiers.js` | red | base | 全量 class 的 `NameAndType`/`Class` 名称不得含 CJK | G4 |

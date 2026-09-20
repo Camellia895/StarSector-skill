@@ -17,6 +17,9 @@
 | `scan_logic_keys.js` | red | base | **逻辑键误译**（显示文本与查找键字面相同）：保留键被译 = 启动 Fatal（本项目实测 `LunaSettings.getBoolean("Nightcross",…)`） |
 | `check_install_source.js` | red | base | **注入前置断言**：目标目录必须是英文原版，否则合成字段会被追加成"一行变两行 + optionId 重复" |
 | `check_jar_patch_integrity.js` | red | cond | **补丁洁净性**：类集合一致 + 映射外常量改动 = 0（补丁脚本退化成全量替换会立刻暴露） |
+| `diff_utf8_multiset.js` | red | cond | **重编译保汉化**（2026-09-20 Nightcross 代码修复沉淀）：重建后旧 jar vs 新产物 Utf8 多重集差 = 0（含 indy recipe）；重建前跑用于提取待回填中文。方法与三闸门见 `starsector-mod-java-hardcoded-text` §5 |
+| `cmp_build.js` | red | cond | **重编译等价**（同上沉淀）：归一化 javap -c 逐类对比，动刀前 diff=0、修复后差异=本次改动本身 |
+| `check_variant_slots.js` | red | base | **变体武器槽位 × 船体 weaponSlots**（2026-09-20 FlowerGod 事故沉淀）：幽灵槽位 = `Slot id [X] not found on hull [Y]`，崩溃可在主菜单演习战；`check_refs` 只对 id 引用、查不出槽位漂移。**2026-09-21 补登记**：registry D 节已录而本表漏录，体检发现的存量不一致 |
 | `check_homoglyphs.js` | yellow | base | 同形异义字符（西里尔/希腊伪拉丁）→ 字库缺字形显示 `?` + 英文检索静默失败 |
 | `check_designtype.js` | red | base | **设计类型/制造商注册表**：`tech`/`manufacturer` 值必须命中 `designTypeColors` 键，否则原值被当分类名显示（静默降级，症状=分类名还是英文）。查 CSV **与** `.skin`/`.ship` 的 `tech` 两处 |
 | `check_uitags_zh.js` | red | base | **船插分类显示列**（`hull_mods.csv` 的 `uiTags`）：该列是**显示列**，引擎直接把值当分类标签显示、**不查表**，英文标签=分类名变英文且无任何报错。词表以核心中文同列为准（武器/特殊/后勤/需要船坞/防御/护盾/引擎/战机/相位/支援）。2026-09-18 Kyeltziv 1.10.7 迁移把中文 uiTags 覆盖回英文，`check_designtype`/`verify_all_data`/`scan_data_stragglers` 三闸门全漏检 ⇒ 新增本闸门 |

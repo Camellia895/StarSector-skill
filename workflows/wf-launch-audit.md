@@ -37,7 +37,7 @@ Select-String -Path <log> -Pattern 'FATAL|ExceptionInInitializerError|Caused by'
 | `NoSuchFieldError` / `NoSuchMethodError`（消息乱码） | **R7 标识符被译** | `verify_identifiers.js <classDir>` |
 | `NoSuchMethodError`（消息**清晰可读**、参数列表完整；多见于旧版 mod 升级） | **API 签名漂移**：方法还在但**返回类型/参数变了**（描述符含返回类型！FlowerGod 实测：`spawnEmpArc` 返回 `CombatEntityAPI`→`EmpArcEntityAPI`） | 先判归属：本次**改过游戏版本** → 走 API 断裂审计（`extract_api_refs.js` + `ApiRefCheck.java`，见 game-upgrade §1.1）；没动过版本才走 R7 |
 | `RuntimeException: Slot id [X] not found on hull [Y]` | **变体武器槽位在船体上不存在**（原版船重做改了槽位 id/数量；`check_refs` 查不到——它只对 id 引用不对槽位。FlowerGod 实测：hyperion 0.8→0.98 从 6 槽变 3 槽） | `check_variant_slots.js <modDir> <游戏根>`；修法=删变体里的幽灵槽位条目与空组 |
-| `NullPointerException: … because "member" is null`，栈里 `skills.*.apply` → `CharacterStats.applyPersonalToStats` → `Ship.setCaptain` | **mod 自身代码缺陷**（战斗部署期其他 mod 调 `setCaptain`，对无 fleet member 的舰船应用军官技能；与汉化无关） | 重编译：技能 `apply`/`unapply` 里对 `stats.getFleetMember()` 判空后早退；保汉化重编译流程见 `starsector-jar-code-fix`（Nightcross 2026-09-20 实测） |
+| `NullPointerException: … because "member" is null`，栈里 `skills.*.apply` → `CharacterStats.applyPersonalToStats` → `Ship.setCaptain` | **mod 自身代码缺陷**（战斗部署期其他 mod 调 `setCaptain`，对无 fleet member 的舰船应用军官技能；与汉化无关） | 重编译：技能 `apply`/`unapply` 里对 `stats.getFleetMember()` 判空后早退；保汉化重编译流程见 `starsector-mod-java-hardcoded-text` §5（Nightcross 2026-09-20 实测） |
 | `StringConcatException` / `BootstrapMethodError` | **R6 `\u0001` 数量漂移** | `check_u0001.js <mapping.json>` |
 | `UnknownFormatConversionException` | **R4 字面 `%` 未写 `%%`** | 修该 tooltip 字段；`check_content.js` |
 | `Duplicate key "…"` | **R10 `designTypeColors` 键重复** | `verify_all_data.js` → 合并同义键 |

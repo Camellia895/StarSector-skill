@@ -21,6 +21,7 @@
 
 > 本流程的立场：**不重编译、不升版本号、不改作者意图**，只做"让它能跑起来"的**最小修复**，
 > 并把每个修复都留档成可回滚的证据。
+> （唯一例外：崩溃在 mod 自己的 jar 代码里、不改代码修不了时，走代码修复重编译——见 §3 手法表首行。）
 
 ## 1. 阶段 A · 烟测取指纹（1 分钟）
 
@@ -89,6 +90,7 @@ node <skills>\shared\scripts\check_refs.js <modDir> <游戏根>     # 引用闭�
 
 | 崩溃形态 | 最小修复 |
 |---|---|
+| **栈在 mod 自己的 Java 代码里**（`at data.scripts.*` / `at data.hullmods.*`，如技能/插件 NPE） | **代码修复重编译**（本流程"不重编译"立场的唯一例外——不改代码就修不了）：最小改动（判空早退等）+ **保汉化回填 + 等价性三闸门**，完整流程见 `starsector-mod-java-hardcoded-text` §5；归属仍按 §B2 判定 |
 | `RuntimeException: Weapon spec [X] not found!` / `Hull spec [X] not found!` | ① 先确认 `X` 该是**武器**还是**模块变体**：搜 `data\variants\*.variant` 有没有 `"variantId": "X"`；② 若是变体却被当武器解析 → **引擎版本行为差异**，在 `data\weapons\weapon_data.csv` 补一条最小 spec（id 必须逐字 = `X`）往往能让它过去；③ 若是作者漏定义 → 同样补 spec，或从 `sim_opponents`/fleet 里去掉该引用 |
 | `JSONObject["options"] not found` | R1/R13/R15（见 `wf-launch-audit.md` §2） |
 | `NumberFormatException: For input string: "<选项id>"` | R13 结构重建 |
