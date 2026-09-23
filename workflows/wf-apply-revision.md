@@ -71,7 +71,9 @@ Copy-Item <EN备份>\* <modRoot>\ -Recurse -Force    # 原地覆盖还原：保�
   `check_options_structure` / `scan_data_stragglers`（注入后目录 vs EN 备份，须 0 候选）
 - **G4**：`verify_identifiers` / `check_jar_patch_integrity` / `check_jar_stragglers`（A=0 且 C=0）
 - **G5（源码层）**：`check_java_equiv`（全部 .java 骨架等价）
-- **烟测**：`smoke_run.ps1 -ModIds <id>`；译者明确要求跳过时**记录在案**（留档写明"跳过"）。
+- **烟测（可选，非闸门）**：本流程属**文本层重注入** ⇒ 按 `wf-smoke-first.md` 的分类表**不需要烟测**，
+  验收靠上面的 G 系列。想眼见为实可顺手跑 `smoke_run.ps1 -ModIds <id>`；跳过**不算没做完**，
+  但若本次动了 jar / 插件注册 / `settings.json` 的 plugins，就必须跑。
 
 ## 6. 收尾
 

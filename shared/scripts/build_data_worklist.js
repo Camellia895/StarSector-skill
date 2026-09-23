@@ -31,7 +31,8 @@
 //         { "kind":"factionFile", "file":"data/world/factions/x.faction",
 //           "id":"faction_id", "displayKeys":["displayName","displayNameWithArticle",
 //             "displayNameLong","displayNameLongWithArticle","description"],
-//           "ranks":true },        // 额外抓取 {"...":{"name":"..."}} 军衔/职务名
+//           "ranks":true,          // 额外抓取 {"...":{"name":"..."}} 军衔/职务名
+//           "fleetTypeNames":true }, // 额外抓取 fleetTypeNames 的值（舰队类型显示名；键是逻辑键不译）
 //         { "kind":"jsonDirObjects", "dir":"data/config/gsounty", "glob":"*.json",
 //           "keys":[{"key":"description","note":"通缉令简介"},{"key":"dialog","note":"对话"}] },
 //         { "kind":"missionDir", "dir":"data/missions",
@@ -95,7 +96,9 @@ function kCsv(rule) {
   const re = rule.idFilter ? new RegExp(rule.idFilter) : null;
   for (const r of rows) {
     const id = (r.cells[idIdx] || '').trim();
-    if (!id || (re && !re.test(id))) continue;
+    // 跳过 # 注释行与 ##### 分隔行（R21；RYAZ 实测：hull_mods.csv 的 ##### 分隔行会以"#####"为 id 产生垃圾条目）
+    if (!id || id.startsWith('#') || /^#+$/.test(id)) continue;
+    if (re && !re.test(id)) continue;
     for (const f of rule.fields) {
       const idx = typeof f.col === 'string' ? header.indexOf(f.col) : f.col;
       if (idx < 0) continue;
@@ -238,6 +241,19 @@ function kFactionFile(rule) {
     const re = /"([A-Za-z]+)"\s*:\s*\{\s*"name"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
     let m;
     while ((m = re.exec(raw))) add({ file, id: m[1], field: 'rank/name', line: findLineOf(raw, m[2]), en: m[2], zh: '', note: '军衔/职务名 (对话与称号显示)' });
+  }
+  // fleetTypeNames（舰队类型显示名）——2026-09-21 RYAZ 实测：内置 kind 原本不抓，
+  // 反向网 scan_data_stragglers.js 抓到 10 条漏译；用块级正则（.faction 可能有未加引号键，pseudojson 解析不了，见铁律 R8）
+  if (rule.fleetTypeNames) {
+    const bm = raw.match(/"fleetTypeNames"\s*:\s*\{([\s\S]*?)\n\s*\}/);
+    if (bm) {
+      const pairRe = /"([A-Za-z]+)"\s*:\s*"([^"]*)"/g;
+      let pm;
+      while ((pm = pairRe.exec(bm[1]))) {
+        if (!pm[2]) continue;
+        add({ file, id: 'fleetTypeNames/' + pm[1], field: 'fleetTypeNames', line: findLineOf(raw, '"' + pm[2] + '"'), en: pm[2], zh: '', note: '舰队类型显示名 (战役舰队标签/情报)；键 ' + pm[1] + ' 为逻辑键不译只译值' });
+      }
+    }
   }
 }
 

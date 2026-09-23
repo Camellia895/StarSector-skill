@@ -1,7 +1,7 @@
 ﻿<#
 smoke_run.ps1 — 启动烟测的统一入口（包装 modcheck 自动化项目）
 
-目的：一种命令跑完"启动→判定→极简输出"，把判据写进文件，**不回显大段内容**。
+目的：一条命令跑完"启动 → 判定 → 极简输出"。**判定只靠退出码**，不解析日志。
 
 它包装 `<game>\_work\explore\modcheck\` 的两套自动化：
   1) ModCheck.ps1  ：只启用目标 mod，加载到**主菜单**，识别报错弹窗/致命日志后自动关闭并恢复配置
@@ -11,10 +11,10 @@ smoke_run.ps1 — 启动烟测的统一入口（包装 modcheck 自动化项目�
   # 只验证能加载到主菜单
   powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds rotcesrats
 
-  # 加载 + 自动建存档（推荐的完整烟测；约 1 分钟）
+  # 加载 + 自动建存档（完整烟测；约 1 分钟）
   powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds rotcesrats -NewGame
 
-  # 冒烟后不还原 mod 列表（调试用）
+  # 烟测后不还原 mod 列表（调试用）
   powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds rotcesrats -KeepEnabled
 
 参数：
@@ -22,27 +22,30 @@ smoke_run.ps1 — 启动烟测的统一入口（包装 modcheck 自动化项目�
   -NewGame           加载成功后继续自动创建存档
   -KeepEnabled       不还原用户的 enabled_mods.json
   -TimeoutSec <n>    单段超时（默认 420）
-  -LogPath <path>    指定日志；默认 <game>\starsector-core\starsector.log
-  -NoScan            跳过日志指纹扫描
 
-退出码（**与 run_check.js 约定一致**，便于记账）：
+退出码（判定依据，与 run_check.js 约定一致）：
   0 = PASS（加载成功；-NewGame 时存档也建成）
-  1 = FAIL（命中致命错误 / 存档未建成 / 日志有致命指纹）
-  2 = 用法错误或环境不满足（找不到 modcheck、找不到日志）
-  3 = 超时（未在限定时间内到主菜单/建成存档）
-  4 = 崩溃/进程异常退出
+  1 = FAIL（加载期报错 / 存档未建成）
+  2 = 用法错误或环境不满足（找不到 modcheck 等）
+  3 = 超时（未在限定时间内到主菜单 / 建成存档）
+  4 = 崩溃 / 进程异常退出
 
-输出约定（**故意极简**）：只打印 6–10 行摘要 + **判定文件路径**。
-详细证据在 `<game>\_work\explore\modcheck\results\<时间戳>_*\` 与 `verdict.json` 里，需要时再去读。
+输出约定（**故意极简，6–10 行**）：只打印摘要 + **证据目录路径**。
+需要定位根因时：`results\<时间戳>_*\verdict.json` 已给出**运行方**（ModCheck 自己）判定的
+失败原因与它摘出的错误行；**不要**去通读 `starsector.log`（几万行起，读它既慢又爆上下文）。
+确实需要自己搜日志时，只做**定向**搜索：
+
+  Select-String -Path <game>\starsector-core\starsector.log -Pattern 'FATAL|ExceptionInInitializerError|Caused by|RuntimeException' -Encoding Default
+
+  # ⚠️ 必须 -Encoding Default（GBK）；用 UTF8 会把中文读成乱码，从而误判"没有中文报错"。
+  # 查表（指纹 → 根因 → 闸门）：<skills>\workflows\wf-launch-audit.md §1
 #>
 [CmdletBinding()]
 param(
   [string[]]$ModIds = @('rotcesrats'),
   [switch]$NewGame,
   [switch]$KeepEnabled,
-  [int]$TimeoutSec = 420,
-  [string]$LogPath = '',
-  [switch]$NoScan
+  [int]$TimeoutSec = 420
 )
 
 $ErrorActionPreference = 'Continue'
@@ -61,15 +64,12 @@ function Find-GameRoot([string]$start) {
   return $null
 }
 $game = Find-GameRoot $PSScriptRoot
-if (-not $game) { Write-Output "SMOKE-ENV-FAIL: 自 $PSScriptRoot 向上未找到 starsector.exe（请用 -GameRoot 指定）"; exit 2 }
-$mc   = Join-Path $game '_work\explore\modcheck'
+if (-not $game) { Write-Output "SMOKE-ENV-FAIL: 自 $PSScriptRoot 向上未找到 starsector.exe"; exit 2 }
+$mc = Join-Path $game '_work\explore\modcheck'
 if (-not (Test-Path -LiteralPath $mc)) { Write-Output "SMOKE-ENV-FAIL: 找不到 modcheck 项目: $mc"; exit 2 }
-$modCheck = Join-Path $mc 'ModCheck.ps1'
-$drivePs1 = Join-Path $mc 'drive.ps1'
+$modCheck   = Join-Path $mc 'ModCheck.ps1'
+$drivePs1   = Join-Path $mc 'drive.ps1'
 $newGamePs1 = Join-Path $mc 'NewGame.ps1'   # ⚠️ 不能叫 $newGame —— 会与 [switch]$NewGame 参数冲突（实测报"无法把 String 转成 SwitchParameter"）
-if (-not $LogPath) { $LogPath = Join-Path $game 'starsector-core\starsector.log' }
-$scanJs = Join-Path $PSScriptRoot 'smoke_scan.js'
-
 if (-not (Test-Path -LiteralPath $modCheck)) { Write-Output "SMOKE-ENV-FAIL: 缺少 $modCheck"; exit 2 }
 
 $ids = ($ModIds -join ',')
@@ -99,8 +99,10 @@ if ($rc1 -ne 0) {
   elseif ($rc1 -eq 3) { Write-Output '  → 超时未到主菜单' }
   elseif ($rc1 -eq 4) { Write-Output '  → 进程崩溃/异常退出' }
   else { Write-Output "  → 未知返回码 $rc1" }
-} 
-# 加载失败就不必再建存档（实测：否则会拿完整 mod 列表去跑 NewGame，崩在别的 mod 上，污染指纹归属）
+}
+
+# 加载失败就不必再建存档（实测：否则会拿完整 mod 列表去跑 NewGame，崩在别的 mod 上，把归属搞乱）
+$rcn = $null
 if ($rc1 -eq 0 -and $NewGame) {
   # ---------------- 第 2 段：自动创建存档（更深一层）----------------
   $sw2 = [System.Diagnostics.Stopwatch]::StartNew()
@@ -118,17 +120,7 @@ if (-not $KeepEnabled) {
   if (Test-Path -LiteralPath $restore) { & powershell -NoProfile -ExecutionPolicy Bypass -File $restore | Out-Null }
 }
 
-# ---------------- 日志指纹（默认扫；-NoScan 跳过）----------------
-$scanRc = 0
-if (-not $NoScan -and (Test-Path -LiteralPath $scanJs) -and (Test-Path -LiteralPath $LogPath)) {
-  Write-Output '-- 日志指纹 --'
-  & node $scanJs $LogPath
-  $scanRc = $LASTEXITCODE
-} elseif (-not (Test-Path -LiteralPath $LogPath)) {
-  Write-Output "-- 日志指纹 -- 跳过（找不到 $LogPath）"
-}
-
-# ---------------- 判定 ----------------
+# ---------------- 判定（只看退出码）----------------
 $verdict = 'PASS'; $why = '加载成功'
 if ($rc1 -ne 0) {
   $verdict = 'FAIL'
@@ -136,10 +128,8 @@ if ($rc1 -ne 0) {
   elseif ($rc1 -eq 3) { $why = '超时' }
   elseif ($rc1 -eq 4) { $why = '进程崩溃' }
   else { $why = "返回码 $rc1" }
-} elseif ($NewGame -and ($rcn -ne 0)) {
+} elseif ($NewGame -and $rcn -ne 0) {
   $verdict = 'FAIL'; $why = "加载成功但存档未建成（newgame rc=$rcn）"
-} elseif ($scanRc -eq 1) {
-  $verdict = 'FAIL'; $why = '日志命中致命指纹（见上）'
 }
 
 $latest = Get-ChildItem (Join-Path $mc 'results') -Directory -EA SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -147,8 +137,8 @@ Write-Output ''
 Write-Output "== 烟测结果: $verdict ==  原因: $why"
 if ($latest) { Write-Output "证据目录: $($latest.FullName)  （verdict.json / log_tail.txt / ng_frames\）" }
 if ($verdict -eq 'FAIL') {
-  Write-Output '下一步: 按上面的 [R#] 到 <skills>\workflows\wf-launch-audit.md §1 查表；**不要**整篇打开 starsector.log。'
-  Write-Output '       跑通后再做全量校验（wf-smoke-first.md 阶段 3）。'
+  Write-Output '下一步: 先看证据目录的 verdict.json（运行方已摘出失败原因与错误行），'
+  Write-Output '       再按 <skills>\workflows\wf-launch-audit.md §1 查表；**不要**通读 starsector.log。'
 }
 if ($verdict -eq 'PASS') { exit 0 }
 if ($rc1 -eq 3) { exit 3 }

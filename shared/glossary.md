@@ -223,3 +223,25 @@
 | 舰名 47 条 | 意译（艾伊斯/轰鸣者…），ship_data↔.ship↔任务单舰名三处同词 | [用户决策]（全表见 `mods\RotcesRats\ai\zh\`） |
 | 变体角色词 29 个（Standard/Assault/…） | 一套自定词，全 mod 同译 | [自定]（见 mod glossary §0.6） |
 | `changelog.txt` | 不存在，未新建 | [流程]（易漏区 16） |
+
+### 6.15 Diable Avionics Original Flavor（diableavionics，2.7.0rc2 zh → 3.0.6 迁移，2026-09-23）
+
+> 旧译（2.7.0rc2，外部中文版）数据层质量高、jar 层未译；3.0.6 新增 Gulf Part 2 剧情/Last Line/Subject 71
+> 等大量新内容 ⇒ 档位③：旧译 841 条注入，新内容交 `mod_work\Diable Avionics\out\deliver_worklist\` 待填。
+> 全量 93 条 DA 专名见该包 `glossary.md`。
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `Diable Avionics`（势力/制造商/designTypeColors 键） | 恶魔航电 | [旧译沿用]（三处一致；中文键与英文键并列注册，`check_designtype` ✓） |
+| `Wanzer` | 万泽 | [旧译沿用]（与 §6.13 同源） |
+| `Pandemonium` / `Virtuous` / `Gulf` | 魔窟 / 贤者 / 深渊 | [旧译沿用]（3.0.6 `Pandemonium(Assault)` 建议「魔窟(突击)」；新剧情 "the Gulf" 区域名沿用「深渊」） |
+| 舰名（Arbitrator 仲裁 / Frost 霜冻 / Zephyr 风神 等 40+） | 意译一套 | [旧译沿用]（全表见 `mod_work\Diable Avionics\out\deliver_worklist\glossary.md`） |
+| 元素谜题串 `86 Rn` / `99 Es` / `88 Ra` | 不译 | [流程]（Gulf Part 2 剧情设计，jar 常量有意保留） |
+### 6.16 Diable Avionics Joestar edition（diableavionics，2.7.0rc2 zh → 2.9.5.2 迁移，2026-09-23）
+> R=36.2% ⇒ 档位③：旧译 786 条就位，298 条待填清单在 `mod_work\Diable-Avionics-Joestar\checklist\`。
+> **同 id 多行时引擎"后行覆盖"只末行生效**（带 # 名字前缀的前行是上游 graveyard）——注入/普查都须按末行。
+> 旧 EN 基线：2.7.0rc3（Patreon 官方帖 81270023，rc3≈rc2）。术语沿用 §6.15 同源词表。
+
+> **2026-09-19 号星行远增补（§6.14 续）**：倒拼舰名按"核心译名倒序"复刻——地狱犬→犬狱地、破阵→阵破、
+> 塔尔苏斯→斯苏尔塔、双子座→子双座、预兆→兆预、征服者−C→服征者、攻势+C→势征、锤头→双髻头。
+> 完整方案见 `_work\mod_work\RotcesRats\out\naming\naming_analysis.md`。

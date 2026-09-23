@@ -54,29 +54,38 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\shared\scripts\smoke_run.p
 1. 改写 `enabled_mods.json`，只启用目标 mod（自动补上它声明的依赖）
 2. 启动游戏并等到主菜单（加 `-NewGame` 则继续走完角色创建，建出 `save_autotest_*`）
 3. 关闭游戏，**并恢复你自己原来的 mod 列表**
-4. 跑日志指纹扫描，只输出 **6–10 行**摘要
+4. 打印 **6–10 行**摘要（**判定只看退出码**，不解析日志）
 
-输出长这样（**不需要去读几十 MB 的 `starsector.log`**）：
+输出长这样（**不需要去读几十 MB 的 `starsector.log`；它有几万行**）：
 
 ```
-判定: PASS   FATAL=0  ERROR=26  (文件 41.2 MB，未整篇读入)
-未命中任何致命指纹。
-== 烟测结果: PASS ==  原因: 加载成功
+== 烟测开始 ==  mod=flowergod  newGame=True  timeout=420s
+[1/2] 加载到主菜单: rc=2  用时 21s
+  → 加载期报错（弹窗或致命日志）
+== 烟测结果: FAIL ==  原因: 加载期报错
+证据目录: ...\modcheck\results\20260920_210553_shortcut_flowergod  （verdict.json / log_tail.txt / ng_frames\）
 ```
 
-**退出码**（与 `run_check.js` 约定一致，便于记账）：
-`0`=PASS / `1`=FAIL / `2`=环境不满足 / `3`=超时 / `4`=崩溃
+**退出码**（判定依据）：`0`=PASS / `1`=FAIL / `2`=环境不满足 / `3`=超时 / `4`=崩溃
+
+**失效排查入口**：先看**证据目录**里的 `verdict.json`（运行方已把失败原因与错误行摘好）；
+需要自己搜日志时**只做定向搜索**，且**必须 `-Encoding Default`**（GBK）：
+
+```powershell
+Select-String -Path <game>\starsector-core\starsector.log `
+  -Pattern 'FATAL|ExceptionInInitializerError|Caused by|RuntimeException' -Encoding Default
+```
 
 **配套文件**
 
 | 文件 | 作用 |
 |---|---|
-| `workflows\wf-smoke-first.md` | 烟测先行流程（任务分类⓪，所有改动的收尾关口） |
+| `workflows\wf-smoke-first.md` | 烟测流程（分类⓪）。**只对③升级/⑦修 mod/动了 jar·插件注册 的改动是关口；①汉化/②迁移不需要** |
 | `shared\scripts\smoke_run.ps1` | 一条命令跑完启动→判定→极简输出 |
-| `shared\scripts\smoke_scan.js` | 日志指纹扫描：把日志压成「指纹名 + 行号」，并指回铁律 R# 与该跑的闸门 |
 | `workflows\wf-mod-fix.md` | 烟测驱动的修复循环（分类⑦）：失败驱动 → 定因 → 一次一处最小修复 → 重测到 PASS |
 
-失败时：看输出的指纹 → 到 `wf-launch-audit.md` §1 查表拿根因与闸门 → 只跑那一个闸门定位 → 修 → **重跑烟测**。
+失败时：看证据目录的 `verdict.json` 拿到失败特征 → 到 `wf-launch-audit.md` §1 按**同一特征**查表拿根因与闸门 →
+只跑那一个闸门定位 → 修 → **重跑烟测**。
 若判定问题**不是本次改动引入的**（文件时间戳仍是作者原始时间戳），转 `wf-mod-fix.md` 走修复循环。
 
 ### 其他新增

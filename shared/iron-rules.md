@@ -109,6 +109,13 @@ Starsector 的 JSON 带 `#` 注释（整行或行内）、尾随逗号 `,}`/`,]`
 - **严禁** `ConvertTo-Json` 回写（破坏原格式；输入为 null 时可能写出完全无关的内容——真实事故：`settings.json` 被写成 `channels.json` 的内容）。
 - 一律**文本替换**式改写（`migrate_json.js` 的 `replaceOnce(path, 原片段, 译文片段)`），保持注释与缩进原样。
 - 解析一律用 `<skills>\shared\scripts\pseudojson.js`（`parseJsonLoose`）；权威验证用 `JsonProbe.java`（游戏 `json.jar`）。
+- ⚠️ **未加引号的键**（`{ id:"ryaz", … }`，2026-09-21 RYAZ 的 `ryaz.faction` 实测）：游戏接受，但 `parseJsonLoose`
+  也解析不了（它只把**冒号后**的裸标识符当值）⇒ 解析抛错时先查这类裸键；提取/注入改走**块级正则或值级文本替换**，
+  **禁**把该文件当 JSON 序列化重写。
+- ⚠️ **值级文本替换必须连引号一起换、并补回引号**（2026-09-22 RYAZ 实测事故）：把 `"Key"` 替换成中文译文时
+  若只写译文不写引号，会产出 `中文键:[1,2,3]` 这类**无引号键**——设置键从此查不到（designTypeColors 全部失效
+  且 `parseJsonLoose` 再也解析不了该文件）。正确写法：`raw.replace('"'+en+'"', '"'+zh+'"')`；
+  反之在 CSV 无引号单元格上则两边都不带引号。替换完成后**至少对一个目标文件跑一次 JSON 解析复核**。
 
 ## R9 · zip / jar 条目名必须正斜杠
 

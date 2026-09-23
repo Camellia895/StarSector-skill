@@ -136,11 +136,12 @@
 
 | 脚本 | severity | tier | 用途 | 用法 |
 |---|---|---|---|---|
-| `smoke_scan.js` | red | base | **日志指纹扫描**（省上下文的核心）：只回答"有没有致命信号 + 是哪个已知指纹"，输出**指纹名 + 铁律编号 `R#` + 该跑的闸门 + 日志行号**，不整篇读日志 | `node smoke_scan.js <starsector.log> [--json] [--context=N]`；退出码 0=干净 / 1=命中 |
-| `smoke_run.ps1` | — | — | **烟测统一入口**（包装 `<game>\_work\explore\modcheck\`，本身不判生死、只编排）：改 `enabled_mods.json` 只启用目标 mod → 启动等主菜单（`-NewGame` 则继续自动建 `save_autotest_*`）→ 关游戏并**恢复 mod 列表** → 调 `smoke_scan.js`。退出码 0=PASS/1=FAIL/2=环境/3=超时/4=崩溃 | `powershell -File smoke_run.ps1 -ModIds <id> [-NewGame] [-KeepEnabled] [-TimeoutSec 420] [-NoScan]` |
+| `smoke_run.ps1` | — | — | **烟测统一入口**（包装 `<game>\_work\explore\modcheck\`，本身不判生死、只编排）：改 `enabled_mods.json` 只启用目标 mod → 启动等主菜单（`-NewGame` 则继续自动建 `save_autotest_*`）→ 关游戏并**恢复 mod 列表**。**判定只看退出码**，不解析日志。退出码 0=PASS/1=FAIL/2=环境/3=超时/4=崩溃 | `powershell -File smoke_run.ps1 -ModIds <id> [-NewGame] [-KeepEnabled] [-TimeoutSec 420]` |
 
-> 加新指纹 = 往 `smoke_scan.js` 的 `PATTERNS` 加一行（`rule` 指铁律编号、`gate` 指闸门脚本），
-> **并同步** `workflows\wf-launch-audit.md` §1 的表——两处必须一致，否则下次还会靠猜。
+> **日志不要通读**（`starsector.log` 几万行起）：先看 `results\<时间戳>_*\verdict.json`（运行方已摘出失败原因与错误行）；
+> 需要自己搜时只做**定向**搜索，且**必须 `-Encoding Default`**（GBK）：
+> `Select-String -Path <log> -Pattern 'FATAL|ExceptionInInitializerError|Caused by|RuntimeException' -Encoding Default`。
+> 查表（指纹 → 根因 → 闸门）见 `workflows\wf-launch-audit.md` §1。
 
 ## E. 诊断（引擎行为复现）
 

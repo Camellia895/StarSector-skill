@@ -12,7 +12,7 @@
 |---|---|---|---|
 | `wf-smoke-first.md` ⓪ | **我们自己刚改过** mod 文件 | 收尾关口：改动 → 烟测 → PASS 才全量 | 全量校验 + 交付 |
 | `wf-game-update.md` ③ | 有**版本代差**（0.7x/0.8x/0.9x → 0.98a） | 先审计再动手：环境取证 → 编译探测 → 一致性证明 → 十步 | 版本号 + changelog + 交付 |
-| **本流程 ⑦** | **没有版本代差**（mod 就是给 0.98 写的），但**真跑起来会崩** | **失败驱动**：烟测 → 指纹 → 定因 → 最小修复 → 重测 | **烟测通过** + 根因说明（**不擅自升版本号**） |
+| **本流程 ⑦** | **没有版本代差**（mod 就是给 0.98 写的），但**真跑起来会崩** | **失败驱动**：烟测 → 失败特征 → 定因 → 最小修复 → 重测 | **烟测通过** + 根因说明（**不擅自升版本号**） |
 | `wf-diagnose.md` ④ | 只是"出事了"的**症状索引** | — | 指向该读哪个 skill |
 
 **判据**：先看 `mod_info.json` 的 `gameVersion`。
@@ -23,7 +23,7 @@
 > 并把每个修复都留档成可回滚的证据。
 > （唯一例外：崩溃在 mod 自己的 jar 代码里、不改代码修不了时，走代码修复重编译——见 §3 手法表首行。）
 
-## 1. 阶段 A · 烟测取指纹（1 分钟）
+## 1. 阶段 A · 烟测拿失败特征（1 分钟）
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smoke_run.ps1 -ModIds <id> -NewGame
@@ -31,9 +31,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 
 拿三样东西：
 
-1. **退出码**（`0`=PASS 收工 / `1`=FAIL / `2`=环境 / `3`=超时 / `4`=崩溃）；
-2. **指纹**（`[R#] 指纹名 + 日志行号`）——可能多条，**只取最后一次会话**（`smoke_scan.js` 已自动隔离）；
-3. **证据目录**（`results\<时间戳>_*`：`verdict.json` / `log_tail.txt` / `ng_frames\`）。
+1. **退出码**（`0`=PASS 收工 / `1`=FAIL / `2`=环境 / `3`=超时 / `4`=崩溃）——**判定只看它**；
+2. **证据目录**（`results\<时间戳>_*`：`verdict.json` / `log_tail.txt` / `ng_frames\`）；
+3. **失败特征**：从证据目录的 `verdict.json` 取（`reason` + `errorLogLines` 是**运行方已经摘好的**）。
+
+> **不要通读 `starsector.log`**（几万行）。只有 `verdict.json` 不够用时，才做**定向**搜索，
+> 且**必须 `-Encoding Default`**（GBK）：
+> ```powershell
+> Select-String -Path <game>\starsector-core\starsector.log `
+>   -Pattern 'FATAL|ExceptionInInitializerError|Caused by|RuntimeException' -Encoding Default
+> # 只最后一次会话：Get-Content <log> -Tail 300 -Encoding Default | Select-String 'ERROR|FATAL|Exception'
+> ```
+> 完整手法见 `wf-launch-audit.md` §0。
 
 > 若报 `-NewGame` 建不出存档而加载 PASS：说明崩在**战役期**，看 `ng_frames\` 的失败帧，再进阶段 B。
 
@@ -43,14 +52,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 
 ### B1 查库表（**必做第一步**）
 
-到 `workflows\wf-launch-audit.md` §1，按**同一指纹名**找到"判定（铁律 R#）+ 处置（该跑哪个闸门）"，
-跑那**一个**闸门定位。表里没有 → 才进 B2。
+到 `workflows\wf-launch-audit.md` §1，按**同一失败特征**（你抓到的那行内容）找到
+"判定（铁律 R#）+ 处置（该跑哪个闸门）"，跑那**一个**闸门定位。表里没有 → 才进 B2。
 
 ### B2 归属判定（决定这是"谁的锅"，**必须做，否则会修错对象**）
 
 | 归属 | 判定方法 | 处置 |
 |---|---|---|
-| **环境** | 指纹是 `VerifyError`/`UnsupportedClassVersionError`/`OutOfMemoryError`；或"游戏跑起来但**离线程序**报错" | 按 `env.md` §4 处理（`-noverify`、`--release`、禁双实例）。**这不是 mod 的问题** |
+| **环境** | 特征是 `VerifyError`/`UnsupportedClassVersionError`/`OutOfMemoryError`；或"游戏跑起来但**离线程序**报错" | 按 `env.md` §4 处理（`-noverify`、`--release`、禁双实例）。**这不是 mod 的问题** |
 | **对方 mod / 安装** | 崩的行属于另一个 mod 的路径；或 `dependencies` 缺失 | 报告给用户，别改无关 mod（本机日志里别人 mod 的噪音很多） |
 | **我们改过的（汉化）** | 崩溃涉及的字段/文件**修改时间晚于** mod 发布（用 §B3 的时间戳法） | 走 `wf-smoke-first.md` 阶段 2 的修复路径；属铁律问题就按 R# 修 |
 | **mod 自身缺陷**（版本不兼容/作者 bug） | 涉及的文件**全是原作者时间戳**、且数据自洽（闸门 0 问题） | 进 §3，做**最小修复** |
@@ -107,18 +116,17 @@ node <skills>\shared\scripts\check_refs.js <modDir> <游戏根>     # 引用闭�
 回阶段 A，`-NewGame` 一起跑。
 
 - PASS（退出码 0）→ 进阶段 E。
-- 仍 FAIL → 看**新的**指纹（可能是下一层错误，也可能是你引入的）→ 回阶段 B。
-  - **同一个指纹修了 3 次还不过** → 停下，说明定因错了：换 §B4 的反汇编路线（别继续试）。
-  - **冒出新指纹** → 那个多半是"下一层"，继续按 B1 查表。
+- 仍 FAIL → 看**新的**失败特征（可能是下一层错误，也可能是你引入的）→ 回阶段 B。
+  - **同一处特征修了 3 次还不过** → 停下，说明定因错了：换 §B4 的反汇编路线（别继续试）。
+  - **冒出新的失败特征** → 那个多半是"下一层"，继续按 B1 查表。
 - 循环上限：**同一 mod 超过 5 轮**就写阶段 E 的"未解决"报告交用户，别无限试。
 
 ## 5. 阶段 E · 收尾
 
 1. **记录根因**：改了什么文件/字段、依据是什么（表项 / 反汇编 / 自洽性核对）、为什么这么改。
 2. **可回滚**：备份路径 + 原始片段/哈希写进修复日志。
-3. **新指纹回灌技能库**（**必做，否则下次还会靠猜**）：
-   - 往 `<skills>\shared\scripts\smoke_scan.js` 的 `PATTERNS` 加一行（`rule` 指铁律编号、`gate` 指闸门脚本）；
-   - **同步** `workflows\wf-launch-audit.md` §1 加同一行；
+3. **新失败特征回灌技能库**（**必做，否则下次还会靠猜**）：
+   - 往 `workflows\wf-launch-audit.md` §1 的表加一行：**左列写你抓到的日志行**、右列写根因（铁律 R#）与闸门；
    - 是"引擎行为差异"就写进 `skills\starsector-engine-diagnose` 或 `shared\iron-rules.md`（编 R 号）。
 4. **版本号与 changelog**：本次是**修复**不是升级 ⇒ **不擅自改 `version`**。
    只有用户明确要"作为新版本发布"才动，并按 `starsector-mod-delivery` 记 changelog。
@@ -131,7 +139,7 @@ node <skills>\shared\scripts\check_refs.js <modDir> <游戏根>     # 引用闭�
 - [ ] 根因有**证据**（表项编号 / 反汇编片段 / 时间戳对照 / 闸门输出），不是"看起来像"
 - [ ] 每处修改都**一次一处且可回滚**（备份 + 原始片段）
 - [ ] 新增/修改的数据文件：无 BOM、行尾风格未变、未碰 id 与逻辑键
-- [ ] 新指纹已回灌 `smoke_scan.js` **与** `wf-launch-audit.md` §1（两处一致）
+- [ ] 新失败特征已回灌 `wf-launch-audit.md` §1 的表（左列 = 抓到的日志行）
 - [ ] 结论交给用户时说明：这是**修复**（版本号未动）、哪些改动属"替作者补数据"、要不要保留
 
 ## 7. 反模式（真实代价）
@@ -141,5 +149,5 @@ node <skills>\shared\scripts\check_refs.js <modDir> <游戏根>     # 引用闭�
 - ❌ **一次改多处**——修好了也不知道为什么，下次复发没线索。
 - ❌ **不看时间戳就怀疑自己的汉化**——原作者时间戳是"与我无关"的铁证；反过来，mtime 是近期就是有力嫌疑。
 - ❌ **把"引擎解析行为差异"当"数据缺项"硬补**——补之前先 `check_refs.js` 证明数据自洽，否则补错方向。
-- ❌ **修完不登记指纹**——下次同类崩溃还是会从零开始。
+- ❌ **修完不登记失败特征**——下次同类崩溃还是会从零开始。
 - ❌ **擅自升 `version`**——修复不等于发布；版本号语义由用户决定。

@@ -107,13 +107,14 @@ node <skills>\shared\scripts\check_designtype.js <modRoot>   # 必须 0 问题
 2. **LunaSettings 的 Text/Header 行**：说明文字在 **defaultValue 列**（段落说明、致谢、各 Header 标题）；**Radio 选项值（`Base`/`150%`/`Wide`）是代码逻辑键，严禁翻译**（`when(x){ "Base" -> }`）。
 3. **装配变体** `data\variants\*.variant` 的 `displayName`。
 4. **faction 舰队名/官职名**：`fleetTypeNames`（patrolSmall/Medium/Large/battlestation…）与 `ranks`/`officerRanks` 的 `name`（Admiral/CEO/Patrol Director…）——按 `"键":"值"` 形态替换值，`#` 注释行跳过。
+   recipe 写法：`factionFile` 加 `"ranks":true, "fleetTypeNames":true`（**2026-09-21 起** `fleetTypeNames` 已内置；RYAZ 实测此前内置 kind 不抓、反向网兜出 10 条）。`.faction` 若有**未加引号键**（如 `id:"ryaz"`），`parseJsonLoose` 解析不了，脚本用块级正则兜底（R8）。
 5. **`designTypeColors` 键**：`config\settings.json` 的**键**是设计类型名，须译为与 CSV `tech/manufacturer` 中文值**精确一致**（否则不上色）且**键必须唯一**（事故：`Abyss`/`Abyssal` 都译"深渊" → `Duplicate key "深渊"` fatal）。原版没有颜色键的设计类型（如 Anomalous Phase-Tech）保持原样。
 6. **`customStarts.json`**：`config\exerelin\customStarts.json` 的 name/difficulty/desc。
 7. **rules.csv 行内列错位**：只译 `AddText "…"` 引号内文字，保留 `AddText`/颜色参数/引号（事故：3 行 flavor text 整行丢失）。
 8. **全原版副本角色表**：`data\factions\fighter_wings.csv`、`weapon_categories.csv` 可能整表只含原版 id 行（势力"开放使用权"的副本）——**整表跳过不译**（在中文核心下会按 id 覆盖核心译名，属上游问题，别在汉化里"顺手修"）。
 9. **伪 JSON 解析**：`#` 注释、尾随逗号、Java float 后缀（`1.2f`）、BOM——一律用 `<skills>\shared\scripts\pseudojson.js`（`parseJsonLoose`），**禁止** `ConvertFrom-Json`/`JSON.parse`（铁律 R8）。
 10. **starmap / 代码命名联动**：`data\campaign\starmap.json` 的星系键与代码 `createStarSystem("Archimedes")`/`star.setName` 常量必须**同译**，否则星系不迁移定位；`custom_entities.json` 的 `defaultName` 与代码 `addCustomEntity(id,"显式名",…)` 两处译成一致。
-11. **mission 类可能在 jar 里**：先按 §3 实证 jar 类集合——`data\missions\<id>\MissionDefinition.class` 若已在 jar 中则走常量池（**不必**改 `.java`）；仅当该类不在 jar、被运行时 Janino 编译时才改源码。任务舰船名（`addToFleet` 第 4 参）、`setFleetTagline`/`addBriefingItem` 均属可见文本。
+11. **mission 类可能在 jar 里**：先按 §3 实证 jar 类集合——`data\missions\<id>\MissionDefinition.class` 若已在 jar 中则走常量池（**不必**改 `.java`）；仅当该类不在 jar、被运行时 Janino 编译时才改源码。任务舰船名（`addToFleet` 第 4 参）、`setFleetTagline`/`addBriefingItem` 均属可见文本。**⚠️ mission 的 `descriptor.json`/`mission_text.txt` 可能同时存在 mod 目录和 jar 内两份副本**（2026-09-21 RYAZ 实测）——注入时两处都要写，漏一处就是"任务选单英文"。
 12. **缺依赖启动弹窗**：`onApplicationLoad` 抛 `ClassNotFoundException` 的 message（"MagicLib is required…"、"You can download … at http://…"）只在缺依赖时弹给安装者——属 UI 文本（正文译、URL 保留），别当开发日志跳过。
 13. **舰船显示名/分类的真正来源是 `data\hulls\ship_data.csv`**：0.95a+ 引擎以该表 `name` 列作舰船显示名、`designation` 作舰级分类、`tech/manufacturer` 作制造商行。**只改 `.ship` 的 `hullName` ≠ 舰名已汉化**（事故：全舰 `.ship` 已译但游戏内仍英文）。designation 取值见 `<skills>\shared\glossary.md` §3。
 14. **★`hull_mods.csv` 的 `uiTags`（船插分类显示列）**：引擎把该列的值（英文逗号切分）**直接当装配界面/百科的船插分类标签显示，不查任何注册表** ⇒ 英文标签就是英文，**不报错、不打日志**。**该列的权威词表 = 核心中文 `starsector-core\data\hullmods\hull_mods.csv` 同列**（`Weapons→武器`、`Special→特殊`、`Logistics→后勤`、`Requires Dock→需要船坞`、`Defenses→防御`、`Shields→护盾`、`Engines→引擎`、`Fighters→战机`、`Phase→相位`、`Support→支援`）。**留空合法**（= 该船插无分类，别猜）；作者自定的分类（`Unique`/`DEVTOOL`/`Utility`/`基础`…）保留原样，除非确认要汉化。
