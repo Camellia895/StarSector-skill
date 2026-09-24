@@ -203,6 +203,8 @@ java.lang.NullPointerException: … LunaSettings.getBoolean(String, String) is n
 
 → 引擎拿 `"ncamcb_start"` 去 `Float.parseFloat` → `NumberFormatException` → **启动崩溃**。
 
+**armaa 3.3.6 复发实录（2026-09-24，同一闸门 `check_options_structure.js` 未跑）**：回传译文把选项行写成 `【情报哪来的？】`（**id 前缀整个被丢**）、多行选项用**字面 `\n`** 连成一行 → `NumberFormatException: For input string: "armaa_kadeChat3a"` / `"【情报哪来的？】"`。日志指纹 = `Rules.o00000` 栈 + `parseFloat` 的字符串是「选项 id」或「中文标签」；修复 = 按 en 行结构重建 id 前缀 + 字面 `\n` 转真实换行（17+1 处）。**options 语法比对必须逐行做（含 `(数字:)?id:标签` 三段式），列数检查与 R1 弯引号检查都看不见它**。
+
 **另两个格式事实**：
 
 - 多行 options 用**真实换行**分隔，不是字面 `\n`；写成字面 `\n` 则单元格不含 `, "` 换行 →

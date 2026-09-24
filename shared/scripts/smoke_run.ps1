@@ -72,7 +72,10 @@ $drivePs1   = Join-Path $mc 'drive.ps1'
 $newGamePs1 = Join-Path $mc 'NewGame.ps1'   # ⚠️ 不能叫 $newGame —— 会与 [switch]$NewGame 参数冲突（实测报"无法把 String 转成 SwitchParameter"）
 if (-not (Test-Path -LiteralPath $modCheck)) { Write-Output "SMOKE-ENV-FAIL: 缺少 $modCheck"; exit 2 }
 
-$ids = ($ModIds -join ',')
+# 拆分逗号/空白分隔的 id（实测 2026-09-23：'-ModIds a,b,c' 被绑成单元素字符串，原样写进
+# enabled_mods.json 成为一个假 mod id，且被脚本中断后无法自愈）。
+$idList = @($ModIds | ForEach-Object { $_ -split '[,\s]+' } | Where-Object { $_ })
+$ids = ($idList -join ',')
 Write-Output "== 烟测开始 ==  mod=$ids  newGame=$([bool]$NewGame)  timeout=${TimeoutSec}s"
 
 # 刷新"用户原始列表"快照为【当前】enabled_mods.json（实测教训：快照只写一次会陈旧，
@@ -87,7 +90,7 @@ if ((Test-Path -LiteralPath $emNow) -and -not $KeepEnabled) {
 
 # ---------------- 第 1 段：加载到主菜单 ----------------
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-$mcArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$modCheck,'-ModIds',$ids,'-TimeoutSec',$TimeoutSec,'-Quiet')
+$mcArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$modCheck,'-ModIds') + $idList + @('-TimeoutSec',$TimeoutSec,'-Quiet')
 if ($KeepEnabled) { $mcArgs += '-KeepEnabled' }
 & powershell @mcArgs | Out-Null            # 不回显：ModCheck 自己写 verdict.json
 $rc1 = $LASTEXITCODE

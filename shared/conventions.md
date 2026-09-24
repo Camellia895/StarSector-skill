@@ -202,7 +202,7 @@ faction 显示名/舰队名/官职名、`tips.json`、`descriptions.csv`…）�
 1. 一次任务**按序**读：`00-索引.md` → 1 个 `workflows\wf-*.md` → 它点名的 2–4 个 skill/shared 文件。
 2. **禁止**通读 `skills\` 整个目录；**禁止**把 `shared\env.md` 的内容复制进别的文件。
 3. 需要别的 skill 的能力时**引用它**，不要内联它的步骤。
-4. 引用语法统一：`<skills>\shared\env.md`、`<skills>\shared\scripts\xxx.js`、
+4. 引用语法统一：`<skills>\shared\env.md`、`<skills>\shared\scripts\<脚本名>.js`、
    skill 名直接用其 `name`（如 `starsector-mod-localization-extract`）。
 
 ## 8. 技能库自身的维护

@@ -3,7 +3,7 @@
 > **触发场景**：任务①阶段 3 交付之后，译者又交了一版（或多版）修订清单——`worklist\zh\` 里出现
 > 新命名的回传件（如 `01_data_zh_v2_flora.json`）或覆盖了旧件。YRXP 实测：同日 v1→v2→v3 三轮
 > （290/527 条改动），每轮步骤完全一致 ⇒ 固化本工作流。
-> **不适用**：首次注入（走 `wf-localize.md` 阶段 3）；mod 上游更新（走 `wf-translate-update.md`）。
+> **不适用**：首次注入（走 `wf-localize.md` 阶段 3）。mod 上游更新本体走 `wf-translate-update.md`，**但其回传译文（用户把 `worklist\zh\` 填完/重制后）同样走本流程注入**——2026-09 armaa 实测：绕开本流程自建管线，漏跑 `check_options_structure`（R13）连续两次启动崩溃。
 > **必读**：`shared\env.md`、`shared\conventions.md` §4.1（回传约定）、`starsector-mod-localization-apply`。
 
 ## 0. 验收（不写盘）
@@ -12,6 +12,9 @@
 - 与原件（`worklist\NN_*.json`）逐条核对：**条目数相等 + locator（file/id/field 或 jar 的 c）序列一致**，
   不一致 = 译者增删了条目 → 让 AI 补进上一级清单，禁止直接注入。
 - 统计：空 `zh` 数（必须 0）、与 `mods\<Mod>\ai\zh\`（上一已应用版）diff 出**改动规模**（写进留档）。
+- **译文质量检测（MT 垃圾）**：`node <skills>\shared\scripts\check_zh_quality.js <zhDir>`
+  （armaa 实测一次回传 53% 为机器翻译直翻的中英混杂 salad，人工看不完；命中 exit 1 →
+  明细在 `--json` 输出，退回译者或安排重译。**专有名词/脚本字/$变量的英文保留是合法的，不算命中**）。
 
 ## 1. 机械规范化（写回 zh 清单本身，再注入）
 
