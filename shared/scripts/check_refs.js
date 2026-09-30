@@ -90,7 +90,15 @@ for (const d of dirs) {
   for (const id of csvIds(path.join(d, 'data/weapons/weapon_data.csv'), 'id')) weapons.add(id);
   for (const id of csvIds(path.join(d, 'data/hullmods/hull_mods.csv'), 'id')) hullmods.add(id);
   for (const id of csvIds(path.join(d, 'data/hulls/wing_data.csv'), 'id')) wings.add(id);
-  for (const f of walk(path.join(d, 'data/variants'))) if (f.endsWith('.variant')) variants.add(path.basename(f, '.variant'));
+  for (const f of walk(path.join(d, 'data/variants'))) if (f.endsWith('.variant')) {
+    // 注册 id = 文件内 variantId 字段（事故库 28）；无该字段才退回文件名
+    let vid = path.basename(f, '.variant');
+    try {
+      const m = fs.readFileSync(f, 'utf8').match(/"variantId"\s*:\s*"([^"]+)"/);
+      if (m) vid = m[1];
+    } catch (e) { /* 读不了就退回文件名 */ }
+    variants.add(vid);
+  }
   for (const f of [...walk(path.join(d, 'data/weapons')), ...walk(path.join(d, 'data/shipsystems'))])
     if (f.endsWith('.proj')) projIds.add(projInternalId(f));
   const hs = path.join(d, 'data/config/hull_styles.json');
