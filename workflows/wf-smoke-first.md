@@ -101,6 +101,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 | `-NewGame` 建不出存档（`boot=0 newgame≠0`） | 加载没问题、**战役期**出问题：看 `results\...\ng_frames\` 的失败帧；常见是某个界面的 tooltip/描述崩、或规则脚本报错 |
 | 只有"插件初始化报错"这类噪音 | **PASS**。这些在原版与别的 mod 上也会出现，先判归属再决定是否追 |
 
+### 已知限制（2026-09-30 MagicMaster 实测沉淀；命中先怀疑脚手架，别急着改 mod）
+
+| 症状 | 原因 | 绕行 |
+|---|---|---|
+| `-ModIds a,b` 报 `A positional parameter cannot be found` | PowerShell 具名参数只绑一个 token；smoke_run→ModCheck 的 `-File` 传参链断 | **标准用法＝单 id** + 在 mod 的 `mod_info.json` 声明 `dependencies`（smoke 会自动补全启用） |
+| 多 mod 组合烟测时 mod 清单"不对" | `drive.ps1 boot` 会**强制改写** enabled_mods 为自己的测试集（rotcesrats+LazyLib+MagicLib） | 只走 smoke_run 一个入口；不要拿 drive.ps1 手动编排目标 mod |
+| `newgame rc=3` 而 `fail_name.png`（`modcheck\results\ng_frames\`，**共享目录**不在 per-run 目录）里游戏停在**主菜单** | NewGame.ps1 UI 坐标按 **1366×768** 标定；主菜单面板右侧像素锚定 ⇒ 分辨率不同（实测 2000×1125 / 2560×1440）相对坐标漂移，点不中"生涯模式" | **脚手架失配，非 mod 问题**：转手动建档测试；注意失败帧不在 per-run 结果目录里 |
+| mod 明明没引用 LunaLib 却启动 Fatal `NoClassDefFoundError: lunalib/...` | GraphicsLib 1.12.1 硬引用 LunaSettingsListener（env.md §6） | 启用清单带上 lunalib（或在 mod_info 声明依赖） |
+
 ## 阶段 3 · PASS 后：进全量校验（适用用法 A 时）
 
 烟测通过（**建议同一配置跑通 2 次**，避免偶发），再进

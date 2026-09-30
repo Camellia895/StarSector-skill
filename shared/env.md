@@ -38,6 +38,8 @@
 - 写回 CSV 保持原 **CRLF**。
 - **含中文的 `.ps1` 必须 UTF-8 带 BOM**；`.bat`/`.cmd` 纯 ASCII + CRLF。
 - `starsector.log` 是 **GBK/ANSI**：`Select-String -Encoding Default` 才不乱码（`-Encoding UTF8` 中文成乱码，英文仍可读）。
+- **上游 mod 的 changelog/杂记 txt 常是 GBK**（如 MagicMaster `更新日志new.txt`、`神秘使Q&A.txt`）：
+  追加条目前先看前 3 字节/试解码，**按原编码读写**；用 UTF-8 覆盖 GBK 文件=全文变乱码。
 - PowerShell 5.1 的 `.ps1` 按 ANSI/GBK 读 ⇒ 无 BOM 的中文脚本报"字符串缺少终止符"之类怪错。
 
 ## 4. 五条"环境毒点"（踩过，别重复验证）
@@ -72,7 +74,11 @@
 
 ## 6. 本机已装依赖（0.98a 版本）
 
-LazyLib 3.0.0（`mods\LazyLib\jars\internal\Kotlin-Runtime.jar` 提供 kotlin-stdlib，metadata 2.1.0）、**MagicLib 1.5.6**（不是 0.3x）、GraphicsLib 1.12.1（`shaderLib`，**自带源码** `org\dark\shaders\**\*.java`）、Nexerelin 0.12.1e、IndEvo 4.1.b、LunaLib。
+LazyLib 3.0.0（`mods\LazyLib\jars\internal\Kotlin-Runtime.jar` 提供 kotlin-stdlib，metadata 2.1.0）、**MagicLib 1.5.6**（不是 0.3x）、GraphicsLib 1.12.1（`shaderLib`，**自带源码** `org\dark\shaders\**\*.java`）、Nexerelin 0.12.1e、IndEvo 4.1.b、LunaLib 2.0.5。
+
+> **GraphicsLib 1.12.1 硬引用 LunaLib**（本机实测）：`ShaderLib.init`（ShaderLib.java:617）直接引用
+> `lunalib.lunaSettings.LunaSettingsListener`，LunaLib 未启用 ⇒ 启动 Fatal `NoClassDefFoundError`。
+> 烟测/启用清单里 **shaderLib 与 lunalib 必须同时启用**；mod 自身不引用 LunaLib 也要带上。
 
 > 读真实版本：`Get-Content mods\<X>\mod_info.json -Encoding UTF8`，别按印象。
 
