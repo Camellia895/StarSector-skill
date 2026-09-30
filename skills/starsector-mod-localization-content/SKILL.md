@@ -41,8 +41,9 @@ jar 层先跑 `analyze_jar_strings.js` 出常量清单，再决定哪些进清�
 
 ## 3. 术语与风格
 
-1. 先建**术语表**（EN→ZH + 来源 note：核心 grep / 社区习惯 / 自定并标注），所有译者与子代理共用；
-   写进 `<skills>\shared\glossary.md` + `glossary.json`。
+1. 先建**本 mod 的术语表**（EN→ZH + 来源 note：核心 grep / 社区习惯 / 自定并标注），所有译者与子代理共用；
+   存 `_work\mod_work\<Mod>\`。**核心术语以 `<skills>\shared\glossary.md` 为准**（该表只收核心术语；
+   mod 专名不写回共享表，AI 也不为它们预设建议译名）。
 2. **跨层一致性**：同一概念在插件名、desc、战斗消息、`mod_info`、设置注释里用词必须一致
    （`escort` 全程"护航"，不一会"护送"；`personality` 全程"性格"）。
 3. **风格贴合游戏**：军事/战术简报口吻、短句为主。`desc` 讲清"触发条件 + 效果 + 例外/覆盖关系"；

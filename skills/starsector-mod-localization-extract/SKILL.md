@@ -1,6 +1,6 @@
 ---
 name: starsector-mod-localization-extract
-description: Starsector（远行星号）mod 汉化的第一阶段——把 mod 里所有玩家可见文本提取成"待译清单 worklist"交给人工/AI 翻译。覆盖摸底判定（strings 表 vs 硬编码在 jar/源码）、data 层 recipe 化提取（CSV/伪 JSON/faction/装配变体/LunaLib 设置/tips/舰名/任务文本/**mod_info 与 changelog 元信息**）、jar 层常量池提取与源码字面量对齐（含编译期折叠、注释夹折叠、Kotlin ${} 片段）、易漏区 16 条清单、**交付契约（给译者的文件总数 ≤10 份：shard ≤5 + index + 修正后 glossary.md + 指向 -spec）**。不含翻译、不含注入（那两步见 starsector-mod-localization-apply / wf-localize）。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
+description: Starsector（远行星号）mod 汉化的第一阶段——把 mod 里所有玩家可见文本提取成"待译清单 worklist"交给人工/AI 翻译。覆盖摸底判定（strings 表 vs 硬编码在 jar/源码）、data 层 recipe 化提取（CSV/伪 JSON/faction/装配变体/LunaLib 设置/tips/舰名/任务文本/**mod_info 与 changelog 元信息**）、jar 层常量池提取与源码字面量对齐（含编译期折叠、注释夹折叠、Kotlin ${} 片段）、易漏区 16 条清单、**交付契约（给译者的文件总数 ≤10 份：shard ≤5 + index + 核心术语表 glossary.md（共享表原样，不含 mod 建议译名）+ 指向 -spec）**。不含翻译、不含注入（那两步见 starsector-mod-localization-apply / wf-localize）。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
 ---
 
 # 提取：生成待译清单（worklist）
@@ -184,7 +184,7 @@ node <skills>\shared\scripts\build_jar_worklist.js <candidates.json> <outTransla
 |---|---|---|---|
 | 1–5 | **待译清单 shard** | `worklist/01_*.json` … | **shard ≤ 5 份** |
 | 6 | `worklist_index.json` | 分片索引 + 条目数 + **被排除区域及理由** | 1 份（合并统计与审计，不另建审计文件） |
-| 7 | `glossary.md` | **基于本 mod 修正后的术语表** | 1 份（在 `<skills>\shared\glossary.md` 基础上增补/纠正本 mod 专名，沿用其来源标注格式） |
+| 7 | `glossary.md` | **核心术语参考表（共享表原样）** | 1 份（`<skills>\shared\glossary.md` **原样交付，不为本 mod 增补专名、不提供建议译名**——mod 专名由译者按其表头"取证优先顺序"自行定名；AI 不预设译名） |
 | 8 | `starsector-mod-localization-spec` | skill 目录（`SKILL.md` 一份） | 1 份（**原文路径交付**，不复制内容，避免双份漂移） |
 
 **总计 ≤ 8 份；即使上游坚持要分得更细，也以 10 份为上限。**
@@ -218,7 +218,7 @@ worklist\
 ├─ 04_jar.json
 ├─ 05_misc.json
 ├─ worklist_index.json   ← 分片索引 + 条目数 + 被排除区域
-├─ glossary.md           ← 基于本 mod 修正后的术语表
+├─ glossary.md           ← 核心术语参考表（共享表原样，不含 mod 建议译名）
 └─ zh\                   ← ★译者把**汉化后的产物**放这里（交付前建成空目录）
     └─ README.md         ← 用法说明（模板见 templates\zh\README.md）
 ```
@@ -240,7 +240,7 @@ worklist\
 - [ ] 每个 section 都有清单文件；`worklist_index.json` 条目数之和 = 各分片实际条目数
 - [ ] **交付文件总数 ≤ 10**（正常 ≤ 8）：shard ≤ 5 + index + `glossary.md` + `spec`；超出必须合并并说明
 - [ ] **已建好 `worklist\zh\`**（含用法说明，见 §4.3），且交付说明里写了"填完另存到 `zh\`、文件名保持一致"
-- [ ] `glossary.md` 已按本 mod 修正（专名/自造译名都在其中），不是直接照搬共享术语表
+- [ ] `glossary.md` 为共享核心表**原样**交付（**不要**为本 mod 增补专名或建议译名——mod 专名是译者的决定，AI 不提供汉化建议）
 - [ ] **data 层反向网 0 候选（§1.5，最高优先级）**：
       `node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版目录> <worklistDir>`
       → 必须 0 候选。**只靠 recipe 不算通过**（recipe 有盲区，实测漏的正是"没想到的字段"）。

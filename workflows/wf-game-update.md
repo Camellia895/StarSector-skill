@@ -52,7 +52,8 @@
 10. **第 9 步 修复 + 重建 + 全量校验**：`build_java_mod.ps1`（编译→打包→备份 `*.orig`→安装），
     重跑第 3/4/6 步校验。**游戏必须先完全退出**。
 11. **第 10 步 版本号 / changelog / 交付**：`version` 与 `*.version` 同步；`gameVersion=0.98a-RC8`；
-    `dependencies` 齐；`changelog.txt` 顶部加条目；走 `starsector-mod-delivery`。
+    `dependencies` 齐；`changelog.txt` 顶部加条目；交付走 `starsector-mod-delivery` **§0.1 简化档**
+    （**changelog + 打包 + 简化自检**；不做 `ai\` 工作区/结构介绍/git 新建）。
 
 ## 3. 有汉化的 mod：不丢汉化的纪律
 
@@ -83,6 +84,6 @@
 - [ ] `mod_info.json`：`version` = `*.version`、`gameVersion=0.98a-RC8`、`dependencies` 齐
 - [ ] `changelog.txt` 已更新；报告里区分"0.98 回归"与"上游一直就坏"
 - [ ] 有汉化 ⇒ 汉化已重新注入并通过 G4/G5
-- [ ] `starsector-mod-delivery` 四项齐备并打包自检
+- [ ] `starsector-mod-delivery` **简化档**完成（changelog 条目 + 打包 + §6 简化自检）
 - [ ] **（≤0.8x mod）**skill §7 三个专项闸门 PASS + **读档冒烟**通过（verifyFactionData 在读档期核对 known*，只进主菜单不够）
 - [ ] **游戏内**：新档生成内容 → 目标功能可用 → 日志无新增 `at data.scripts.` 栈帧

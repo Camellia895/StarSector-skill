@@ -19,6 +19,13 @@ mod 根下无 jars/，且 data/plugins|data/scripts 有 .java？
 └─ 否 → 走 jar 常量池补丁（starsector-mod-java-hardcoded-text）
 ```
 
+> **⚠️ 2026-09-23 YRXP 实证补充（"有 jars 也有 data 源码"的混合形态）：**mod 同时带 `jars/`
+> 和 `data/**/*.java` 时，**jar 里已编入的类以 jar 为准**——Janino 只编 jar 缺的类。
+> 判定法：游戏日志搜 `ScriptLoader - Compiling script`（其他 mod 的源码在编、目标 mod 一条没有
+> ⇒ 它的 data 源码是**惰性**的，改了不生效）。YRXP 的 data/missions 与 data/scripts 共 205 个
+> .java 全是惰性源码，唯 `data/campaign/intel/events/` 3 个因 jar 无对应类而真 Janino 生效。
+> 任务层引用闭包校验（含惰性降级）用 `shared\scripts\check_mission_refs.js`。
+
 - **不需要 javac 重编译**：Janino 启动时自己编；翻译只动字面量内容，风险 = 转义写坏，用 §4 的骨架闸门兜住。
 - **不要**因"想验证可编译"去搭 SiC/框架类的编译环境（依赖 mod 缺失时根本编不过）；骨架等价证明足够。
 

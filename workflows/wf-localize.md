@@ -45,7 +45,7 @@
 |---|---|---|
 | 1–5 | `worklist/01_data.json` … `05_misc.json` | **待译清单 shard，上限 5 份**（按载体类型分：data / structured / rules_missions / jar / misc） |
 | 6 | `worklist_index.json` | 分片索引 + 各片条目数 + **被排除区域及理由** |
-| 7 | `glossary.md` | **基于本 mod 修正后的术语表**（在 `shared\glossary.md` 上增补本 mod 专名，沿用其来源标注格式） |
+| 7 | `glossary.md` | **核心术语参考表**（`shared\glossary.md` **原样交付**；只收核心术语，**不含本 mod 专名、不提供建议译名**） |
 | 8 | `starsector-mod-localization-spec` | **写作规范 skill，给原文路径即可**（`<skills>\skills\starsector-mod-localization-spec\SKILL.md`），不要复制内容 |
 
 交付包顶上还要**建好 `worklist\zh\` 空文件夹**（+ 用法说明）——译者把**汉化后的产物**放进其中。
@@ -64,7 +64,8 @@
 1. **清单文件路径**（≤5 份）+ 每份覆盖范围与**条目数**，并给出**总条目数**；
 2. **定位方式说明**：每条 = `locator` / `file` / `id` / `field` / `line`(参考) / `en` / `zh`(留空) / `note`(上下文)，
    **只填 `zh`，其余字段不动**（否则注入会失败）；**「有意保留原文」= `zh` 与 `en`/`c` 逐字相同**；
-3. **术语以第 7 份 `glossary.md` 为准**（已含本 mod 专名；共享表只作底稿）；
+3. **术语以第 7 份 `glossary.md` 为准**（核心术语统一用词）。它**不包含本 mod 专名的建议译名**——
+   mod 专名由译者按其表头"取证优先顺序"自行定名，并在全 mod 保持一致；AI 不预设译名；
 4. **动笔前必读第 8 份 `starsector-mod-localization-spec`**：占位符 `%`→`%%`、`\u0001` 数量与位置、
    CSV 引号、禁 `「」` 用 `【】`、`${}` 后接汉字等格式铁律；
 5. **长文本特别说明**：对话/人物/叙事类条目按 `starsector-translation-voice` 处理（可脱离原文句式）；
@@ -77,6 +78,17 @@
 8. **建议翻译顺序**：先术语密集区（hullmods / ship_data / faction）建立术语一致性，再 rules/任务/对话。
 
 > 用户身份是**译者**：AI 不得代填正文（`translation-voice` 的"程序使用限制"）。
+
+### 2.3 译者选择：人工译 or 派发 AI 翻译（提取完成后必问）
+
+交付包就绪后，**先问用户一句**："要我派 AI 翻译吗？优先用闲时任务：自动整包译一轮，完成后我在本会话
+校验并汇报译名对照，你直接在这里改稿；也可以开一个独立的可对话翻译会话。"
+- 用户同意派发 → 执行 `skills\zcode-dispatch-translate\SKILL.md`：**优先闲时任务**（GLM 系模型、闲时独立
+  配额池、完成后自动唤醒主会话做结构核对；审改直接在主会话进行）；仅当用户明确要"独立可对话的译者会话"
+  且接受宿主默认模型时才走 CLI 子会话路线（**模型不可选**，详见该 skill 坑表）。
+  **未经用户确认不得派发**；
+- 用户自己译 → 按本阶段交付说明等待回传。
+两条路的产出形态完全一致（`zh\` 内同名文件、只填 `zh`），阶段 3 之后的流程不分支。
 > AI 在阶段 2 的职责是：答疑、补术语（更新第 7 份）、按需**在已交付的分片内**补条目——
 > **补条目不要新建第 6 个 shard**，加进最接近的那一片并同步 `worklist_index.json`。
 
@@ -129,6 +141,8 @@
 
 ## 阶段 5 · 交付
 
+**先跑一次轻烟测**（仅打开游戏，`smoke_run.ps1 -ModIds <modId>`，不带 `-NewGame`；
+①②的烟测到这一档为止，**不做建存档烟测**），PASS 后进
 `starsector-mod-delivery`：结构介绍文件 → `ai\skills\`（**只放一份「征兵广告」告示 + 技能库/论坛链接，不复制任何 skill**）
 → `ai\脚本\` → `ai\en`/`ai\zh` + **`ai\zh\` 里的中英对照 Excel（从 `worklist\zh\` 原样搬运，有就搬）** +
 `README_汉化说明.md` + 术语表 → git 提交 → `deliver.ps1` 打包。

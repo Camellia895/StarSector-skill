@@ -135,12 +135,13 @@
 
 ## D4. 冒烟测试（自动跑一遍游戏：入口 + 日志指纹）
 
-> 流程见 `workflows\wf-smoke-first.md`；**先烟测、PASS 后才做全量校验**。
+> 流程见 `workflows\wf-smoke-first.md`；**分两档：轻烟测＝仅打开游戏（①②收尾必跑）/ 深烟测＝加载+建存档（③⑦关口）**；
+> 深烟测路径下**先烟测、PASS 后才做全量校验**。
 > 输出刻意极简（6–10 行）——**不要把 `starsector.log` 读进上下文**。
 
 | 脚本 | severity | tier | 用途 | 用法 |
 |---|---|---|---|---|
-| `smoke_run.ps1` | — | — | **烟测统一入口**（包装 `<game>\_work\explore\modcheck\`，本身不判生死、只编排）：改 `enabled_mods.json` 只启用目标 mod → 启动等主菜单（`-NewGame` 则继续自动建 `save_autotest_*`）→ 关游戏并**恢复 mod 列表**。**判定只看退出码**，不解析日志。退出码 0=PASS/1=FAIL/2=环境/3=超时/4=崩溃 | `powershell -File smoke_run.ps1 -ModIds <id> [-NewGame] [-KeepEnabled] [-TimeoutSec 420]` |
+| `smoke_run.ps1` | — | — | **烟测统一入口**（包装 `<game>\_work\explore\modcheck\`，本身不判生死、只编排）：改 `enabled_mods.json` 只启用目标 mod 及声明依赖 → 启动等主菜单（`-NewGame` 时 ModCheck 以 `-KeepEnabled` 结束、**测试集保留给建存档段**（2026-09-30 修复：否则 ModCheck 先还原完整列表，建存档段挂不上目标 mod），再 `drive.ps1 boot -KeepMods` + `NewGame.ps1` 自动建 `save_autotest_*`）→ 关游戏并**恢复 mod 列表** → 打印摘要（含**"挂载 mod"行**＝verdict.json 的 enabledIds，须核对目标 id 在列）。**判定只看退出码**，不解析日志。退出码 0=PASS/1=FAIL/2=环境/3=超时/4=崩溃 | `powershell -File smoke_run.ps1 -ModIds <id> [-NewGame] [-KeepEnabled] [-TimeoutSec 420]`（**必须显式传 `-ModIds`——缺省 `rotcesrats` 是测试值，等于测了别的 mod**） |
 
 > **日志不要通读**（`starsector.log` 几万行起）：先看 `results\<时间戳>_*\verdict.json`（运行方已摘出失败原因与错误行）；
 > 需要自己搜时只做**定向**搜索，且**必须 `-Encoding Default`**（GBK）：

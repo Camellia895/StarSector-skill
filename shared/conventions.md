@@ -194,8 +194,9 @@ faction 显示名/舰队名/官职名、`tips.json`、`descriptions.csv`…）�
   放 `_work\mod_work\<Mod>\`。
 - 下次同 mod 更新（任务2）**直接复用**这些映射：按 `locator`/id 匹配 → `en` 未变则复用旧 `zh`；
   `en` 变了才进"待译新条目"并计入 R。
-- 术语表只增不改语义：新词写进 `<skills>\shared\glossary.md`（+ `glossary.json`），标注来源
-  （核心 grep / 社区习惯 / 自定）。
+- 术语分层：**共享表（`shared\glossary.md` + `glossary.json`）只收 0.98a 核心术语**——核心 grep
+  证实的新词才进，只增不改语义；**mod 专名的定名不写回共享表、也不提供 AI 建议译名**，
+  记入本 mod 的 `_work\mod_work\<Mod>\` 留档与交付包的术语说明。
 
 ## 7. 上下文节约纪律
 

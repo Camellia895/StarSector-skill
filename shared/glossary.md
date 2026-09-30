@@ -1,14 +1,18 @@
 # 术语表（唯一权威，按需扩展）
 
+> **定位：本表只收 0.98a 核心（原版）术语**，是全项目统一核心用词的权威。
+> **不收录具体 mod 的专名，也不为 mod 汉化提供建议译名** —— mod 专名由译者按下面的取证顺序自行定名，
+> 决定记入本 mod 的译名留档（`_work\mod_work\<Mod>\`），**不写回本表**。
+
 > **取证优先顺序**（不要凭感觉译）：
 > 1. **0.98a 核心汉化** —— 游戏本体中文化用词就是玩家的"母语"。
 >    - grep `<game>\starsector-core\data\`（`strings\strings.json`、各 CSV、`rules.csv`）；
 >    - 全项目平行语料：`<game>\_work\语料库\parallel\core_parallel.plain.jsonl`（15,033 对，中位 119 字符）。
 > 2. **社区既有模组中文名** —— 同一 mod 已有广泛使用的 CN 名就沿用，别另起炉灶（除非与核心严重冲突或明显错误）。
 > 3. **本项目既有译名** —— 查 `_work\mod_work\<Mod>\` 的 EN→ZH 映射与 `ai\zh\` 语料。
-> 4. 以上都没有 → 自定，并在本文件**标注"自定"**。
+> 4. 以上都没有 → 译者自定，记入本 mod 的译名留档（`_work\mod_work\<Mod>\`）。
 
-每条注明来源：`[核心]` = 0.98a 核心汉化 grep 证实 / `[社区]` = 社区沿用 / `[自定]` = 本项目新定。
+每条注明来源：`[核心]` = 0.98a 核心汉化 grep 证实。
 
 ## 1. 核心机制与数值
 
@@ -21,6 +25,7 @@
 | `flux` / `flux capacity` / `flux dissipation` | 幅能 / 幅能容量 / 幅能耗散 | [核心] |
 | `hull` / `armor` / `shield` | 结构 / 装甲 / 护盾 | [核心] |
 | `hullmod` | 船插 | [核心] |
+| `d-mods` | D-插件 | [核心] |
 | `ship system` | 战术系统 | [核心] |
 | `phase` / `time flow` | 相位 / 时间流速 | [核心] |
 | `burn` / `burn level` / `sustained burn` | 燃烧 / 燃烧等级 / 持续燃烧 | [核心] |
@@ -30,7 +35,7 @@
 | `automated ship` / `AI core` | 自动化舰船 / AI 核心 | [核心] |
 | `Alpha/Beta/Gamma Core` | 阿尔法/贝塔/伽马核心 | [核心] |
 | `salvage` / `derelict` | 打捞 / 残骸 | [核心] |
-| `Close Support`（武器角色词） | **密接支援** | [核心]（**不是**「支援密接」——2026-09-18 Kyeltziv 1.10.7 迁移错序修正 5 处；同类还有 `Fire Support` 火力支援） |
+| `Close Support`（武器角色词） | **密接支援** | [核心]（**不是**「支援密接」——注意词序；同类还有 `Fire Support` 火力支援） |
 | `hullmod` 分类标签（`hull_mods.csv` 的 `uiTags` 显示列） | 武器 / 特殊 / 后勤 / 需要船坞 / 防御 / 护盾 / 引擎 / 战机 / 相位 / 支援 | [核心]（逐字照抄核心中文同列；该列**引擎直接显示、不查表** ⇒ 单独闸门 `check_uitags_zh.js`，专项提示词 `workflows\prompt-船插分类汉化.md`） |
 
 ## 2. 性格（引擎常量值，**只译显示名，值不译**）
@@ -58,6 +63,7 @@
 | `Pirates` / `Independent` | 海盗 / 非势力团体 | [核心]（`independent.faction` 四显示字段 + `descriptions.csv` + `rules.csv` 十处一致；⚠️ 旧表作「独立势力」系误读——核心数据中「独立势力」仅 1 处，译的是形容词语境 "rising independent **power**"，非势力名。形容词用法照常「独立＋名词」：独立舰队/独立世界/独立政体；个别语境：`independent trade` 民间贸易、`independent operator` 自由人/个体商户/独立经营者） |
 | `Domain` / `Domain-era` | 人之领 / 人之领时代 | [核心] |
 | `Persean Sector` | 英仙座星域 | [核心] |
+| `Transplutonics`（武器制造商） | 稀有元素 | [核心] |
 | `hyperspace` / `gate` | 超空间 / 星门 | [核心] |
 
 > 势力显示名须与 `weapon_data.csv` 的 `tech/manufacturer`、`settings.json` 的 `designTypeColors` 键**精确一致**（铁律 R10）。
@@ -69,8 +75,18 @@
 `supplies` 补给 · `fuel` 燃料 · `crew` 船员 · `marines` 陆战队员 · `heavy machinery` 重型机械 ·
 `food` 食物 · `organics` 有机物 · `ore` 矿石 · `rare ore` 稀有矿石 · `volatiles` 挥发物 ·
 `refined metals` 精炼金属 · `domestic goods` 生活用品 · `luxury goods` 奢侈品 · `drugs` 毒品 ·
-`hand weapons` 轻武器 · `heavy armaments` 重武器 [核心]
+`hand weapons` 轻武器 · `heavy armaments` 重武器 · `Volturnian lobster` 蓝龙虾 [核心]
 
+## 6. 船插 / 舰船系统 / 武器（核心常见条目）
+
+| EN | ZH | 来源 |
+|---|---|---|
+| `Hardened Subsystems` | 硬化子系统 | [核心] |
+| `Integrated Point Defense AI` | 整合点防御 AI | [核心] |
+| `Advanced Targeting Core` | 先进目标定位核心 | [核心] |
+| `Safety Overrides` / `Unstable Injector` | 安全协议超驰 / 不稳定喷射器 | [核心] |
+| `Phase Skimmer`（舰船系统） | 闪现 | [核心] |
+| `Hellbore` / `Heavy Mauler` / `Autopulse Laser` | 炼狱炮 / 重型撕裂者 / 自动脉冲激光 | [核心] |
 
 ## 7. 写作铁律摘要（详见 `iron-rules.md`）
 
@@ -80,168 +96,8 @@
 - **人名**：项目一直保留拉丁字母就继续保留，不强制音译（`Amelie`、`Xander` 原样）。
 - **船名**：按本表固定译名；`ship_names.json` 的重复词是加权设计，同词同译（铁律 R11）。
 - 引擎常量值、配置枚举、id、路径、URL **绝不译**。
-- 模组名 → 沿用 `[社区]` 名。
 
 ## 8. 机器可读副本
 
 `<skills>\shared\glossary.json`（`glossary` 映射 + `style_notes`）供脚本消费（`build_worklist2.js` 等）。
-**新增术语请同时更新 `.md`（人读，带来源）与 `.json`（脚本读）。**
-
-### 6.6 SCAV-CO Ship Works（sv，X-8 汉化）
-
-| EN | ZH | 来源 |
-|---|---|---|
-| `SCAV-CO` / `VACS-INC` | **保留英文品牌名**（designTypeColors 注册键 + tech/manufacturer + 舰名前缀三通道同步保留，R16） | [自定] |
-| `Ultima`（设计类型/武器商） | 终极（舰名"终极号"；designTypeColors 已注册键"终极"） | [自定] |
-| `d-mods` | D-插件 | [核心] |
-| `Transplutonics` | 稀有元素 | [核心] |
-| `Hardened Subsystems` | 硬化子系统 | [核心] |
-| `Integrated Point Defense AI` | 整合点防御 AI | [核心] |
-| `Advanced Targeting Core` | 先进目标定位核心 | [核心] |
-| `Safety Overrides` / `Unstable Injector` | 安全协议超驰 / 不稳定喷射器 | [核心] |
-| `Phase Skimmer` | 闪现 | [核心] |
-| `Hellbore` / `Heavy Mauler` / `Autopulse Laser` | 炼狱炮 / 重型撕裂者 / 自动脉冲激光 | [核心] |
-| `Volturnian lobster` | 蓝龙虾 | [核心] |
-| `Corvette`（designation） | 护卫艇 | [自定]（核心语料无该词） |
-| uiTags 分类词（`Shields/Weapons/.../Requires Dock`） | 护盾/武器/…/需要船坞 | [核心]（与核心 hull_mods.csv 同列用词逐字一致；该列为显示列） |
-
-### 6.7 No Such Organization - Phase Ships（kayse_phaseships，0.4.0 汉化迁移）
-
-| EN | ZH | 来源 |
-|---|---|---|
-| `No Such Org` / `No Such Organization`（势力名/designTypeColors 键/tech 列） | 无此组织 / 无此组织（键与 CSV 值逐字一致，R16） | [旧译沿用]（0.3.2 砒霜瓜子） |
-| `Nusquam`（星系+恒星名，createStarSystem 共享常量） | 乌有之乡（拉丁语"乌有"；旧存档仍显英文名，新游戏起中文） | [自定] |
-| `Tombstone`（行星+市场名） | 墓碑 | [自定] |
-| `Ossum`（气态巨星；Ossum Relay=藏骨中继站） | 藏骨（谐 ossuary 藏骨堂） | [自定] |
-| `Boneyard`（行星+市场名） | 骸骨地 | [自定] |
-| `The Ring`（小行星带） | 环带 | [自定] |
-| `Tombstone Portal`（跳跃点） | 墓碑之门 | [自定] |
-| `Grim` / `Grime`（舰名双关） | 狰狞 / 污秽（"违规改装的脏狰狞"，描述有交代） | [旧译沿用]+[自定] |
-| `No Such Audition`（酒馆任务名） | 无此试镜 | [自定] |
-| `Phase Disrupted!` / `Phase Coils Disabled!` | 相位受扰！/ 相位线圈失效！ | [核心对齐]（相位线圈） |
-| `READY` / `NO TARGET` / `NO VALID TARGET`（系统 HUD） | 就绪 / 无目标 / 目标无效 | [自定] |
-| `Requires Phase Field` / `Requires Phase Coils and Phase Field` | 需要安装相位场 / 需要安装相位线圈与相位场 | [核心对齐]（phasefield=相位场） |
-| `Lament` / `Requiem` / `Funeral`（Nexerelin 复仇舰队三级） | 挽歌 / 安魂 / 葬仪 | [自定] |
-| 舰名系列（0.3.2 旧译，沿用） | Barrow=古冢、Pyre=柴薪、Poltergeist=吵闹鬼、Haunt=鬼屋、Ghoulie=小尸鬼、Dullahan=无头骑士、Bansidhe=报丧女鹰、Azrael=死亡天使、Necromancer=死灵法师、Corpse=腐尸、Ghost=妖鹭、Maggot=蛆虫、Deathknight=亡灵骑士 | [旧译沿用] |
-
-### 6.8 Epta Consortium（seven_nexus，1.6.SO4→2.1.2 汉化迁移，2026-09-16）
-
-> 旧译作者：砒霜瓜子、Klize1917（1.6.SO4）。以下词条自旧译迁移抽取，翻译新增内容时**必须沿用**，
-> 保证 designTypeColors / tech 列 / 代码 getDesignTypeColor 字面量三处一致（R16）。
-
-| EN | ZH | 来源 |
-|---|---|---|
-| `Epta Consortium` / `Epta`（势力+全 mod 主名） | Epta财团 | [旧译沿用] |
-| `Epta Tech`（designTypeColors 键/tech 列/代码字面量） | Epta科技 | [旧译沿用]（R16 三处联动） |
-| `Zeta Computers` | Zeta计算 | [旧译沿用] |
-| `Takeshido`（ Bushido 势力/designType） | 武士道 | [旧译沿用] |
-| `Low Tech?` | 主宰纪元? | [旧译沿用]（问号是作者原名的一部分，保留） |
-| `seven phase` / `seven white` | 七企相位 / 七企纯白 | [旧译沿用] |
-| `Exotic` | 珍奇科技 | [旧译沿用] |
-| `Syzygy Acutators`（mod 原文即拼错，指 Syzygy Actuators） | 融合体执行器 | [旧译沿用] |
-| `Protectors Garrison` | 保卫者警备队 | [旧译沿用] |
-| `Kantina Combine` | 坎蒂纳联合体 | [旧译沿用] |
-| `Shooting Stars` | 流星公司 | [旧译沿用] |
-| `Chutnam Security` | 楚特南安保 | [旧译沿用] |
-| `AdProSec` / `Anodyne Indefatigable` / `Anodyne` | 不译（保留原文；旧译即如此） | [旧译沿用] |
-| `Decimus (Maximus)` / `Ashley` / `Nate` / `Rose` / `Triela` / `Gia` | 人名不译，保留原文（旧译惯例） | [旧译沿用] |
-| `mothball` / `standard mothball` | 封存 / 标准封存 | [旧译沿用] |
-| `Zero Flux Speed Boost (ZFSB)` | 零幅能加速（提升） | [旧译沿用] |
-| `time dilation`（AI 网络/相位时流） | 时流 | [旧译沿用] |
-| `Phase Grabber` | 相位捕捉 | [旧译沿用] |
-| `Field of Fire 7` / `FoF`（对话中的虚构游戏） | 《火力全开7》 | [旧译沿用] |
-| `LPC`（fighter LPC） | 不译（保留 LPC） | [旧译沿用] |
-| `Onslaughts` | 攻势级 | [旧译沿用]（核心舰名"攻势"复数语境） |
-| `AI Network` / `Sync Rating` / `Human AI duo` | AI网络 / 同步率 / 人机羁绊（旧译语境，2.1 新系统待定稿） | [旧译参考] |
-| `hardflux` / `hard flux` | 硬幅能 | [核心对齐] |
-
-### 6.9 RetroLib（前置框架库，1.0.1→1.1.1 汉化迁移，2026-09-17）
-
-> 旧汉化作者：未知（`_work\mod_zh\Roider Union V2.1.1\RetroLib`）。RetroLib 为前置库、无内容，
-> 术语量小；**它是「舰船改装」这一玩法概念在 0.98a 的术语源头**，下属 mod（Roider Union 等）应沿用本表。
-> 迁移要点见 `starsector-mod-localization-migrate`：1.1.0 起上游做了**字符串外置化 + 键名整体重构**
-> （`RetroLib_impl.BaseRetrofitPluginView_29` → `RetroLib.sourcesTextLegalFree`），旧译只能**按语义配对**复用。
-
-| EN | ZH | 来源 |
-|---|---|---|
-| `retrofit` / `retrofitting` / `convert`（舰船改装玩法） | 改装 | [核心]（核心 `rules.csv` 的 `refit` 作「改装舰船」；旧译一致） |
-| `RetroLib`（前置库名） | RetroLib | [社区]（保留原文，不意译） |
-| `hull`（船体/舰体） | 舰体 | [核心]（与「船体框架」区分：`hull` = 一艘舰的舰体本身） |
-| `frame hull`（改装产物：框架） | 船体框架 | [旧译沿用] |
-| `source (ship)`（改装来源） | 用于改装的舰船 / 原材料舰船 | [自定]（**旧译误作「原材料」已修正**——source 是"可作为改装来源的舰船"） |
-| `target (hull)`（改装目标） | 目标舰体 | [自定]（与 source 成对，避免与「型号」混淆） |
-| `queue` / `queued retrofits` | 队列 / 改装队列 | [旧译沿用] |
-| `commission` | 雇佣协议 | [核心]（核心 `rules.csv`：`commission revoked` → 「雇佣协议已被撤销」） |
-| `credits` | 星币 | [核心] |
-| `pristine`（改装后舰体状态） | 全新的 | [核心]（核心 `pristine` → 「完好/崭新」；此处指改装产物是全新出厂舰体） |
-| `bonus XP`（S 插件移除返还） | 额外经验 | [核心] |
-| `S-mod` / `permMod` | S 插件 / 永久插件 | [核心]（社区通用缩写，保留 `S`） |
-| `[NUMBER]` / `[REFUND]`（代码替换令牌） | **不译**（逐字保留） | [自定·铁律]（`Helper.TOKEN_NUMBER` / `TOKEN_REFUND` 精确匹配） |
-| `numberPercent` 值（`[NUMBER]%`） | `[NUMBER]%` | [自定·铁律]（代码走 `String.replace` 而非 `String.format` ⇒ 字面 `%` **不写 `%%`**；与铁律 R4 的适用条件不同） |
-
-### 6.12 Kyeltziv Technocracy（kyeltziv，1.10.7 汉化修复，2026-09-18）
-
-| EN | ZH | 来源 |
-|---|---|---|
-| `Kyeltziv Technocracy`（势力名/designTypeColors 键/tech 列） | 凯尔捷夫技术官僚（中英双键都在 settings.json，R16） | [社区]（沿用 1.9） |
-| **船插分类显示列** `hull_mods.csv` → `uiTags`：`Special/Defenses/Weapons/Shields/Engines/Fighters/Logistics/Requires Dock/Phase/Support` | **特殊/防御/武器/护盾/引擎/战机/后勤/需要船坞/相位/支援** | [核心]（必须与核心中文同列**逐字一致**；该列是**显示列**，引擎不查表 ⇒ 英文就是英文，闸门 `check_uitags_zh.js`） |
-| 武器角色词 `primaryRoleStr`：`Close Support` | **密接支援**（**不是**「支援密接」——1.10.7 迁移错序，2026-09-18 修正 5 处） | [核心] |
-| 百科武器页「机载」分类 | **机载**（`CodexDataV2.FIGHTER_WEAPON`，核心已译）；判定 = `AIHints.SYSTEM` **且** `primaryRoleStr` 以 `(Fighter)` 结尾 | [核心]（`starfarer.api.zip` 源码实证） |
-| 战机专用武器名后缀 | **`（机载）`**（社区惯例，如 Emergent Threats「费米子解耦器 (机载)」）；核心 vanilla 用 `(战机型)` | [社区]/[核心] |
-
-### 6.13 TVVFW 万泽时代（TVVFW，1.2→1.3 汉化迁移，2026-09-19）
-
-> 旧译（1.2，外部中文版）质量高，已按 id/field 配对复用。1.3 把 1.2 的自创设计类型
-> （`Low Tech?` 等）改回原版值 ⇒ 旧纪元名（主宰纪元/核心纪元/扩展纪元）弃用，改用核心词。
-
-| EN | ZH | 来源 |
-|---|---|---|
-| `TVVFW` / `Tinyverse - The Wanzer Age`（mod 显示名） | 万泽时代：Tinysaurus的原版万泽扩展 | [旧译沿用] |
-| `Wanzer` | 万泽 | [旧译沿用] |
-| `Scarrebiron` | 斯卡利比昂 | [旧译沿用+统一]（旧译舰名作「斯卡利布昂」，与描述/武器名的「斯卡利比昂」不一致；1.3 迁移统一为「比昂」） |
-| `White Glint` | 白色闪光 | [旧译沿用] |
-| `Isomer` / `Phantomsia` / `Persona (MS-19)` / `Paradagism` / `Golem` / `Alseides` | 异构式 / 三一之影 / MS-19 异闻录 / 范例式 / 魔像 / 奥赛德斯 | [旧译沿用] |
-| `Custodian`（1.3 新舰/武器前缀） | 监护者 | [自定·建议]（待用户确认；1.3 新增） |
-| `Outpost`（1.3 新舰 carrier_outpost） | 前哨站 | [自定·建议]（待用户确认） |
-| `Low Tech` / `Midline` / `High Tech`（1.3 tech 列已标准化；1.2 为 `Low Tech?` 等自创名） | 低端技术 / 中线技术 / 高新技术 | [核心]（核心 designTypeColors 中英双键齐备；旧纪元名 主宰纪元/核心纪元/扩展纪元 **1.3 起弃用**，取代 §6.8 存档的 `Low Tech?→主宰纪元?`） |
-| `Explorarium` / `Remnant`（tech 列） | 开拓者 / 余辉 | [旧译沿用=核心]（与核心 ship_data 同列逐字一致） |
-| `Derelict`（武器名形容词，如 Derelict Cannon/Lance） | 开拓者 | [旧译沿用]（旧译「开拓者加农炮」） |
-| 武器 tooltip 覆写列用词 `Fast/Very Fast/None/Average` | 较快 / 非常快 / 无 / 中等 | [核心]（核心 weapon_data 同列用词） |
-| `Missile Rainer`（作者生造词） | 导弹倾泻 | [自定·建议]（待用户确认） |
-
-### 6.14 号星行远 RotcesRats（rotcesrats，0.3.4 汉化，2026-09-19）
-
-| EN | ZH | 来源 |
-|---|---|---|
-| `RotcesRats`（mod 显示名/zip 名） | **号星行远** | [用户决策]（launchers/zip/文件夹名，合法字符已校验） |
-| `Pirate` / `Midline` / `Low Tech` / `High Tech` / `Luddic Path`（tech 列，两表同词） | 海盗 / 中线技术 / 低端技术 / 高新技术 / 卢德左径 | [核心]（核心 ship_data 同列实证；核心 designTypeColors 已注册中文键，`check_designtype` 须带 core 参数验证） |
-| `Combat Freighter`（designation） | **武装商舰** | [核心·同列实证]（核心 ship_data 同列；修正底稿 §3 的「武装货船」） |
-| `Corvette` / `Gun Cruiser`（designation） | 护卫艇 / 火炮巡洋舰 | [自定] / [自定·建议] |
-| `Close Support`（primaryRoleStr） | **密接支援** | [核心]（§1 同源，二次确认） |
-| `Ecsort`（变体词，原文拼写错误） | 护卫 | [自定]（按 Escort 处理，勿照抄） |
-| `It's the Circus`（Itano 系统状态，jar 常量×2 类） | 马戏开演了 | [自定]（撇号=直引号 U+0027，`c` 键逐字符） |
-| 舰名 47 条 | 意译（艾伊斯/轰鸣者…），ship_data↔.ship↔任务单舰名三处同词 | [用户决策]（全表见 `mods\RotcesRats\ai\zh\`） |
-| 变体角色词 29 个（Standard/Assault/…） | 一套自定词，全 mod 同译 | [自定]（见 mod glossary §0.6） |
-| `changelog.txt` | 不存在，未新建 | [流程]（易漏区 16） |
-
-### 6.15 Diable Avionics Original Flavor（diableavionics，2.7.0rc2 zh → 3.0.6 迁移，2026-09-23）
-
-> 旧译（2.7.0rc2，外部中文版）数据层质量高、jar 层未译；3.0.6 新增 Gulf Part 2 剧情/Last Line/Subject 71
-> 等大量新内容 ⇒ 档位③：旧译 841 条注入，新内容交 `mod_work\Diable Avionics\out\deliver_worklist\` 待填。
-> 全量 93 条 DA 专名见该包 `glossary.md`。
-
-| EN | ZH | 来源 |
-|---|---|---|
-| `Diable Avionics`（势力/制造商/designTypeColors 键） | 恶魔航电 | [旧译沿用]（三处一致；中文键与英文键并列注册，`check_designtype` ✓） |
-| `Wanzer` | 万泽 | [旧译沿用]（与 §6.13 同源） |
-| `Pandemonium` / `Virtuous` / `Gulf` | 魔窟 / 贤者 / 深渊 | [旧译沿用]（3.0.6 `Pandemonium(Assault)` 建议「魔窟(突击)」；新剧情 "the Gulf" 区域名沿用「深渊」） |
-| 舰名（Arbitrator 仲裁 / Frost 霜冻 / Zephyr 风神 等 40+） | 意译一套 | [旧译沿用]（全表见 `mod_work\Diable Avionics\out\deliver_worklist\glossary.md`） |
-| 元素谜题串 `86 Rn` / `99 Es` / `88 Ra` | 不译 | [流程]（Gulf Part 2 剧情设计，jar 常量有意保留） |
-### 6.16 Diable Avionics Joestar edition（diableavionics，2.7.0rc2 zh → 2.9.5.2 迁移，2026-09-23）
-> R=36.2% ⇒ 档位③：旧译 786 条就位，298 条待填清单在 `mod_work\Diable-Avionics-Joestar\checklist\`。
-> **同 id 多行时引擎"后行覆盖"只末行生效**（带 # 名字前缀的前行是上游 graveyard）——注入/普查都须按末行。
-> 旧 EN 基线：2.7.0rc3（Patreon 官方帖 81270023，rc3≈rc2）。术语沿用 §6.15 同源词表。
-
-> **2026-09-19 号星行远增补（§6.14 续）**：倒拼舰名按"核心译名倒序"复刻——地狱犬→犬狱地、破阵→阵破、
-> 塔尔苏斯→斯苏尔塔、双子座→子双座、预兆→兆预、征服者−C→服征者、攻势+C→势征、锤头→双髻头。
-> 完整方案见 `_work\mod_work\RotcesRats\out\naming\naming_analysis.md`。
+**新增核心术语请同时更新 `.md`（人读，带来源）与 `.json`（脚本读）；mod 专名不进这两份表。**

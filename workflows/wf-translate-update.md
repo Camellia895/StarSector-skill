@@ -55,7 +55,7 @@
 
 1. 执行 `starsector-mod-localization-extract`，产出新版完整 worklist。
    **产出必须遵守 §4.1 交付契约**：shard ≤ 5 份 + `worklist_index.json`（含被排除区域及理由）
-   + 基于本 mod 修正的 `glossary.md` + 指向 `starsector-mod-localization-spec`（共 ≤ 8 份，至多 10 份）。
+   + 核心术语表 `glossary.md`（共享表原样，不含 mod 建议译名）+ 指向 `starsector-mod-localization-spec`（共 ≤ 8 份，至多 10 份）。
 2. **diff 出"待译新条目"**：`en` 未变 → 复用旧 `zh`；`en` 变了 / 新增 / 新版新增文件里的条目 → 待译（`source:"new"`）。
 3. **★输出的翻译 JSON 必须**"**旧汉化 + 新待译**"**在同一份里**（本流程的硬要求，三档都适用）：
 
@@ -84,8 +84,8 @@
 ## 3. 分档执行
 
 > **三档的共同产物**：都产出 §2 第 3 步那份"**旧汉化 + 新待译**"合并清单（本次任务的交付物）。
-> **本流程属于文本层改动 ⇒ 不需要烟测**（见 `wf-smoke-first.md` 的分类表）；
-> 验收靠 `starsector-mod-localization-verify` 的 G2–G6。
+> **本流程属于文本层改动 ⇒ 只做轻烟测（仅打开游戏，不带 `-NewGame`），不做建存档烟测**
+> （见 `wf-smoke-first.md` 的档位表）；验收靠 `starsector-mod-localization-verify` 的 G2–G6。
 
 ### ① R < 10%（微量）
 
@@ -99,7 +99,11 @@
 
 1. 旧译迁移注入。
 2. **AI 翻译新条目**：先读 `starsector-mod-localization-spec`（格式铁律），
-   界面/功能文本按 `-content`，对话/叙事按 `translation-voice`，术语查**本 mod 修正后的 `glossary.md`**。
+   界面/功能文本按 `-content`，对话/叙事按 `translation-voice`，术语查**核心术语表 `glossary.md`**
+   （共享表；mod 专名按其表头取证顺序自行定名并保持一致）。
+   > 新条目成批（整片 shard 量级）时，可改为**开一个可见可对话的翻译子会话**：
+   > `skills\zcode-dispatch-translate\SKILL.md`（须先获用户确认）；少量几条主会话顺手译即可，
+   > 不必开会话（冷启动 ~1.8 万 tokens）。
    > 注意 `translation-voice` 的"程序使用限制"：**长文本（对话/人物/叙事）必须逐段理解后亲自写**，
    > 不得用机器翻译或模板拼接；界面/功能短文本可批量处理但同样要过 `-content` 的自检清单。
    > **`mod_info.json`（`name`/`description`）与 `changelog.txt`（条目正文）在这一步一并译完**（易漏区 15/16）：

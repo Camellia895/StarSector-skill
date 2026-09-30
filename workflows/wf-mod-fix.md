@@ -94,6 +94,7 @@ node <skills>\shared\scripts\check_refs.js <modDir> <游戏根>     # 引用闭�
 2. **一次只改一处**，改完立刻回阶段 A 重测（**不要攒着改**——攒着分不清哪个修好的、哪个引的新问题）。
 3. **保持字节安全**：CSV 用状态机（别朴素 `split(',')`）、保持行尾风格（R17）、无 BOM、别碰 id/logic key（R12）。
 4. **改前留证**：把原文件片段（或哈希）记进修复日志，便于回滚与交付说明。
+5. **惰性源码**（2026-09-23 YRXP 实证）：mod 同时带 `jars/` 与 `data/**/*.java` 时，jar 已编入的类以 jar 为准，Janino 只编 jar 缺的类（日志指纹：`ScriptLoader - Compiling script` 有别人没有我们）。别改 data 源码以为改了行为：要么重编 jar（走 `starsector-mod-java-hardcoded-text` §5），要么确认目标类 jar 里确实没有。
 
 ### 按崩溃形态选修复手法
 
@@ -101,6 +102,7 @@ node <skills>\shared\scripts\check_refs.js <modDir> <游戏根>     # 引用闭�
 |---|---|
 | **栈在 mod 自己的 Java 代码里**（`at data.scripts.*` / `at data.hullmods.*`，如技能/插件 NPE） | **代码修复重编译**（本流程"不重编译"立场的唯一例外——不改代码就修不了）：最小改动（判空早退等）+ **保汉化回填 + 等价性三闸门**，完整流程见 `starsector-mod-java-hardcoded-text` §5；归属仍按 §B2 判定 |
 | `RuntimeException: Weapon spec [X] not found!` / `Hull spec [X] not found!` | ① 先确认 `X` 该是**武器**还是**模块变体**：搜 `data\variants\*.variant` 有没有 `"variantId": "X"`；② 若是变体却被当武器解析 → **引擎版本行为差异**，在 `data\weapons\weapon_data.csv` 补一条最小 spec（id 必须逐字 = `X`）往往能让它过去；③ 若是作者漏定义 → 同样补 spec，或从 `sim_opponents`/fleet 里去掉该引用 |
+| **主菜单点任务即崩 / 任务加载报 variant not found**（独立任务，无报错或无声崩回菜单） | 任务层引用闭包：`node <skills>\shared\scripts\check_mission_refs.js <modDir> <游戏根>`（jar 任务类 + data 源码双载体，惰性源码自动降级 warn）。按 red 清单：照舰舰现有槽位重造缺失的 variant（参考同 hull 其他 variant 风格）或改引用；重复崩点任务直到 PASS。2026-09-23 YRXP 3.1.0 实证：3.x 削舰体槽位后旧任务装配没重建，另有一类是联动舰死引用（版本间从不存在） |
 | `JSONObject["options"] not found` | R1/R13/R15（见 `wf-launch-audit.md` §2） |
 | `NumberFormatException: For input string: "<选项id>"` | R13 结构重建 |
 | `ExceptionInInitializerError` + `Could not find mod X` | R12 逻辑键误译 |
@@ -129,9 +131,10 @@ node <skills>\shared\scripts\check_refs.js <modDir> <游戏根>     # 引用闭�
    - 往 `workflows\wf-launch-audit.md` §1 的表加一行：**左列写你抓到的日志行**、右列写根因（铁律 R#）与闸门；
    - 是"引擎行为差异"就写进 `skills\starsector-engine-diagnose` 或 `shared\iron-rules.md`（编 R 号）。
 4. **版本号与 changelog**：本次是**修复**不是升级 ⇒ **不擅自改 `version`**。
-   只有用户明确要"作为新版本发布"才动，并按 `starsector-mod-delivery` 记 changelog。
-5. **交付**：用户要交付包才走 `starsector-mod-delivery`（把 `wf-mod-fix` 的修复日志放进
-   `ai\README_汉化说明.md` 或 `项目说明.md` 的"已知修改"段）。
+   只有用户明确要"作为新版本发布"才动；changelog 条目写清"症状 → 根因 → 改法"（一两行）。
+5. **交付 = 简化档**：用户要交付包时走 `starsector-mod-delivery` **§0.1 简化档**——
+   只做 **changelog 条目 + `deliver.ps1` 打包 + 简化自检**；**不做** `ai\` 工作区、结构介绍、git 新建。
+   修复日志留在本 mod 的 `_work\mod_work\<Mod>\`（mod 已有 `项目说明.md` 的"已知修改"段则有才补一行）。
 
 ## 6. 完成标准
 

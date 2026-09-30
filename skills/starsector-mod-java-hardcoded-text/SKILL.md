@@ -283,6 +283,15 @@ for (Field f : k.getDeclaredFields()) if (f.getName().startsWith("$SwitchMap")) 
    - class major 用 `javap -v` 看（**别用 od 手数 minor/major，易读反**：Nightcross 2.1.4 实为 61 而非 52）；
      `--release` 必须**与 jar 现状一致**——env.md 的 `--release 8` 是新编译底线，对已是 61 的 jar 保 61 才能
      字节码等价，且 `var`/模式匹配 instanceof/indy 拼接只有 ≥10/16/9 才合法（`-g` 对齐 LVT）。
+   - **javac diff≠0 时先识别作者的编译器再换工具，别硬凑 `--release`**。合成访问器风格是指纹：
+     javac 11+ 生成 `access$002`/`access$100`（**带返回值** setter，`dup_x1; putfield; areturn`）；
+     老式 `access$0/1/2`（**void** setter）+ `<clinit>` 紧跟字段 = **Eclipse ECJ**（或 javac ≤10）。
+     作者用 ECJ 时用 `_work\_tools\ecj\ecj-3.33.0.jar` 按 `-source/-target` 对齐重编：
+     实测 RYAZ 2.0.0（major 51，作者 ECJ target 1.7）用
+     `java -jar ecj-3.33.0.jar -source 1.7 -target 1.7 -g` 重建后，未涉改内嵌类与作者 class
+     **逐字节一致**、主类指令级 diff=0（javac 17 无论怎么选 `--release` 都做不到）。
+     javap -c 不显示 major：ECJ target 1.7 产物 major=51 与旧类一致；若工具链只支持 target ≥8
+     （major 52）而对齐目标更低，major 一字节补丁（class 偏移 6–7）是可接受的最小事后修正。
 3. **提取已汉化串**：`dump_utf8.js` 分别 dump 旧 jar 解包目录与纯净编译产物 →
    `diff_utf8_multiset.js <old.json> <en.json> --out=zh_strings.json`；old-only 集 = 需回填的中文。
    用**多重集差**而非逐位对齐：补丁工具重打过常量池尾部，顺序不可信。

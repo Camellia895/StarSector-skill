@@ -1,32 +1,42 @@
 # wf-smoke-first · 烟测（真跑一遍游戏）
 
-> **任务分类 ⓪**。适用：**③ 版本升级**、**⑦ 修 mod**，以及**任何动了 jar/插件/模组注册**的改动。
+> **任务分类 ⓪**。适用：**① 汉化 / ② 汉化迁移（只做轻烟测）**、**③ 版本升级 / ⑦ 修 mod（深烟测）**，
+> 以及**任何动了 jar/插件/模组注册**的改动。
 > 输出：一次**真跑一遍游戏**的判定（PASS / FAIL），**6–10 行摘要**。
 > 需要读：`shared\env.md`（内存 / 环境毒点）；失败时读 `wf-launch-audit.md`（特征 → 根因 → 闸门）。
 
-## ⚠️ 哪些任务**不需要**烟测
+## 烟测分两档（允许只跑轻的）
 
-| 任务 | 要烟测吗 | 为什么 |
+| 档位 | 命令 | 验证什么 | 耗时 |
+|---|---|---|---|
+| **轻烟测 = 仅打开游戏** | `smoke_run.ps1 -ModIds <modId>` | mod 能加载到主菜单，无致命报错/弹窗 | ~40s |
+| **深烟测 = 加载 + 建存档** | `smoke_run.ps1 -ModIds <modId> -NewGame` | 再走完角色创建、生成 `save_autotest_*`，暴露战役期错误 | ~1min |
+
+**允许只跑轻烟测，而不跑建存档烟测**——选哪档看改动类型，不必为了"测得全"一律建存档：
+
+| 任务 | 跑哪种 | 为什么 |
 |---|---|---|
-| **① 汉化**（改数据文本：CSV / JSON / 描述 / 对话） | **不需要** | 改的是**文本内容**，不碰结构与注册。全量校验（G1–G6）覆盖它；真要眼见为实，全量跑完再顺手开一次游戏（可选，不是闸门） |
-| **② 汉化迁移** | **不需要** | 同上：复用旧译 + 补新译，仍是文本层 |
-| **③ 版本升级**（改编译产物/API 适配） | **需要** | 类加载、插件注册、数据表头都可能变 ⇒ 只有真跑能证明 |
-| **⑦ 修跑不通的 mod** | **需要**（本流程即其核心） | 目标就是"跑起来"，烟测就是验收标准 |
-| 动了 `jars\*.jar` / `modPlugin` / `settings.json` 的 plugins / `mod_info.json` 的 `jars` | **需要** | 这几处坏了都是"启动才崩"，闸门看不出来 |
+| **① 汉化**（改数据文本：CSV / JSON / 描述 / 对话） | **仅轻烟测**（不做建存档） | 改的是**文本内容**，不碰结构与注册；全量校验（G1–G6）负责文本层，收尾用轻烟测确认"加载没被弄坏" |
+| **② 汉化迁移** | **仅轻烟测**（不做建存档） | 同上：复用旧译 + 补新译，仍是文本层 |
+| **③ 版本升级**（改编译产物/API 适配） | **深烟测**（`-NewGame`） | 类加载、插件注册、数据表头都可能变 ⇒ 只有真跑能证明 |
+| **⑦ 修跑不通的 mod** | **深烟测**（本流程即其核心） | 目标就是"跑起来"，建存档是验收标准 |
+| 动了 `jars\*.jar` / `modPlugin` / `settings.json` 的 plugins / `mod_info.json` 的 `jars` | **深烟测**（`-NewGame`） | 这几处坏了都是"启动才崩"或"开档才崩"，闸门看不出来 |
 | 只改 `ai\`（交付说明、语料）或不改 mod 内容 | 不需要 | 与游戏加载无关 |
 
 > 判据一句话：**改动是否可能影响"游戏能不能启动 / 能不能开档"？**
-> 只动**文本内容** → 不需要；动了**结构、注册、字节码** → 需要。
+> 只动**文本内容** → 轻烟测即可；动了**结构、注册、字节码** → 深烟测（含建存档）。
 
 ## 两种用法
 
-**用法 A · 升级/修复的关口（推荐）**：改动 → 烟测 → PASS 才进全量校验。
+**用法 A · 升级/修复的关口（③⑦）**：改动 → **深烟测（`-NewGame`）** → PASS 才进全量校验。
 全量放在烟测之后，才不会在"根本起不来"的东西上白忙。
+建存档段因脚手架失配失败且判定非 mod 问题时（见已知限制），退回轻烟测 + 手动建档补验。
 
-**用法 B · 汉化完成后的可选冒烟**：① / ② 全量校验（G2–G6）**已经做完**，想再眼见为实一次，
-就顺手跑一次烟测当"最后一层确认"。**它是可选项，不是闸门**；跳过了也不算没做完。
+**用法 B · 汉化/迁移的收尾（①②）**：全量校验（G2–G6）做完后，跑一次**轻烟测（仅打开游戏，
+不带 `-NewGame`）**作为交付前最后一层确认。**①② 的烟测到这一档为止**：不做建存档烟测
+（文本层改动不需要战役期验证，建存档是 ③⑦ 关口的事）。
 
-## 为什么烟测值得跑（当它适用时）
+## 为什么烟测值得跑
 
 | | 全量校验（几十个闸门） | 烟测（真跑游戏） |
 |---|---|---|
@@ -39,27 +49,34 @@
 
 ## 阶段 0 · 前置（30 秒）
 
-1. **游戏必须完全退出**：烟测会自己关游戏，但**不同时跑两个实例**——`drive.ps1` 的 JVM 固定 `-Xmx16g`，
+1. **★必须显式传 `-ModIds <目标mod id>`**——这是"烟测没挂上正确 mod"的头号原因：
+   脚本缺省值 `rotcesrats` 是 modcheck 自带的**测试值**，忘传就等于"在测别的 mod"。
+   id 是 `mod_info.json` 的 `id`（**不是文件夹名**）。启动后输出首行 `mod=<ids>`
+   与"挂载 mod"行**必须含目标 id**；不一致立即中止，改对参数重跑，**不要**解读那次结果。
+2. **游戏必须完全退出**：烟测会自己关游戏，但**不同时跑两个实例**——`drive.ps1` 的 JVM 固定 `-Xmx16g`，
    启动即提交 16GB，双实例会互相拖死。
    ```powershell
    powershell -File <game>\_work\explore\modcheck\drive.ps1 close   # 需要时先关
    ```
-2. 确认要测的 **mod id**（不是文件夹名，是 `mod_info.json` 的 `id`）。
 3. 想带别的 mod 一起测：把它们的 id 一起写进 `-ModIds`（逗号分隔）；`ModCheck.ps1` 会自动补上声明的依赖。
 
 ## 阶段 1 · 跑烟测（**唯一需要的命令**）
 
 ```powershell
-# 只验证"能加载到主菜单"（约 40 秒）
+# 轻烟测：只验证"能加载到主菜单"（约 40 秒）—— ①汉化 / ②迁移 到这一档为止
 powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smoke_run.ps1 -ModIds <modId>
 
-# 推荐：加载 + 自动创建生涯存档（约 1 分钟，能暴露战役期错误）
+# 深烟测：加载 + 自动创建生涯存档（约 1 分钟，能暴露战役期错误）—— ③升级 / ⑦修 mod 用这档
 powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smoke_run.ps1 -ModIds <modId> -NewGame
 ```
 
-它内部做四件事（不用分别调用）：改写 `enabled_mods.json` 只启用目标 mod →
-启动游戏并等到主菜单（`-NewGame` 则继续自动走完角色创建建出 `save_autotest_*`）→
-关闭游戏并**恢复你的 mod 列表** → 打印摘要。
+它内部做四件事（不用分别调用）：改写 `enabled_mods.json` 只启用目标 mod 及其声明依赖 →
+启动游戏并等到主菜单（`-NewGame` 则由 `drive.ps1 boot -KeepMods` + `NewGame.ps1`
+继续走完角色创建建出 `save_autotest_*`；此时 ModCheck 以 `-KeepEnabled` 结束、
+**把测试集保留给建存档段**，全部结束后统一恢复）→ 关闭游戏并**恢复你的 mod 列表** → 打印摘要。
+
+**输出里的"挂载 mod"行列出实际启用的 id**（含自动补的依赖）——先核对目标 id 在列，
+再谈 PASS/FAIL：不在列说明根本没测到目标 mod，结论作废。
 
 **判定只看退出码**：`0`=PASS / `1`=FAIL / `2`=环境不满足 / `3`=超时 / `4`=崩溃。
 
@@ -67,7 +84,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 
 ```
 == 烟测开始 ==  mod=flowergod  newGame=True  timeout=420s
+  已刷新 user_original 快照 = 当前 enabled_mods.json
 [1/2] 加载到主菜单: rc=2  用时 21s
+  挂载 mod (3): flowergod, lw_lazylib, MagicLib   ← 先核对目标 id 在列
   → 加载期报错（弹窗或致命日志）
 == 烟测结果: FAIL ==  原因: 加载期报错
 证据目录: ...\modcheck\results\20260920_210553_shortcut_flowergod  （verdict.json / log_tail.txt / ng_frames\）
@@ -106,7 +125,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 | 症状 | 原因 | 绕行 |
 |---|---|---|
 | `-ModIds a,b` 报 `A positional parameter cannot be found` | PowerShell 具名参数只绑一个 token；smoke_run→ModCheck 的 `-File` 传参链断 | **标准用法＝单 id** + 在 mod 的 `mod_info.json` 声明 `dependencies`（smoke 会自动补全启用） |
-| 多 mod 组合烟测时 mod 清单"不对" | `drive.ps1 boot` 会**强制改写** enabled_mods 为自己的测试集（rotcesrats+LazyLib+MagicLib） | 只走 smoke_run 一个入口；不要拿 drive.ps1 手动编排目标 mod |
+| 建存档段 mod 清单"不对"（历史 bug，2026-09-30 已修） | 旧版 ModCheck 结束即把用户完整列表还原，`drive.ps1 boot -KeepMods`"保留"到的是完整列表 ⇒ 建存档段没挂目标 mod | 现版 `-NewGame` 时 smoke_run 让 ModCheck 以 `-KeepEnabled` 结束、测试集保留给建存档段；若"挂载 mod"行仍不含目标 id，先查 `-ModIds` 是否忘传/写错（缺省 `rotcesrats` 是测试值） |
 | `newgame rc=3` 而 `fail_name.png`（`modcheck\results\ng_frames\`，**共享目录**不在 per-run 目录）里游戏停在**主菜单** | NewGame.ps1 UI 坐标按 **1366×768** 标定；主菜单面板右侧像素锚定 ⇒ 分辨率不同（实测 2000×1125 / 2560×1440）相对坐标漂移，点不中"生涯模式" | **脚手架失配，非 mod 问题**：转手动建档测试；注意失败帧不在 per-run 结果目录里 |
 | mod 明明没引用 LunaLib 却启动 Fatal `NoClassDefFoundError: lunalib/...` | GraphicsLib 1.12.1 硬引用 LunaSettingsListener（env.md §6） | 启用清单带上 lunalib（或在 mod_info 声明依赖） |
 
@@ -121,12 +140,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 - 全量发现的问题若**玩家能看见但烟测看不见**（如显示 `?`、分类名英文）→ 记一笔
   "烟测盲区"，考虑是否要补进 `wf-launch-audit.md` §1 的特征表。
 
-> **用法 B（① / ② 汉化）**：跳过本阶段——全量校验已经在前面做完了，烟测只是可选的"最后一层确认"。
+> **用法 B（① / ② 汉化）**：跳过本阶段——全量校验已经在轻烟测之前做完了。
 
 ## 阶段 4 · 交付
 
 `starsector-mod-delivery`（结构介绍 + `ai\` + git + zip）。
-**交付说明里报告烟测结论**（若跑了）：加载 PASS / 建存档 PASS、用时、有无噪音类提示。
+**交付说明里报告烟测结论**：档位（轻=仅打开游戏 / 深=含建存档）与 PASS、挂载的 mod 清单、
+用时、有无噪音类提示。
 
 ## 触发词
 

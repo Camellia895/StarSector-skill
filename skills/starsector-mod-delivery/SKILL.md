@@ -1,13 +1,34 @@
 ---
 name: starsector-mod-delivery
-description: Starsector（远行星号）mod 完成汉化或修复后的交付打包——四项准备（①结构介绍文件 项目说明.md ②AI 工作区：`ai\skills\` 只放一份**「征兵广告」告示**并给技能库与论坛链接（**不再逐包复制 skill**）、`ai\脚本\` 放本项目脚本、汉化 mod 另有 `ai\en`+`ai\zh` 语料与 `ai\zh\` 下的**中英对照 Excel 表**（从 `worklist\zh\` 原样搬运）、`ai\README_汉化说明.md` ③本地 git 仓库并提交 ④deliver.ps1 打包 zip）与交付前验证清单。zip 名取 mod_info.json 中文名（自动清洗 Windows 非法字符），内部嵌套一个 mod 文件夹，自动排除 .git/out/源码等开发残留，空目录写目录条目保结构，条目名 UTF-8。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
+description: Starsector（远行星号）mod 完成汉化或修复后的交付打包，分两档——**简化档**（⑦修 mod / ③版本更新专用：只写 changelog + deliver.ps1 打包 + zip 自检，跳过 ai\ 工作区与结构介绍）与**完整档**（汉化交付：四项准备 ①结构介绍文件 项目说明.md ②AI 工作区：`ai\skills\` 只放一份**「征兵广告」告示**并给技能库与论坛链接（**不再逐包复制 skill**）、`ai\脚本\` 放本项目脚本、汉化 mod 另有 `ai\en`+`ai\zh` 语料与 `ai\zh\` 下的**中英对照 Excel 表**（从 `worklist\zh\` 原样搬运）、`ai\README_汉化说明.md` ③本地 git 仓库并提交 ④deliver.ps1 打包 zip）。两档共用 `deliver.ps1` 打包行为（zip 名取 mod_info.json 中文名并清洗非法字符，内部嵌套一个 mod 文件夹，自动排除 .git/out/源码等开发残留，空目录写目录条目保结构，条目名 UTF-8），验证清单分设（§5 完整 / §6 简化）。默认用户环境与当前环境一致（游戏根 C:\game\StarSector.v0.9.8a-RC8，中文 Windows）。
 ---
 
 # 交付打包
 
-**职责**：把 `mods\<Mod>\` 变成可交付的 zip，且包内**自带协作者/AI 需要的上下文**。
-**调用方**：`wf-localize.md`、`wf-translate-update.md`、`wf-game-update.md` 的最后一步。
+**职责**：把 `mods\<Mod>\` 变成可交付的 zip；完整档另使包内**自带协作者/AI 需要的上下文**。
+**调用方**：`wf-localize.md`、`wf-translate-update.md`（完整档）；`wf-mod-fix.md`、`wf-game-update.md`（**简化档**）。
 **必读**：`<skills>\shared\env.md`、`<skills>\shared\conventions.md`（产物留档位置）。
+
+## 0. 先选档
+
+| 档 | 谁用 | 做什么 | 跳过什么 |
+|---|---|---|---|
+| **简化档** | **⑦ 修 mod**（`wf-mod-fix` 阶段 E）、**③ 版本更新**（`wf-game-update` 第 10 步） | **changelog 条目 + 打包 + §6 简化自检**，报告烟测结论 | §1 结构介绍、§2 `ai\` 工作区、§3 git 新建——修复/更新是功能层改动，交付物就是"能跑的新包" |
+| **完整档** | ① 汉化（`wf-localize`）、② 迁移（`wf-translate-update`），以及用户明说"完整交付"时 | §1–§5 全部 | — |
+
+> 修复/更新的 mod **之前若已做过完整档交付**（包里已有 `ai\`），简化档不删不动它们，
+> 只更新本次该更新的（changelog；版本信息以 §7 为准）。
+> 用户在 ③⑦ 任务里主动要完整交付 → 按完整档，不猜。
+
+## 0.1 简化档（⑦修复 / ③更新专用）
+
+1. **changelog**：`changelog.txt` 顶部加一条目——⑦ 写"修了什么、症状→根因→改法"一两行；
+   ③ 写"适配 0.98a-RC8：动了哪些类/数据"。保留版本号、日期与原有分段/项目符号结构；
+   文件不存在就新建（首行为 mod 名或版本号，跟社区惯例）。
+   **⑦ 不擅自改 `version`**（修复 ≠ 发布，语义由用户定）；③ 按该流程第 10 步同步 `version`/`*.version`。
+2. **打包**：§4 的 `deliver.ps1`，一条命令。
+3. **自检**：§6 简化验证清单（几分钟，不是完整档 §5）。
+4. 报告里带上烟测结论（轻/深档、PASS、挂载 mod）。
 
 ## 1. 结构介绍文件
 
@@ -77,7 +98,7 @@ powershell -ExecutionPolicy Bypass -File "<skills>\skills\starsector-mod-deliver
 空目录写目录条目保结构；`mod_info.json` 读取时容忍 `#` 注释与尾随逗号（**zip 内保留原文件**）；
 条目名 UTF-8（别用会写 ANSI 条目名的老工具二次打包）；重复运行覆盖旧 zip。
 
-## 5. 交付前验证清单
+## 5. 交付前验证清单（完整档）
 
 - [ ] 结构介绍文件存在，内容与实际结构/版本/依赖一致
 - [ ] `ai\skills\` **只有一份招募告示**（含技能库 + 论坛两个链接），**没有任何 skill 目录**
@@ -92,7 +113,18 @@ powershell -ExecutionPolicy Bypass -File "<skills>\skills\starsector-mod-deliver
 - [ ] （可选）放入 `mods\` 用启动器启用，确认列表显示中文名
 - [ ] 汉化 mod 另需：`starsector-mod-localization-verify` 的 G2/G3（动过 jar 则加 G4/G5）已通过
 
-## 6. 常见问题
+## 6. 简化档验证清单（⑦修复 / ③更新）
+
+- [ ] `changelog.txt` 顶部已加本次条目（⑦ 症状→根因→改法；③ 0.98a-RC8 适配内容），
+      已有分段/项目符号结构未被破坏；⑦ 未擅自动 `version`（除非用户要发布）
+- [ ] zip 已生成在 `<game>\_work\deliver\`，文件名为清洗后的中文名
+- [ ] 解压到临时目录：顶层**只有一个文件夹**；`mod_info.json` 在且 **UTF-8 无 BOM**；
+      `jars\*.jar`、`data\`、`graphics\`、`sounds\`（如 mod 有）齐全
+- [ ] 包内不含开发残留（`.git`/`out`/`src`/`*.bak`——deliver.ps1 默认排除，用了 `-NoExclude` 才需要手查）
+- [ ] 报告含烟测结论（轻/深档、PASS、挂载 mod）与修复/更新摘要
+- [ ] （mod 已有 git 仓库时顺手 `git add -A && git commit`；没有**不新建**）
+
+## 7. 常见问题
 
 - **`mod_info.json` 读出来乱码**：文件是 UTF-8，用脚本默认方式（显式 UTF-8）读，别用 `Get-Content` 默认编码。
 - **脚本中文摘要乱码**：`deliver.ps1` 必须 **UTF-8 带 BOM**（PS 5.1 对无 BOM 的 `.ps1` 按 ANSI 读）；

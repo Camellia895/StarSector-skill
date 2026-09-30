@@ -7,19 +7,23 @@ smoke_run.ps1 — 启动烟测的统一入口（包装 modcheck 自动化项目�
   1) ModCheck.ps1  ：只启用目标 mod，加载到**主菜单**，识别报错弹窗/致命日志后自动关闭并恢复配置
   2) drive.ps1 boot + NewGame.ps1 ：继续走完角色创建，生成 `save_autotest_*` 存档（**更深一层**，能暴露战役期错误）
 
-用法：
-  # 只验证能加载到主菜单
-  powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds rotcesrats
+用法（烟测分两档）：
+  # 轻烟测：只验证能加载到主菜单（约 40 秒）—— ①汉化 ②汉化迁移 的标准收尾
+  powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds <modId>
 
-  # 加载 + 自动建存档（完整烟测；约 1 分钟）
-  powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds rotcesrats -NewGame
+  # 深烟测：加载 + 自动建存档（完整烟测；约 1 分钟，能暴露战役期错误）—— ③升级 ⑦修 mod 的关口
+  powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds <modId> -NewGame
 
   # 烟测后不还原 mod 列表（调试用）
-  powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds rotcesrats -KeepEnabled
+  powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds <modId> -KeepEnabled
+
+⚠️ -ModIds 必须显式传目标 mod 的 id（mod_info.json 的 id，不是文件夹名）：
+   缺省值 rotcesrats 是 modcheck 自带的测试值 —— 忘传就等于"在测别的 mod"。
+   启动后输出首行 mod=<ids> 与"挂载 mod"行必须含目标 id，否则立即中止重跑。
 
 参数：
-  -ModIds <id[,id]>  目标 mod id（逗号或空格分隔）；默认 rotcesrats（modcheck 自带的测试值）
-  -NewGame           加载成功后继续自动创建存档
+  -ModIds <id[,id]>  目标 mod id（逗号或空格分隔）；默认 rotcesrats（modcheck 自带的测试值，勿依赖）
+  -NewGame           加载成功后继续自动创建存档（深烟测）
   -KeepEnabled       不还原用户的 enabled_mods.json
   -TimeoutSec <n>    单段超时（默认 420）
 
@@ -91,11 +95,27 @@ if ((Test-Path -LiteralPath $emNow) -and -not $KeepEnabled) {
 # ---------------- 第 1 段：加载到主菜单 ----------------
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 $mcArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$modCheck,'-ModIds') + $idList + @('-TimeoutSec',$TimeoutSec,'-Quiet')
-if ($KeepEnabled) { $mcArgs += '-KeepEnabled' }
+# -NewGame 时让 ModCheck 结束后【保留】测试集：否则它会在 finally 里把用户完整列表还原，
+# 第 2 段 drive.ps1 boot -KeepMods 拿到的就是完整列表 —— 实测 2026-09-30：建存档段
+# 每次都没挂上目标 mod 的根因。最终恢复仍由本脚本末尾的 restore-mods.ps1 统一做。
+if (($NewGame -or $KeepEnabled)) { $mcArgs += '-KeepEnabled' }
 & powershell @mcArgs | Out-Null            # 不回显：ModCheck 自己写 verdict.json
 $rc1 = $LASTEXITCODE
 $sw.Stop()
 Write-Output ("[1/2] 加载到主菜单: rc={0}  用时 {1:N0}s" -f $rc1, $sw.Elapsed.TotalSeconds)
+
+# 打印实际挂载的 mod（ModCheck 写进 verdict.json 的 enabledIds，含自动补的依赖）。
+# 调用方必须核对目标 id 在列——不在列说明没挂上（多半是 -ModIds 写错或忘传）。
+$r1Dir = Get-ChildItem (Join-Path $mc 'results') -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if ($r1Dir -and (Test-Path (Join-Path $r1Dir.FullName 'verdict.json'))) {
+  try {
+    $v1 = Get-Content (Join-Path $r1Dir.FullName 'verdict.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $enabled = @($v1.enabledIds)
+    Write-Output ("  挂载 mod ({0}): {1}" -f $enabled.Count, ($enabled -join ', '))
+    $missing = @($idList | Where-Object { $enabled -notcontains $_ })
+    if ($missing.Count -gt 0) { Write-Output ("  !! 目标 mod 未挂载: {0}  （核对 -ModIds 是否为目标 mod 的 id，缺省值 rotcesrats 是测试值）" -f ($missing -join ', ')) }
+  } catch {}
+}
 
 if ($rc1 -ne 0) {
   if ($rc1 -eq 2) { Write-Output '  → 加载期报错（弹窗或致命日志）' }
