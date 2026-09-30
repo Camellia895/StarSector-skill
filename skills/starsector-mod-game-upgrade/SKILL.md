@@ -22,11 +22,14 @@ description: 把一个旧版本 Starsector（远行星号）mod（0.7x/0.8x/0.95
 先看 mod_info.json 的 gameVersion（目标准入版本）：
 ├─ ≤ 0.8x（0.9 以下）→ 主体十步 + **必读 §7**（势力文件/wing_data/经济模型/机翼改名四类硬断点
 │   + 3 个专属闸门；编译 114 错→0 之后仍连爆 5 轮运行时错误，全部落在 §7 射程内。AI War 实证）
-├─ 0.9x 及以后 → 主体十步即可
+├─ 0.9x 及以后 → 主体十步即可；**§7 三个闸门仍当探针跑一遍**（成本≈0；
+│   0.9a mod 也会缺 wing_data 的 attackPositionOffset——MagicMaster 0.4.19b 实测命中）
 
 有 jars\src（或 mod 目录内任意层级 src）?
 ├─ 有 → 检查 jar 是否可整包重编译（第 3 步）；能重编译就别做常量池补丁
-└─ 无 → 见 §1.1「只有 jar 的 mod」
+├─ 只有 jar、无源码 → 见 §1.1「只有 jar 的 mod」
+└─ **无 jars 且 .java 直接在 data\ 下（janino 运行时编译 mod）→ 见 §2.1「janino mod 的编译探测」
+    + 铁律 R22（一文件一类；批量探针全绿≠游戏能过）**
 
 jar 内是否含 CJK 字符串?
 ├─ 含 → jar 被汉化过，整包重编译会丢汉化 → 先备份 EN jar 再重编译+重汉化，或只重编译改动的类原位替换
@@ -104,6 +107,16 @@ $cp = @(
 - 老 mod 常见残留：IDE 误自动导入的 `com.sun.org.apache.xalan...`、`com.sun.prism.shader...`、`com.sun.org.apache.xpath...`
   （JDK8 内部类，JDK9+ 不存在）→ 直接删（它们从未被使用）。
 - 编译不过的每一条都要去 `_api_src` 里查替代签名，**别猜**。
+
+### §2.1 janino mod（无 jars、.java 在 data\ 下）的编译探测
+
+- **权威编译器 = 游戏自带的 janino.jar**（`JavaSourceClassLoader`，与游戏同机制），不是 javac：
+  javac 强制"公共类必须在同名文件"，会为 janino 合法写法（一文件多类等）报一堆伪错把人带偏。
+  工具：`shared\scripts\JaninoProbe.java` + `gen_janino_manifest.py`（用法见 script-registry D 节）。
+- **两道闸门缺一不可**（铁律 R22）：批量编译+加载（签名级兼容）→
+  `check_perfile_resolvability.py`（逐文件可解析性：一文件一类、import 的 data.* 有同名文件）。
+- 第 3 步（jar↔源码一致性）与第 4 步的 jar 类加载不适用；脚本类校验由批量探针的 loadClass 覆盖。
+- **烟测必跑且是最终裁决**：MagicMaster 实测批量 65/65 全绿，游戏仍在加载期 Fatal（逐文件按需编译看不到批量会话里的兄弟类）。
 
 ### 第 3 步 · jar ↔ 源码一致性（决定"能不能整包重编译"）
 
@@ -309,6 +322,12 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 33. **隐性库依赖靠 javac 兜底**：grep class 常量池扫 `org/lazywizard` 之类会漏（FlowerGod 实测漏报 LazyLib，
     `lazylib.combat.CombatUtils` 直至编译期才暴露）⇒ 依赖扫描只能当预检，**重编译 + API 审计通过才算数**；
     审计脚本本身要把 **mod jar 自身 + 全部库 jar 放进 classpath**，否则同 jar 内部类引用全成假阳性（FG_GarbageShipCollection 40+ 条）。
+34. **`OnHitEffectPlugin.onHit` 5 参→6 参**（0.98a，`ApplyDamageResultAPI damageResult` 插在 engine 前；
+    类在 `com.fs.starfarer.api.combat.listeners`）：0.9a 及更早 mod 的全部 onHit 类 13 处实测命中
+    （MagicMaster）。修法＝补参 + 补 import，方法体不动；janino 与 jar mod 同样命中。
+35. **janino 逐文件编译**（2026-09-30 MagicMaster）：0.98a 按文件名逐个按需编译 data 下 .java ⇒
+    多类合一文件 / `A.B` 顶层类限定 / import 无同名文件 = 启动 Fatal；且**离线批量探针全绿也拦不住**
+    （批量会话兄弟类可见）。约束与两道闸门见铁律 R22；烟测是最终裁决。
 
 ## 4. 反模式
 
@@ -323,6 +342,7 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 ## 5. 验证清单（升级完成）
 
 - [ ] 源码能干净编译（`--release 8`，exit 0）
+- [ ] **（janino mod，§2.1 + 铁律 R22）** `JaninoProbe` 批量编译+加载全绿 **且** `check_perfile_resolvability.py` 0 问题
 - [ ] javap 签名 diff 只剩编译器产物；`cmp_strings.js` 只剩故意改动
 - [ ] LoadTest：全类加载成功、脚本类 0 缺失
 - [ ] 引用校验 0 真问题（装配/贴图/精灵/武器）

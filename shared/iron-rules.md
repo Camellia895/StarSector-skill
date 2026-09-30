@@ -404,3 +404,29 @@ name,id,tier,…
 
 > 同类陷阱（历史）：R14 的"反向网要排除 deliberate skip"、R16 的假阳性（core+mod 合并注册表）——
 > **闸门报警先定性，再动手**。本条的判据是"这一行引擎到底读不读"。
+
+## R22 · Janino 脚本一文件一类：0.98a 按文件名逐个按需编译（会**启动 Fatal**）
+
+**引擎事实**（2026-09-30 MagicMaster 烟测实测）：0.98a 对 `data/**` 下的 `.java`（无 jars/ 的
+janino mod）**按"包名+文件名"逐个、按需、独立编译**——加载 `A` 时才会编译 `A.java`，
+其 import 的 `data.*` 类通过 ScriptClassLoader 按 **FQCN→同名文件** 查找。
+
+**三条硬约束**：
+
+1. **一个 `.java` 文件只能放一个顶层公共类**。多类合一（如 6 个数据类塞一个文件）时，
+   其它文件 `import` 其中兄弟类 ⇒ 找不到同名文件 ⇒ 启动 Fatal：
+   `Fatal: Error while loading script [X] / A class "data.scripts.Y" could not be found`。
+2. **import 的 `data.*` 类必须有同名文件**（或来自依赖库 jar 的旧包名垫片，如 MagicLib 的
+   `data.scripts.util.*`）。`A.B` 这种"把顶层类当成员限定"的写法同样 Fatal。
+3. **变体 id 同源教训**：注册 id 以文件内字段为准，文件名只是载体（同事故库 28）。
+
+**假阴性陷阱（最易漏）**：离线批量编译探针（把所有源文件喂进同一个编译会话，如 javac 或
+janino `JavaSourceClassLoader` 一次 cook 全部）**全绿≠游戏能过**——批量会话内兄弟类互相可见，
+逐文件按需编译时不可见。MagicMaster 实测：批量 65/65 全绿，游戏一进加载就 Fatal。
+⇒ janino mod 必须**两道都跑**：批量编译闸门（签名级兼容）+ 逐文件可解析性检查（结构约束）
++ 烟测（最终裁决）。
+
+**校验**：`node <skills>\shared\scripts\check_perfile_resolvability.py <modDir>`
+（import 的 data.* 类是否都有同名文件；多顶层类文件清单）＋
+`JaninoProbe.java`（游戏自带 janino.jar 批量编译+加载，见 script-registry）＋
+③类任务烟测（`wf-smoke-first.md`）。

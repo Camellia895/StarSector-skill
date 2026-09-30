@@ -29,6 +29,7 @@
 | `check_faction_shiproles.js` | red | base | **faction shipRoles 变体可解析**（2026-09-15 AI War 事故沉淀）：不存在的变体 id = faction 加载 NPE 启动崩溃；dead 角色键也会被解析。fallback 里是角色名不是变体，先剥掉再匹配；变体 id 按「文件内 variantId 字段」校验 |
 | `check_faction_known_lists.js` | red | base | **faction known\* 条目对照注册表**（2026-09-15 AI War 事故⑤沉淀）：复刻 verifyFactionData；id 填错（如类名而非 id）在读档/开局才炸，冒烟必须读档 |
 | `check_refs.js` | red | cond | 改过装配/舰船/武器/贴图引用 |
+| `check_mission_refs.js` | red | cond | 改过任务（mission）或删过 variant/武器/舰体时：任务引用闭包，含 jar 任务类字节取证与惰性源码降级（2026-09-23 YRXP 沉淀：点击任务即崩） | G5 |
 | `check_faction_file.js` | red | cond | `.faction` 必填键/资产/登记（缺 `names` = 启动崩） |
 | `LoadTest.java` | red | cond | 离线类加载/实例化 + 脚本类存在性（skill 自带脚本，见 `script-registry.md` F 节） |
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3）；零宽字符单列提示、不计命中 |
@@ -44,6 +45,8 @@
 | `check_jar_stragglers.js` | red | base | **交付 jar 英文残留闸门**：直接吃 jar 文件（避 `scan_stragglers.js` 对着补丁前副本跑出假警报），用 patch_map + skip 审计判定 A（要译却仍英文，必错）/ B（已记账跳过，允许）/ C（未记账）；A=C=0 才通过 |
 | `check_java_residue.js` | red | cond | 仅 Janino 源码 mod（无 jars、`data/plugins|scripts/*.java`）：与提取器不同解析路径的独立复查网，未覆盖英文字面量 = 0（2026-09 SiC Aux 事故：提取器行注释 bug 漏 79 条被它抓回） |
 | `check_java_equiv.js` | red | cond | 仅 Janino 源码 mod：注入后骨架逐字节等价 + 字面量数一致 + 词法完整（= "只改了字面量内容"的机器证明；源码层 G4/G5 替代） |
+| `check_perfile_resolvability.py` | red | cond | 仅 janino mod（铁律 R22）：一文件一顶层公共类 + `import data.*` 有同名文件（0.98a 按文件名逐个按需编译，违反=启动 Fatal）；**批量探针全绿≠本闸门过**（2026-09-30 MagicMaster：批量 65/65 绿、游戏仍 Fatal） |
+| `JaninoProbe.java` | red | cond | 仅 janino mod：游戏自带 janino.jar 批量编译+加载全部源码类（签名级兼容闸门；javac 会为一文件多类报伪错，弃用） |
 | `sweep_sentences.js` | green | sample | 专治注释夹折叠漏译 |
 | `verify_patched.js` | green | sample | 迁移场景的合并版扫描 |
 | `csvcheck.js` | green | sample | 只读列检查（`verify_all_data.js` 已覆盖常见段） |
