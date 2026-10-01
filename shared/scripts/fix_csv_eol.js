@@ -12,6 +12,7 @@ const ID_COL = {
   'data/strings/descriptions.csv': 'id', 'data/config/vayraBounties/unique_bounty_data.csv': 'bounty_id',
   'data/config/vayraProcgenEntities/lore_objects.csv': 'unique_id', 'data/console/commands.csv': 'command',
   'data/config/vayraBounties/rare_flagships.csv': 'bounty',
+  'data/config/exerelin/corvus_capitals.csv': 'entityID', 'data/config/exerelin/corvus_spawnpoints.csv': 'entityID',
 };
 
 function walk(raw) {

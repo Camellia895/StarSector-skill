@@ -94,7 +94,10 @@ if ((Test-Path -LiteralPath $emNow) -and -not $KeepEnabled) {
 
 # ---------------- 第 1 段：加载到主菜单 ----------------
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-$mcArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$modCheck,'-ModIds') + $idList + @('-TimeoutSec',$TimeoutSec,'-Quiet')
+# 2026-10-02 修复：powershell -File 模式不把多个位置参数绑到 string[]，
+# 拆成多参时第二个 id 起全部报"positional parameter cannot be found"。
+# ModCheck 自己会切逗号串（见其 Get-WithDeps），故合并回单个逗号参数传入。
+$mcArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$modCheck,'-ModIds', ($idList -join ',')) + @('-TimeoutSec',$TimeoutSec,'-Quiet')
 # -NewGame 时让 ModCheck 结束后【保留】测试集：否则它会在 finally 里把用户完整列表还原，
 # 第 2 段 drive.ps1 boot -KeepMods 拿到的就是完整列表 —— 实测 2026-09-30：建存档段
 # 每次都没挂上目标 mod 的根因。最终恢复仍由本脚本末尾的 restore-mods.ps1 统一做。
