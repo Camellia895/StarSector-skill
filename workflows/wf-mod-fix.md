@@ -47,6 +47,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 > 若报 `-NewGame` 建不出存档而加载 PASS：说明崩在**战役期**，看 `ng_frames\` 的失败帧，再进阶段 B。
 
 ## 2. 阶段 B · 定因：先查表，再决定挖多深
+> **定因前先翻旧账**（通用纪律，`conventions.md` §6）：`_work\mod_work\<Mod>\` 里若有既往修复日志/失败特征回灌记录，本次特征很可能命中同一根因——先对旧表再动手。
 
 **顺序不能反**——库里的表是几十次事故沉淀的，先查表能省掉大部分深挖。
 

@@ -122,3 +122,4 @@ git -C <dir> remote add origin https://github.com/<you>/<repo>.git
 - **tar 解出的目录名带 `-master` 后缀**：解压后立即 Rename-Item 成 `<Repo>`，别在后续路径里带分支后缀。
 - **想保留完整历史**：只能等 github.com 可达时正常 clone；tarball 是快照（历史可用 `git fetch` 补，同样依赖可达性）。
 - **`git push` 时好时坏**：可在网络空档重试几次；`gh api` 类请求不受影响。
+- **要装的是能跑的 mod 本体（不是源码基线）**：提示词只给仓库链接 ⇒ `starsector-mod-github-acquire`（Release vs HEAD 选版、装进 `mods\`、补依赖）；本 skill 只管 `_work\mod_src\` 的源码基线。

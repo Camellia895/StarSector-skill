@@ -1,9 +1,13 @@
 # wf-translate-update · 汉化迁移（mod 更新版本 + 复用旧汉化）
 
-> **任务分类 ②**。输入：同一个 mod 的**新版**（英文）+ 已有的**旧版汉化**。
+> **任务分类 ②**。输入：同一个 mod 的**新版**（英文）+ 已有的**旧版汉化**。新版只在 GitHub 上 ⇒ 先走 `skills\starsector-mod-github-acquire\SKILL.md` 选版装好。
 > 输出随"新内容占比 R"分三档：**仅告知** / **汉化完交检阅** / **不汉化，只整理清单交用户**。
 > 需要读：`shared\conventions.md`（§3 条目计数口径！）、`shared\env.md`、
 > `skills\starsector-mod-localization-migrate\SKILL.md`、`-extract`、`-apply`、`-verify`。
+
+## 开工前 · 先找旧档
+
+旧汉化就是本流程的原材料——动手前先查（通用纪律，`conventions.md` §6 开工端表）：`_work\mod_work\<Mod>\` 的 EN→ZH 映射 / 已填 worklist / `excluded_entries.json` / `dispatch\session.txt`、包内 `ai\zh\` 旧语料。**都找不到旧汉化 ⇒ 这其实是任务①**（转 `wf-localize.md`）。
 
 ## 0. 核心规则：按"新内容占比"分档
 

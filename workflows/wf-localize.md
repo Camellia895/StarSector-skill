@@ -6,6 +6,8 @@
 
 ## 适用 / 不适用
 
+- **前提**：mod 已在本地 `mods\`。提示词**只给了 GitHub 仓库** ⇒ 先走 `skills\starsector-mod-github-acquire\SKILL.md`
+  （评估 Release vs 最新推送选版并装好、补依赖），再进本流程。
 - **适用**：给某个 mod 做**首次**汉化（无旧汉化可复用）。
 - **不适用**：存在旧版汉化、且本次是 mod 更新 → 走 `wf-translate-update.md`（任务②）。
 - 例外：任务② 若比例 ≥ 20%（需人工全量汉化），会**移交**本流程。
@@ -13,6 +15,7 @@
 ## 阶段 0 · 立项（10 分钟）
 
 1. 备份英文原版：`mods\<Mod>\` → `<game>\_work\mod_bak\<Mod>_<版本>_EN_backup`。
+0. **开工先查旧档**（通用纪律，`conventions.md` §6 开工端表）：`_work\mod_work\<Mod>\`（旧映射/脚本/dispatch\session.txt）、`_work\mod_src\`、`_work\mod_bak\`、包内 `ai\`——发现旧译/旧 worklist ⇒ 这其实是任务②。
 2. 建工作区：`<game>\_work\mod_work\<Mod>\out\`（产物）+ `tools\`（本次脚本）——最小约定见 `conventions.md` §1.1。
 3. 需要源码 → `starsector-repo-source`。
 4. 判定翻译机制（strings 表 vs 硬编码）→ `starsector-mod-localization-extract` §0；

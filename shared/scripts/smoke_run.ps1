@@ -17,12 +17,16 @@ smoke_run.ps1 — 启动烟测的统一入口（包装 modcheck 自动化项目�
   # 烟测后不还原 mod 列表（调试用）
   powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds <modId> -KeepEnabled
 
-⚠️ -ModIds 必须显式传目标 mod 的 id（mod_info.json 的 id，不是文件夹名）：
-   缺省值 rotcesrats 是 modcheck 自带的测试值 —— 忘传就等于"在测别的 mod"。
-   启动后输出首行 mod=<ids> 与"挂载 mod"行必须含目标 id，否则立即中止重跑。
+⚠️ -ModIds 规范（2026-10-02 起）：
+   缺省（不传）= **标准测试集** 7 mod：EmergentThreats_Vice / EmergentThreats_IX_Revival /
+   lw_lazylib / lunalib / MagicLib / shaderLib / nexerelin（本机标准环境组合）。
+   测**具体 mod** 时必须显式传 `-ModIds <modid>` —— 它**整体替换**默认集（不是叠加），
+   声明的依赖由 ModCheck 按 mod_info 自动补齐。id 是 mod_info.json 的 id（**不是文件夹名**，
+   实例：GraphicsLib 的 id 是 shaderLib）。
+   启动后输出首行 mod=<ids> 与"游戏加载"行必须含目标 id，否则立即中止重跑。
 
 参数：
-  -ModIds <id[,id]>  目标 mod id（逗号或空格分隔）；默认 rotcesrats（modcheck 自带的测试值，勿依赖）
+  -ModIds <id[,id]>  目标 mod id（逗号或空格分隔）；默认 = 标准测试集（见上）
   -NewGame           加载成功后继续自动创建存档（深烟测）
   -KeepEnabled       不还原用户的 enabled_mods.json
   -TimeoutSec <n>    单段超时（默认 420）
@@ -46,7 +50,16 @@ smoke_run.ps1 — 启动烟测的统一入口（包装 modcheck 自动化项目�
 #>
 [CmdletBinding()]
 param(
-  [string[]]$ModIds = @('rotcesrats'),
+  # 标准测试集（2026-10-02 规范）：本机标准环境组合；顺序即启用优先级。测单个 mod 时用 -ModIds 整体替换。
+  [string[]]$ModIds = @(
+    'EmergentThreats_Vice',
+    'EmergentThreats_IX_Revival',
+    'lw_lazylib',
+    'lunalib',
+    'MagicLib',
+    'shaderLib',
+    'nexerelin'
+  ),
   [switch]$NewGame,
   [switch]$KeepEnabled,
   [int]$TimeoutSec = 420
@@ -134,10 +147,10 @@ if ($runDir -and (Test-Path (Join-Path $runDir 'boot_capture.log'))) {
 if ($loaded.Count -gt 0) {
   Write-Output ("  游戏加载 ({0}): {1}" -f $loaded.Count, ($loaded -join ', '))
 }
-# 核对：目标 mod 既不在"游戏加载"也不在"配置启用" ⇒ 基本是 -ModIds 写错/忘传（缺省 rotcesrats 是测试值）
+# 核对：目标 mod 既不在"游戏加载"也不在"配置启用" ⇒ 基本是 -ModIds 拼写错（id ≠ 文件夹名，如 shaderLib ↔ GraphicsLib）
 foreach ($t in $idList) {
   if (($loaded.Count -gt 0 -and $loaded -notcontains $t) -or ($loaded.Count -eq 0 -and $enabledIds.Count -gt 0 -and $enabledIds -notcontains $t)) {
-    Write-Output ("  !! 目标 mod 未被加载: {0}  （核对 -ModIds 是否为 mod_info.json 的 id；缺省值 rotcesrats 是测试值）" -f $t)
+    Write-Output ("  !! 目标 mod 未被加载: {0}  （核对 -ModIds 拼写是否为 mod_info.json 的 id；不传 -ModIds 时测的是标准测试集）" -f $t)
   }
 }
 

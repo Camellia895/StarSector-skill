@@ -1,6 +1,6 @@
 # wf-game-update · 给 mod 更新版本以适配新版游戏（任务分类 ③）
 
-> 输入：0.95/0.96/0.97 时代写成的 mod（Java 或 Kotlin；有源码或只有 jar）。
+> 输入：0.95/0.96/0.97 时代写成的 mod（Java 或 Kotlin；有源码或只有 jar）。**提示词只给了 GitHub 仓库** ⇒ 先走 `skills\starsector-mod-github-acquire\SKILL.md` 选版装好再进本流程。
 > 输出：能在 **0.98a-RC8** 正常运行的 mod（+ 版本号/changelog/交付包）。
 > 需要读：`shared\env.md`、`shared\iron-rules.md`、`shared\conventions.md`、
 > `skills\starsector-mod-game-upgrade\SKILL.md`（主体执行手册）。
@@ -11,6 +11,7 @@
 >   转 `workflows\wf-mod-fix.md`（烟测驱动的失败循环：只做最小修复、不重编译、不升版本号）。
 > - 是**我们自己刚改过的东西**崩了 ⇒ 转 `workflows\wf-smoke-first.md`。
 > 三条路的前提不同，混用会白忙：本流程赌的是"有代差、要大修"，`wf-mod-fix` 赌的是"只坏了某处、要小修"。
+> **开工先查旧档**（`conventions.md` §6）：本 mod 的 `mod_work`（既往修复/汉化留档、dispatch\session.txt）、`mod_src` 源码基线、`mod_bak` 备份——有基线就不用重新 fork。
 
 ## 0. 原则
 
