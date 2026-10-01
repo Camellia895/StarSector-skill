@@ -111,7 +111,7 @@
 5. 安装到 `mods\<Mod>\`，jar 备份 `*.orig`，装后做 SHA-256 比对。
 
 跑完立刻过一遍闸门（`-apply` §3）：`check_options_structure.js` / `scan_data_stragglers.js` /
-`scan_logic_keys.js` / `check_jar_patch_integrity.js` 是四道常跑的，**别漏**。
+`scan_logic_keys.js` / `check_jar_registry_keys.js`（动 jar 必跑：映射 × 引擎注册表交集，crabshack 事故沉淀） / `check_jar_patch_integrity.js` 是五道常跑的，**别漏**。
 另两道**极易漏但代价高**：
 `check_designtype.js`（R16：设计类型名有**三通道** —— `settings.json` 的 `designTypeColors` **键** +
 `ship_data.csv`/`weapon_data.csv` 的 `tech/manufacturer` **全列**，三者都不是 recipe 列，漏一处就**静默不上色**）；

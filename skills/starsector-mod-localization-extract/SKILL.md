@@ -167,7 +167,16 @@ node <skills>\shared\scripts\build_jar_worklist.js <candidates.json> <outTransla
 - **编译期折叠**：相邻字面量 `"a" + "b"` 折叠为 `"ab"`；**中间夹 `//` 或 `/* */` 注释也会折叠** —— 匹配逻辑须放行注释，否则整句漏译（事故：AlterationRefitButton 舰体改造说明）。`scan_jar_sources.js` 已处理；`build_worklist2.js` 未处理（仅旧版参考）。
 - **`\u0001` recipe**：Kotlin 2.x indy 拼接把字面文本与 `\u0001` 占位符合在同一常量 —— 翻译保留 `\u0001` 的**数量与位置**（铁律 R6）。
 
-**UI 筛选排除项**：路径、`rat_`/`$` 开头 id、全大写单词（多为选项 ID）、着色器参数、调试输出、数据类 `toString`、`Ljava/…` 签名、`SMAP`、`Intrinsics`。
+**UI 筛选排除项（形态判据不可靠，两条例证）**：路径、`rat_`/`$` 开头 id、全大写单词（多为选项 ID）、着色器参数、调试输出、数据类 `toString`、`Ljava/…` 签名、`SMAP`、`Intrinsics`。
+
+**形态判据的两个实证坑（2026-10-01 crabshack）**：
+
+- **连字符 id**：原版 planets.json 类型键混用连字符（`barren-bombarded`/`terran-eccentric`），
+  蛇形/全大写 id 正则必漏 → 漏网的 `barren-bombarded` 被译成中文后 addPlanet 查表 null，新游戏必崩。
+  **兜底 = 注册表交集**：分类定稿后必跑 `check_jar_registry_keys.js <patch_map.json> <coreDir> [modDir]`（见 script-registry D 节），命中即回退或写 --allow。
+- **sig 形态误杀**：`[` 开头的招牌 UI 文（`[ CLICK HERE ]`、`[ Right click to analyze ] ` 等）会被`isSig` 自动排除——
+  crabshack 的 sig 桶 19 条里 14 条是真 UI，靠 `check_jar_stragglers` 在交付前兜回（17 条补译）。
+  **自动排除的 sig 桶必须全量人工过一遍**，别只信形态。
 
 **分类契约**（每项）：
 `{ "c": <jar 常量原文，逐字符一致>, "decision": "translate"|"skip", "category": "ui"|"log"|"id"|"path"|"sig"|"fmt"|"markup"|"other", "cls": "...", "note": "..." }`

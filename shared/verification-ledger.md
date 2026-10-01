@@ -15,6 +15,7 @@
 | `scan_data_stragglers.js` | red | base | **data 层提取完整性**：未被清单覆盖的人可读英文 = 0。G1（英文原版）与 G3（注入后）各跑一次 |
 | `check_options_structure.js` | red | base | **options 结构等价**（rules/zgrstuff）：段数与 optionId 序列一致、无字面 `\n`；坏了启动崩溃而列数检查看不见 |
 | `scan_logic_keys.js` | red | base | **逻辑键误译**（显示文本与查找键字面相同）：保留键被译 = 启动 Fatal（本项目实测 `LunaSettings.getBoolean("Nightcross",…)`） |
+| `check_jar_registry_keys.js` | red | cond | **jar 映射 × 引擎注册表交集**（2026-10-01 crabshack 沉淀：`barren-bombarded`→「荒芜-轰击」致新游戏 NPE；连字符 id 漏过形态判据）：patchdir 前对 patch_map 全键求交集，命中=回退或写 --allow 白名单（附反编译证据） |
 | `check_install_source.js` | red | base | **注入前置断言**：目标目录必须是英文原版，否则合成字段会被追加成"一行变两行 + optionId 重复" |
 | `check_jar_patch_integrity.js` | red | cond | **补丁洁净性**：类集合一致 + 映射外常量改动 = 0（补丁脚本退化成全量替换会立刻暴露） |
 | `diff_utf8_multiset.js` | red | cond | **重编译保汉化**（2026-09-20 Nightcross 代码修复沉淀）：重建后旧 jar vs 新产物 Utf8 多重集差 = 0（含 indy recipe）；重建前跑用于提取待回填中文。方法与三闸门见 `starsector-mod-java-hardcoded-text` §5 |

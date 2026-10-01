@@ -42,6 +42,7 @@ Vayra's Sector 汉化（2026-09-16）沉淀了一对可直接改造的通用注�
 | 结构 | 做法 | 工具 |
 |---|---|---|
 | CSV（单行字段） | 按 `id` 列匹配回填指定列；写回**仅当字段含 `",` `\n` `\r` 之一才加引号**并做 `""` 转义 | `<skills>\shared\scripts\csvlib.js`（`parseCsv` + 写回）；迁移场景用 `csvtool.js migrate` |
+| CSV（首选注入骨架） | **0.98a crabshack 实测三连破坏**：上游 CSV 可能含**非 UTF-8 字节**（`readFileSync(utf8)` 静默变 U+FFFD 再写回=永久损坏）、**混搭行尾**（整文件重建必改风格，R17）、**单元格首尾空行/对齐空白**（提取时被 trim，重建即丢）。首选 **span 级重放**骨架（`fix_csv_eol.js` v3 的 walk()：从基线恢复原字节 + 按单元格 span 精确替换 + 单元格内换行沿用原风格）；en 经 trim 提取的须 trim 匹配 + 保留首尾空白/空行。工具坑两条：JS 正则 `.` 不匹配 `\r`（CRLF 基线做行级解析前先归一化 LF）；`check_encoding` 报 invalid-utf8 时先对**英文基线**跑一次定性是不是上游自带 | 自写（`fix_csv_eol.js` v3 walk() 骨架） |
 | CSV（多行单元格） | 必须用完整状态机（原版 `hull_mods.csv` 的 `desc` 含真实换行，295 物理行 vs 152 逻辑行）。⚠️ **回传译文常见两类退化**（2026-09 armaa 双事故）：① 译者把段内换行写成**字面 `\n` 两字符**（rules 的 options 多行被连成一行 → 引擎切分选项即崩，铁律 R13；text 列则游戏内显示字面 `\n`）——注入前检测"en 有真实换行而 zh 只有字面 `\n`"并转换；② options 行的**选项 id 前缀被丢**（只剩标签）——按 `(数字:)?id:标签` 逐行比对 en/zh 的 id，缺失即按 en 重建前缀 | 同上，勿逐行 `split(',')`；改完必跑 `check_options_structure.js` |
 | CSV（多行单元格·行级重建） | 按"起始物理行区间"重建被改行时，**必须按起始行降序逐个 splice**：多行单元格译后行数常变（合并段落），升序处理会让后续行号整体位移，后续拼接落错位置 → **级联损坏**（armaa 实测：hull_mods/descriptions 结构错乱，被迫整目录回滚重注入） | 自写（`touchedRows.sort((a,b)=>行号降序)` 后再 splice） |
 | CSV（行尾/末尾换行） | **保持每个文件自己的风格**（铁律 R17）：读原文件判断 `\r\n` 还是 `\n`，并保留"是否以换行结尾"。**别硬编码 CRLF** —— 原版核心是 CRLF，但个别 mod（San-Iris）全 LF，硬编码会把 10 个 CSV 改风格、多行单元格变混合行尾 | 自写（`const EOL = text.includes('\r\n') ? '\r\n' : '\n'`） |
@@ -112,6 +113,9 @@ needle 要按 `""` 形态匹配（先试原样、再试引号加倍），译文�
 ### 2.2 流程
 
 ```powershell
+# 0) ★映射建好后先跑注册表交集闸门（crabshack 事故：引擎 id 被译致新游戏崩）
+#    node <skills>\shared\scripts\check_jar_registry_keys.js <mapping.json> <coreDir> [modDir]
+#    命中=回退英文或写 --allow 白名单（附反编译证据）；补丁后复跑一次
 # 1) 解包 jar → <classDir>
 # 2) 常量池安全替换（映射 = {jar 常量原文: 译文}）
 node <skills>\shared\scripts\patchdir.js <mapping.json> <classDir>   # 会输出键命中报告
@@ -151,6 +155,7 @@ node <skills>\shared\scripts\rezip.js <classDir> <out.jar>
 **G4 jar 安全**（只在动了 jar 时）
 
 ```powershell
+node <skills>\shared\scripts\check_jar_registry_keys.js <mapping.json> <coreDir> [modDir] [--allow=<json>]  # ★注册表交集：引擎 id 被译 = 崩溃（crabshack 事故）
 node <skills>\shared\scripts\verify_identifiers.js <classDir>     # 标识符含 CJK = 0
 node <skills>\shared\scripts\check_u0001.js <mapping.json>        # \u0001 数量一致
 node <skills>\shared\scripts\verify_u0001_jar.js <原jar> <新jar>   # 每个含 \u0001 常量数量一致

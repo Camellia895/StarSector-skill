@@ -188,6 +188,22 @@ java.lang.NullPointerException: … LunaSettings.getBoolean(String, String) is n
 （A 类 = 保留键被译 → 必错；B 类 = 键查找上下文里"像 id"的常量被译 → 待人工确认）。
 
 > 实测提醒：**首次启动就崩**时，先在日志里搜 `Could not find mod`——若 mod 名是中文，基本就是本条。
+
+**R12 补充：id 形态判据不可靠，注册表交集才是兜底（2026-10-01 crabshack 事故）**
+
+`barren-bombarded` 被译成「荒芜-轰击」→ `addPlanet` 查表 null → 新建游戏 NPE。三个教训：
+
+1. **原版注册表键名混用连字符与下划线**：planets.json 里 `barren-bombarded`/`terran-eccentric`
+   是合法类型键（不是 `barren_bombarded`）——「蛇形才是 id」的直觉会漏掉连字符 id，
+   也不能看到连字符串就当普通短语翻译。
+2. **调用点行级语境区分不了参数位**：`addPlanet(id, null, name, type, …)` 的名称参与类型参
+   在同一行，SHOWUSE/KEYUSE 行级正则二者通吃。`getTypeId()=="X"` 比较、`map.put(id,…)`、
+   `getXxxSpec(id)` 的 id 实参同理都可能被行级判据放行。
+3. **强制闸门**：patch_map 建好后必跑
+   `node <skills>sharedscriptscheck_jar_registry_keys.js <patch_map.json> <coreDir> [modDir]`
+   （命中 exit 1）；同串确属纯 UI 高亮用法（`water`/`intercept` 型）的，反编译核实**全部**引用点后
+   写 `--allow` 白名单。补丁后复跑一次防映射回改。
+
 > 另：`getMergedSpreadsheetDataForMod` 拿错 modID **不抛异常**，只静默返回空数组（表现为"白名单没生效"），
 > 比崩溃更难发现。
 

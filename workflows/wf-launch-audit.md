@@ -66,6 +66,7 @@ Get-Content $log -Tail 300 -Encoding Default | Select-String -Pattern 'ERROR|FAT
 | 文本在引号处截断（无报错） | **R2 rules 参数内嵌引号** | `check_rules_arg_quotes.js <rules.csv>` |
 | 个别字显示 `?` | **R3 缺字形** | `check_font_glyphs.js <data目录>` |
 | `NullPointerException` 且栈顶在 `data.scripts.*`（mod 自己的 jar 代码，战斗/战役期触发） | **mod 自身代码缺陷**（判空缺失，与汉化无关；归属按 `wf-mod-fix.md` §B2） | 走 `wf-mod-fix.md` §3 手法表首行：代码修复重编译 + 保汉化回填（`starsector-mod-java-hardcoded-text` §5）。实例：RYAZ `ryaz_SpellcastMarine.findTarget`（射程内置 null 后立刻 `target.isAlive()`）、Nightcross `NAFulldiveOfficer` |
+| 新建/读档时 `NullPointerException`，消息形如 `Cannot invoke '…Spec.getXxx()' because … is null`，栈在 `addPlanet`/`addCondition` 或 mod `generate` | **R12 补充：引擎 id（星球类型/条件/商品等注册表 id）被 jar 补丁翻译** | `check_jar_registry_keys.js <patch_map.json> <coreDir> <modDir>` 找出被译的 id → 回退英文重打（crabshack 实测：`barren-bombarded`→「荒芜-轰击」致新游戏必崩） |
 | `VerifyError` / `StackMapTable`（**离线程序**报的） | **环境**：本机 `starfarer.api.jar` 被改过；游戏自带 `-noverify` 无感 | 自己的验证程序加 `-noverify`（`env.md` §4）——**不是 mod 的问题** |
 | `UnsupportedClassVersionError` | **环境**：编译目标 class 版本高于游戏 JRE | mod 用 `--release 8`、验证程序 `--release 17` |
 | `Error while initializing plugin` / WARN 级 `spec … not found` | **噪音**（原版与别的 mod 也有，加载成功时也会出现） | 先判**归属**（把 `[id]` 一起匹配）再决定，别算到目标 mod 头上 |
