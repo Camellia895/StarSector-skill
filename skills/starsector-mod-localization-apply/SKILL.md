@@ -33,6 +33,9 @@ Vayra's Sector 汉化（2026-09-16）沉淀了一对可直接改造的通用注�
    对**已汉化**目录二次注入 → 替换全部失配；`options` 之类**合成字段**会把"上一次的中文"当成
    "原文"保留并**追加** → 一行变两行、optionId 重复 → **启动崩溃**（与 R13 同一路径）。
    不通过就**先还原英文原版**再注入。
+   **纯配置/纯 jar 的 mod 可能报"没有可用探针"（exit=2）**——那不是通过也不是失败，是脚本
+   找不到可判定的英文文本列（2026-10-02 ItemMarkers 实测）：改用
+   `diff -r <modRoot> <EN备份>` 零差异来证明 R15（零差异 ⇒ 必为英文原版）。
 3. **一次性备份**：`mods\<Mod>\` → `_work\mod_bak\<Mod>_<版本>_pre_zh_backup`（写入中文之前的状态）；jar 另存 `*.orig`。
 4. **本任务脚本放** `_work\mod_work\<Mod>\tools\`；能复用的进 `<skills>\shared\scripts\`（先查 `script-registry.md`）。
 5. **游戏必须完全退出**才能替换 jar（Windows 文件锁）。

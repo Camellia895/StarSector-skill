@@ -105,6 +105,7 @@ node <skills>\shared\scripts\check_designtype.js <modRoot>   # 必须 0 问题
 
 1. **JSON 兜底名**：`config\custom_entities.json`、`config\planets.json` 的 `defaultName`/`nameInText`/`name` 是实体兜底显示名（`addCustomEntity(id, null, …)` 时使用）——事故："Photosphere"/"Sensor Array" 显示英文。
 2. **LunaSettings 的 Text/Header 行**：说明文字在 **defaultValue 列**（段落说明、致谢、各 Header 标题）；**Radio 选项值（`Base`/`150%`/`Wide`）是代码逻辑键，严禁翻译**（`when(x){ "Base" -> }`）。
+   **`tab` 列内置 kind 不抓**（2026-10-02 ItemMarkers 实测）：它是 LunaLib 设置页的**页签显示名**（`Visual` 这类），要译须另写一条 `csv` kind 规则补提取；同一 tab 值的多行**必须同译**（写进 consistencyRequirements）。
 3. **装配变体** `data\variants\*.variant` 的 `displayName`。
 4. **faction 舰队名/官职名**：`fleetTypeNames`（patrolSmall/Medium/Large/battlestation…）与 `ranks`/`officerRanks` 的 `name`（Admiral/CEO/Patrol Director…）——按 `"键":"值"` 形态替换值，`#` 注释行跳过。
    recipe 写法：`factionFile` 加 `"ranks":true, "fleetTypeNames":true`（**2026-09-21 起** `fleetTypeNames` 已内置；RYAZ 实测此前内置 kind 不抓、反向网兜出 10 条）。`.faction` 若有**未加引号键**（如 `id:"ryaz"`），`parseJsonLoose` 解析不了，脚本用块级正则兜底（R8）。另有 `displayNameIsOrAre`（情报句"is/are"系动词）：**核心惯例=空串**（中文语序无需系动词，2026-10-02 Hyperion 定例）——非空的英文值应一并提取处置，太短过不了反向网、只能靠这里记住。
@@ -178,6 +179,12 @@ node <skills>\shared\scripts\build_jar_worklist.js <candidates.json> <outTransla
 - **sig 形态误杀**：`[` 开头的招牌 UI 文（`[ CLICK HERE ]`、`[ Right click to analyze ] ` 等）会被`isSig` 自动排除——
   crabshack 的 sig 桶 19 条里 14 条是真 UI，靠 `check_jar_stragglers` 在交付前兜回（17 条补译）。
   **自动排除的 sig 桶必须全量人工过一遍**，别只信形态。
+
+- **★双用途筛选标签**（2026-10-02 ItemMarkers 实测，R12 的 UI 形态）：`MultiSelect`/`RadioPanel` 的按钮文案若
+  经 `getSelectedStrings()` **原样回到代码**再与引擎数据比对（如把标签直接 add 进过滤集合，
+  `EXPLICIT_MANUFACTURERS.contains(engineManufacturer)`），则它既是显示文本又是逻辑键——**必须 skip**
+  （ItemMarkers 的 `Low Tech/Midline/High Tech/Pirate/Luddic Path/Other` 六词，译则筛选全坏）。
+  判据：**回调查的是按钮索引还是按钮文本**——按索引取枚举（`values()[customData]`）可译，按文本回传不可译。
 
 **分类契约**（每项）：
 `{ "c": <jar 常量原文，逐字符一致>, "decision": "translate"|"skip", "category": "ui"|"log"|"id"|"path"|"sig"|"fmt"|"markup"|"other", "cls": "...", "note": "..." }`
