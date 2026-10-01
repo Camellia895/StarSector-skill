@@ -135,6 +135,7 @@
 | `run_check.js` | **包装执行校验并自动记账**（退出码 → ledger；默认不透传子命令输出以省上下文） | `node run_check.js --check=<名> [--target=<标签>] [--note=] [--probe] [--out] -- <命令...>` |
 | `ledger_report.js` | 聚合账本 → 升降档/退役候选/需探针/需修复 报告 | `node ledger_report.js [--json] [--check=<名>]` |
 | `sync_to_mod.js` | **把 skills 库的当前状态快照进交付 mod 的 `ai\`**（各 skill 的 SKILL.md/自带脚本、shared 文档含 `glossary.md`→`core-glossary.md` 改名、`workflows\*`、共享脚本 → `ai\脚本\`）。**只增改不删**，以免误删 `ai\脚本` 中不属于 skills 库的一次性诊断脚本。交付前跑一次，否则包里是旧文档旧脚本 | `node sync_to_mod.js <skillsDir> <modAiDir> [--dry]` |
+| `check_doc_script_refs.js` | **技能库体检 §8-3 的转义安全版**：扫全部 .md 里引用的 `shared\scripts\*` 是否存在（内联 grep/sed 管道会被 Bash 工具的反斜杠转义搅坏——env.md 毒点 9，2026-10-02 实测全员误报 MISSING） | `node check_doc_script_refs.js`（在 `<skills>` 根下跑；退出码 0=无悬挂） |
 
 ## D4. 冒烟测试（自动跑一遍游戏：入口 + 日志指纹）
 
