@@ -102,22 +102,43 @@ $mcArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$modCheck,'-ModIds'
 # 第 2 段 drive.ps1 boot -KeepMods 拿到的就是完整列表 —— 实测 2026-09-30：建存档段
 # 每次都没挂上目标 mod 的根因。最终恢复仍由本脚本末尾的 restore-mods.ps1 统一做。
 if (($NewGame -or $KeepEnabled)) { $mcArgs += '-KeepEnabled' }
-& powershell @mcArgs | Out-Null            # 不回显：ModCheck 自己写 verdict.json
+$mcOut = @(& powershell @mcArgs)           # 不回显；ModCheck 的 stdout 末行是压缩版 verdict JSON
 $rc1 = $LASTEXITCODE
 $sw.Stop()
 Write-Output ("[1/2] 加载到主菜单: rc={0}  用时 {1:N0}s" -f $rc1, $sw.Elapsed.TotalSeconds)
 
-# 打印实际挂载的 mod（ModCheck 写进 verdict.json 的 enabledIds，含自动补的依赖）。
-# 调用方必须核对目标 id 在列——不在列说明没挂上（多半是 -ModIds 写错或忘传）。
-$r1Dir = Get-ChildItem (Join-Path $mc 'results') -Directory -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-if ($r1Dir -and (Test-Path (Join-Path $r1Dir.FullName 'verdict.json'))) {
-  try {
-    $v1 = Get-Content (Join-Path $r1Dir.FullName 'verdict.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    $enabled = @($v1.enabledIds)
-    Write-Output ("  挂载 mod ({0}): {1}" -f $enabled.Count, ($enabled -join ', '))
-    $missing = @($idList | Where-Object { $enabled -notcontains $_ })
-    if ($missing.Count -gt 0) { Write-Output ("  !! 目标 mod 未挂载: {0}  （核对 -ModIds 是否为目标 mod 的 id，缺省值 rotcesrats 是测试值）" -f ($missing -join ', ')) }
-  } catch {}
+# ---- 输出本次烟测的 mod 清单（两行，供调用方核对目标 id 在列）----
+# ① 配置启用 = ModCheck 写进 enabled_mods.json 的集合（verdict JSON 的 enabledIds，含自动补的依赖）；
+#    从 stdout 的 verdict JSON 直接拿本次 runDir，不猜"最新结果目录"。
+$v1 = $null; $runDir = ''; $enabledIds = @()
+foreach ($line in $mcOut) {
+  if ($line -like '{"timestamp"*') { try { $v1 = $line | ConvertFrom-Json } catch {} }
+}
+if ($v1) { $enabledIds = @($v1.enabledIds); $runDir = $v1.runDir }
+if ($enabledIds.Count -gt 0) {
+  Write-Output ("  配置启用 ({0}): {1}" -f $enabledIds.Count, ($enabledIds -join ', '))
+}
+# ② 游戏加载 = boot_capture.log 的 "Running with the following mods" 块，引擎实际加载的地面真相
+#    （能暴露"id 写错被引擎静默跳过 / enabled_mods 写了没生效"这类配置层看不出的挂载失败）
+$loaded = @()
+if ($runDir -and (Test-Path (Join-Path $runDir 'boot_capture.log'))) {
+  $inBlock = $false
+  foreach ($l in (Get-Content (Join-Path $runDir 'boot_capture.log') -Encoding UTF8)) {
+    if ($l -match 'Running with the following mods') { $inBlock = $true; continue }
+    if ($inBlock) {
+      if ($l -match 'Mod list finished') { break }
+      if ($l -match '\[id:\s*([^\[\]]+)\]') { $loaded += $Matches[1].Trim() }
+    }
+  }
+}
+if ($loaded.Count -gt 0) {
+  Write-Output ("  游戏加载 ({0}): {1}" -f $loaded.Count, ($loaded -join ', '))
+}
+# 核对：目标 mod 既不在"游戏加载"也不在"配置启用" ⇒ 基本是 -ModIds 写错/忘传（缺省 rotcesrats 是测试值）
+foreach ($t in $idList) {
+  if (($loaded.Count -gt 0 -and $loaded -notcontains $t) -or ($loaded.Count -eq 0 -and $enabledIds.Count -gt 0 -and $enabledIds -notcontains $t)) {
+    Write-Output ("  !! 目标 mod 未被加载: {0}  （核对 -ModIds 是否为 mod_info.json 的 id；缺省值 rotcesrats 是测试值）" -f $t)
+  }
 }
 
 if ($rc1 -ne 0) {
@@ -158,7 +179,10 @@ if ($rc1 -ne 0) {
   $verdict = 'FAIL'; $why = "加载成功但存档未建成（newgame rc=$rcn）"
 }
 
-$latest = Get-ChildItem (Join-Path $mc 'results') -Directory -EA SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+# 证据目录 = 本次运行的 runDir（verdict JSON 给出）；拿不到才回退"最新结果目录"
+$latest = $null
+if ($runDir -and (Test-Path $runDir)) { $latest = Get-Item $runDir }
+else { $latest = Get-ChildItem (Join-Path $mc 'results') -Directory -EA SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1 }
 Write-Output ''
 Write-Output "== 烟测结果: $verdict ==  原因: $why"
 if ($latest) { Write-Output "证据目录: $($latest.FullName)  （verdict.json / log_tail.txt / ng_frames\）" }

@@ -64,6 +64,7 @@ Get-Content $log -Tail 300 -Encoding Default | Select-String -Pattern 'ERROR|FAT
 | **无任何报错**，但界面某处照旧英文（典型：图鉴的**分类/制造商**名） | **R16/R10 补充：`designTypeColors` 未注册**（引擎查不到不报错，把原值当分类名显示） | `check_designtype.js <modRoot> <core>`；**务必同时查 CSV 与 `.skin`/`.ship` 的 `tech`** |
 | **无任何报错**，船插**分类标签**是英文 | **`uiTags` 是显示列**，引擎不查表 | 见 `workflows\prompt-船插分类汉化.md` + `check_uitags_zh.js` |
 | 文本在引号处截断（无报错） | **R2 rules 参数内嵌引号** | `check_rules_arg_quotes.js <rules.csv>` |
+| **无任何报错，mod 整个没加载**（日志无该 mod 的任何 Loading 行；launcher 日志有 `发现 Mod：{id}` 但 `保存已启用的 Mod 清单 [...]` 里**没有它**） | **启动器静默拒载 gameVersion 不匹配的 mod**（2026-10-02 Hyperion 实测：0.97a 声明在 0.98a 运行版上被 ModManager 从启用清单剔除，无弹窗无报错，英文原版同样中招） | 对照 `mod_info.json` 的 `gameVersion` 与运行版 → 改成一致（最小版本适配，非汉化内容，留档）；烟测后用 verdict.json 的 `enabledIds` 复核目标 id 在列 |
 | 个别字显示 `?` | **R3 缺字形** | `check_font_glyphs.js <data目录>` |
 | `NullPointerException` 且栈顶在 `data.scripts.*`（mod 自己的 jar 代码，战斗/战役期触发） | **mod 自身代码缺陷**（判空缺失，与汉化无关；归属按 `wf-mod-fix.md` §B2） | 走 `wf-mod-fix.md` §3 手法表首行：代码修复重编译 + 保汉化回填（`starsector-mod-java-hardcoded-text` §5）。实例：RYAZ `ryaz_SpellcastMarine.findTarget`（射程内置 null 后立刻 `target.isAlive()`）、Nightcross `NAFulldiveOfficer` |
 | 新建/读档时 `NullPointerException`，消息形如 `Cannot invoke '…Spec.getXxx()' because … is null`，栈在 `addPlanet`/`addCondition` 或 mod `generate` | **R12 补充：引擎 id（星球类型/条件/商品等注册表 id）被 jar 补丁翻译** | `check_jar_registry_keys.js <patch_map.json> <coreDir> <modDir>` 找出被译的 id → 回退英文重打（crabshack 实测：`barren-bombarded`→「荒芜-轰击」致新游戏必崩） |

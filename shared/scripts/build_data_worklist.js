@@ -261,12 +261,14 @@ function kJsonDirObjects(rule) {
   const dir = rule.dir;
   if (!fs.existsSync(path.join(MOD, dir))) return;
   for (const f of fs.readdirSync(path.join(MOD, dir))) {
-    if (rule.glob && !f.endsWith(rule.glob.replace('*', ''))) continue;
-    if (!/\.json$/i.test(f)) continue;
+    // 2026-10-02 Hyperion 修正：带 glob 时以 glob 为准（放行任意扩展名，如 *.skin）——
+    // 此前内部固定 `.json$` 过滤把非 .json 文件全部静默跳过，11 条 .skin tech 漏提取（靠 check_designtype 兜出）
+    if (rule.glob) { if (!f.endsWith(rule.glob.replace('*', ''))) continue; }
+    else if (!/\.json$/i.test(f)) continue;
     const file = norm(path.join(dir, f));
     const raw = fs.readFileSync(path.join(MOD, file), 'utf8');
     const obj = parseJsonLoose(raw);
-    const id = f.replace(/\.json$/i, '');
+    const id = f.replace(/\.[^.]+$/i, '');
     for (const vk of rule.keys) {
       if (obj[vk.key] !== undefined && obj[vk.key] !== '') add({ file, id, field: vk.key, line: findLineOf(raw, '"' + vk.key + '"'), en: obj[vk.key], zh: '', note: vk.note || '' });
     }

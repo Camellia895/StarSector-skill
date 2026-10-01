@@ -13,6 +13,11 @@
 //   const { parseCsv, csvCell, csvJoinRow } = require('./csvlib.js');
 //   const { header, rows } = parseCsv(fs.readFileSync(file,'utf8'));
 //   rows.forEach(r => { r.line /*起始行*/; r.cells[colIdx] });
+//
+// ⚠️⚠️ 表头不属于 rows（2026-10-02 Hyperion 事故）：parseCsv 返回的 `rows` **不含表头行**（header 单独返回）。
+//   **整文件重写必须显式把表头拼回**：`[csvJoinRow(header), ...rows.map(r => csvJoinRow(r.cells))].join(EOL) + EOL`。
+//   直接 `rows.map(...)` 重写 = 表头丢失 → 全表列解析崩坏（引擎把首行数据当列名）。
+//   该事故在字节层的指纹：每文件恰好 **少 1 个 CRLF**（check_eol.js 的 ±1 计数差最先暴露，样式本身没变）。
 module.exports = { parseCsv, csvCell, csvJoinRow };
 
 // text -> { header:[...], rows:[{cells:[...], line: number}] }

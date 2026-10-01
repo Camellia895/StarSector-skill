@@ -52,7 +52,7 @@
 1. **★必须显式传 `-ModIds <目标mod id>`**——这是"烟测没挂上正确 mod"的头号原因：
    脚本缺省值 `rotcesrats` 是 modcheck 自带的**测试值**，忘传就等于"在测别的 mod"。
    id 是 `mod_info.json` 的 `id`（**不是文件夹名**）。启动后输出首行 `mod=<ids>`
-   与"挂载 mod"行**必须含目标 id**；不一致立即中止，改对参数重跑，**不要**解读那次结果。
+   与"游戏加载"行**必须含目标 id**；不一致立即中止，改对参数重跑，**不要**解读那次结果。
 2. **游戏必须完全退出**：烟测会自己关游戏，但**不同时跑两个实例**——`drive.ps1` 的 JVM 固定 `-Xmx16g`，
    启动即提交 16GB，双实例会互相拖死。
    ```powershell
@@ -75,8 +75,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 继续走完角色创建建出 `save_autotest_*`；此时 ModCheck 以 `-KeepEnabled` 结束、
 **把测试集保留给建存档段**，全部结束后统一恢复）→ 关闭游戏并**恢复你的 mod 列表** → 打印摘要。
 
-**输出里的"挂载 mod"行列出实际启用的 id**（含自动补的依赖）——先核对目标 id 在列，
-再谈 PASS/FAIL：不在列说明根本没测到目标 mod，结论作废。
+**输出里的两行 mod 清单**（先核对目标 id 在"游戏加载"里，再谈 PASS/FAIL）：
+- **配置启用**＝ModCheck 写进 enabled_mods.json 的集合（含自动补的依赖）；
+- **游戏加载**＝boot_capture.log 的 `Running with the following mods` 块——**引擎实际加载的地面真相**，
+  能暴露"id 写错被引擎静默跳过 / enabled_mods 写了没生效"这类配置层看不出的挂载失败。
+- 目标 id 两处都不在 ⇒ 输出 `!! 目标 mod 未被加载` 警告，结论作废，改对 `-ModIds` 重跑。
 
 **判定只看退出码**：`0`=PASS / `1`=FAIL / `2`=环境不满足 / `3`=超时 / `4`=崩溃。
 
@@ -86,7 +89,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 == 烟测开始 ==  mod=flowergod  newGame=True  timeout=420s
   已刷新 user_original 快照 = 当前 enabled_mods.json
 [1/2] 加载到主菜单: rc=2  用时 21s
-  挂载 mod (3): flowergod, lw_lazylib, MagicLib   ← 先核对目标 id 在列
+  配置启用 (3): flowergod, lw_lazylib, MagicLib
+  游戏加载 (3): flowergod, lw_lazylib, MagicLib   ← 核对目标 id 在这行
   → 加载期报错（弹窗或致命日志）
 == 烟测结果: FAIL ==  原因: 加载期报错
 证据目录: ...\modcheck\results\20260920_210553_shortcut_flowergod  （verdict.json / log_tail.txt / ng_frames\）
@@ -125,7 +129,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 | 症状 | 原因 | 绕行 |
 |---|---|---|
 | `-ModIds a,b` 报 `A positional parameter cannot be found` | PowerShell 具名参数只绑一个 token；smoke_run→ModCheck 的 `-File` 传参链断 | **标准用法＝单 id** + 在 mod 的 `mod_info.json` 声明 `dependencies`（smoke 会自动补全启用） |
-| 建存档段 mod 清单"不对"（历史 bug，2026-09-30 已修） | 旧版 ModCheck 结束即把用户完整列表还原，`drive.ps1 boot -KeepMods`"保留"到的是完整列表 ⇒ 建存档段没挂目标 mod | 现版 `-NewGame` 时 smoke_run 让 ModCheck 以 `-KeepEnabled` 结束、测试集保留给建存档段；若"挂载 mod"行仍不含目标 id，先查 `-ModIds` 是否忘传/写错（缺省 `rotcesrats` 是测试值） |
+| 建存档段 mod 清单"不对"（历史 bug，2026-09-30 已修） | 旧版 ModCheck 结束即把用户完整列表还原，`drive.ps1 boot -KeepMods`"保留"到的是完整列表 ⇒ 建存档段没挂目标 mod | 现版 `-NewGame` 时 smoke_run 让 ModCheck 以 `-KeepEnabled` 结束、测试集保留给建存档段；若"游戏加载"行仍不含目标 id，先查 `-ModIds` 是否忘传/写错（缺省 `rotcesrats` 是测试值） |
 | `newgame rc=3` 而 `fail_name.png`（`modcheck\results\ng_frames\`，**共享目录**不在 per-run 目录）里游戏停在**主菜单** | NewGame.ps1 UI 坐标按 **1366×768** 标定；主菜单面板右侧像素锚定 ⇒ 分辨率不同（实测 2000×1125 / 2560×1440）相对坐标漂移，点不中"生涯模式" | **脚手架失配，非 mod 问题**：转手动建档测试；注意失败帧不在 per-run 结果目录里 |
 | mod 明明没引用 LunaLib 却启动 Fatal `NoClassDefFoundError: lunalib/...` | GraphicsLib 1.12.1 硬引用 LunaSettingsListener（env.md §6） | 启用清单带上 lunalib（或在 mod_info 声明依赖） |
 

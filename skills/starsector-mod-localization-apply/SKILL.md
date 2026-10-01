@@ -36,12 +36,13 @@ Vayra's Sector 汉化（2026-09-16）沉淀了一对可直接改造的通用注�
 3. **一次性备份**：`mods\<Mod>\` → `_work\mod_bak\<Mod>_<版本>_pre_zh_backup`（写入中文之前的状态）；jar 另存 `*.orig`。
 4. **本任务脚本放** `_work\mod_work\<Mod>\tools\`；能复用的进 `<skills>\shared\scripts\`（先查 `script-registry.md`）。
 5. **游戏必须完全退出**才能替换 jar（Windows 文件锁）。
+6. **核对 `mod_info.json` 的 `gameVersion` 与运行版一致**（2026-10-02 Hyperion 实测）：启动器会**静默剔除**版本不匹配的 mod——ModManager 打印"发现 Mod"但保存启用清单时不含它，无任何报错，表现为"mod 没加载"而非崩溃（英文原版同样中招）。不匹配就先做最小适配（只改 gameVersion 字段，属版本适配非汉化内容，留档说明）。烟测后用 verdict.json 的 `enabledIds` 复核目标 id 确实在列（见 `script-registry.md` D4）。
 
 ## 1. 数据层回填（按结构类型选工具）
 
 | 结构 | 做法 | 工具 |
 |---|---|---|
-| CSV（单行字段） | 按 `id` 列匹配回填指定列；写回**仅当字段含 `",` `\n` `\r` 之一才加引号**并做 `""` 转义 | `<skills>\shared\scripts\csvlib.js`（`parseCsv` + 写回）；迁移场景用 `csvtool.js migrate` |
+| CSV（单行字段） | 按 `id` 列匹配回填指定列；写回**仅当字段含 `",` `\n` `\r` 之一才加引号**并做 `""` 转义。⚠️ **整文件重写必须显式拼回表头**（2026-10-02 Hyperion 事故）：`csvlib.parseCsv` 返回的 `rows` **不含表头行**，直接 `rows.map(csvJoinRow)` 重写 = 表头丢失 → 全表列解析崩坏；正确写法 `[csvJoinRow(header), ...rows.map(r=>csvJoinRow(r.cells))].join(EOL)+EOL`；字节指纹=每文件恰好少 1 个 CRLF（check_eol ±1 差最先暴露） | `<skills>\shared\scripts\csvlib.js`（`parseCsv` + 写回）；迁移场景用 `csvtool.js migrate` |
 | CSV（首选注入骨架） | **0.98a crabshack 实测三连破坏**：上游 CSV 可能含**非 UTF-8 字节**（`readFileSync(utf8)` 静默变 U+FFFD 再写回=永久损坏）、**混搭行尾**（整文件重建必改风格，R17）、**单元格首尾空行/对齐空白**（提取时被 trim，重建即丢）。首选 **span 级重放**骨架（`fix_csv_eol.js` v3 的 walk()：从基线恢复原字节 + 按单元格 span 精确替换 + 单元格内换行沿用原风格）；en 经 trim 提取的须 trim 匹配 + 保留首尾空白/空行。工具坑两条：JS 正则 `.` 不匹配 `\r`（CRLF 基线做行级解析前先归一化 LF）；`check_encoding` 报 invalid-utf8 时先对**英文基线**跑一次定性是不是上游自带 | 自写（`fix_csv_eol.js` v3 walk() 骨架） |
 | CSV（多行单元格） | 必须用完整状态机（原版 `hull_mods.csv` 的 `desc` 含真实换行，295 物理行 vs 152 逻辑行）。⚠️ **回传译文常见两类退化**（2026-09 armaa 双事故）：① 译者把段内换行写成**字面 `\n` 两字符**（rules 的 options 多行被连成一行 → 引擎切分选项即崩，铁律 R13；text 列则游戏内显示字面 `\n`）——注入前检测"en 有真实换行而 zh 只有字面 `\n`"并转换；② options 行的**选项 id 前缀被丢**（只剩标签）——按 `(数字:)?id:标签` 逐行比对 en/zh 的 id，缺失即按 en 重建前缀 | 同上，勿逐行 `split(',')`；改完必跑 `check_options_structure.js` |
 | CSV（多行单元格·行级重建） | 按"起始物理行区间"重建被改行时，**必须按起始行降序逐个 splice**：多行单元格译后行数常变（合并段落），升序处理会让后续行号整体位移，后续拼接落错位置 → **级联损坏**（armaa 实测：hull_mods/descriptions 结构错乱，被迫整目录回滚重注入） | 自写（`touchedRows.sort((a,b)=>行号降序)` 后再 splice） |
@@ -52,7 +53,7 @@ Vayra's Sector 汉化（2026-09-16）沉淀了一对可直接改造的通用注�
 | rules.csv `options` | **合成字段，必须结构级重建**（铁律 R13）：以英文原版的**行数 + 每行 optionId**为准，只替换标签；长式（`数字:optionId:标签`）保留数字前缀；多行之间用**真实换行**（不是字面 `\n`），由写入器按 RFC4180 加引号。**行数/optionId 不符就报错并保留原文，绝不猜** | 自写（本项目 `apply_data.js` 的 `translateOptions`）；改完必跑 `check_options_structure.js` |
 | 伪 JSON | **文本替换**式（`replaceOnce(path, 原片段, 译文片段)`），保持 `#` 注释与缩进原样 | `migrate_json.js`；**严禁** `ConvertTo-Json` 回写（铁律 R8） |
 | **JSON 字符串表**（`data/strings/strings.json` 这类"界面文本全外置"的表：`{"命名空间":{"camelCaseKey":"文本"}}`） | 按「键 JSON 串 + 冒号 + 值 JSON 串」做**正则文本替换**（冒号两侧空白用 `\s*`，保留原缩进/键序/行尾），**绝不 `JSON.stringify` 整体重写**；同一 `strings.json` 里可能并列**多个 mod 的命名空间**，只碰自己那个。替换前断言 needle **在文件内唯一**，否则报错退出 | 自写（范式见 `_work\mod_work\RetroLib\tools\build_zh_strings.js`：容忍空白的唯一性正则 + 生成后自查「可解析/键序一致/占位符集合一致/无 BOM/行尾计数」）；改完必跑 `verify_strings_json.js`（`-verify` §1.5） |
-| `.faction` 嵌套 | 按"行前缀 + 引号值"匹配（`"spaceSailor":{"name":"Page"}` → 换引号内值），`#` 注释行跳过。**三种形状要分开处理**（2026-09 armaa 实测）：① `displayName`/`description` 等标量 → `("键"\s*:\s*")…(")` ；② `rank/name` 类 → `"id":{"name":"值"}` **嵌套**，正则须含 `\{\s*"name"`；③ `fleetTypeNames` → 扁平 `"键":"值"`，id 形如 `fleetTypeNames/patrolSmall` 要取 `/` 后半段。三种都用错正则 = 静默 miss | 自写；`_work/mod_work/Arma Armatura/tools/apply_zh.js` 的 `injectKeyed` 是三形状参照 |
+| `.faction` 嵌套 | 按"行前缀 + 引号值"匹配（`"spaceSailor":{"name":"Page"}` → 换引号内值），`#` 注释行跳过。**三种形状要分开处理**（2026-09 armaa 实测）：① `displayName`/`description` 等标量 → `("键"\s*:\s*")…(")` ；② `rank/name` 类 → `"id":{"name":"值"}` **嵌套**，正则须含 `\{\s*"name"`；③ `fleetTypeNames` → 扁平 `"键":"值"`，id 形如 `fleetTypeNames/patrolSmall` 要取 `/` 后半段。三种都用错正则 = 静默 miss。⚠️ **JS 正则取值实现坑**（2026-10-02 Hyperion）：非 `g` 正则的 `str.match(re)` 返回数组**混着捕获组**、`g` 正则只返回完整匹配——校验"命中位现值==en"必须用 `exec` 循环取 `m[2]`，替换用 replacer 函数，否则 displayName 形状被组污染误判"en 不匹配" | 自写；`_work/mod_work/Arma Armatura/tools/apply_zh.js` 的 `injectKeyed` 是三形状参照 |
 | `.ship`/`.skin`/`.variant` | 替换 `hullName` / `displayName` 的值文本；**`.skin` 还有 `descriptionPrefix`（图鉴描述前缀，铁律 R14）与 `hullDesignation`（人可读短语才译）** | 直接用 `build_data_worklist.js` 的对应 kind 反查 locator |
 | 纯文本（`mission_text.txt` 等） | 整篇写回，保持段落结构 | — |
 | `mod_info.json`（易漏区 15） | 只换 **`name`/`description`** 的**值文本**；`id`/`version`/`gameVersion`/`author`/`dependencies` 等**一个都不能碰**（铁律 R12）。⚠️ 注入后 `name` 会成为 `deliver.ps1` 的 zip 名与解压文件夹名 ⇒ 检验它不含 `\/:*?"<>|`、无首尾空白/点 | `migrate_json.js` 思路（文本替换） |

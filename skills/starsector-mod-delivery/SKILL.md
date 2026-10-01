@@ -28,7 +28,7 @@ description: Starsector（远行星号）mod 完成汉化或修复后的交付�
    **⑦ 不擅自改 `version`**（修复 ≠ 发布，语义由用户定）；③ 按该流程第 10 步同步 `version`/`*.version`。
 2. **打包**：§4 的 `deliver.ps1`，一条命令。
 3. **自检**：§6 简化验证清单（几分钟，不是完整档 §5）。
-4. 报告里带上烟测结论（轻/深档、PASS、挂载 mod）。
+4. 报告里带上烟测结论（轻/深档、PASS、游戏加载清单）。
 
 ## 1. 结构介绍文件
 
@@ -121,7 +121,7 @@ powershell -ExecutionPolicy Bypass -File "<skills>\skills\starsector-mod-deliver
 - [ ] 解压到临时目录：顶层**只有一个文件夹**；`mod_info.json` 在且 **UTF-8 无 BOM**；
       `jars\*.jar`、`data\`、`graphics\`、`sounds\`（如 mod 有）齐全
 - [ ] 包内不含开发残留（`.git`/`out`/`src`/`*.bak`——deliver.ps1 默认排除，用了 `-NoExclude` 才需要手查）
-- [ ] 报告含烟测结论（轻/深档、PASS、挂载 mod）与修复/更新摘要
+- [ ] 报告含烟测结论（轻/深档、PASS、游戏加载清单）与修复/更新摘要
 - [ ] （mod 已有 git 仓库时顺手 `git add -A && git commit`；没有**不新建**）
 
 ## 7. 常见问题

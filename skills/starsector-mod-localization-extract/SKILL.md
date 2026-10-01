@@ -107,7 +107,7 @@ node <skills>\shared\scripts\check_designtype.js <modRoot>   # 必须 0 问题
 2. **LunaSettings 的 Text/Header 行**：说明文字在 **defaultValue 列**（段落说明、致谢、各 Header 标题）；**Radio 选项值（`Base`/`150%`/`Wide`）是代码逻辑键，严禁翻译**（`when(x){ "Base" -> }`）。
 3. **装配变体** `data\variants\*.variant` 的 `displayName`。
 4. **faction 舰队名/官职名**：`fleetTypeNames`（patrolSmall/Medium/Large/battlestation…）与 `ranks`/`officerRanks` 的 `name`（Admiral/CEO/Patrol Director…）——按 `"键":"值"` 形态替换值，`#` 注释行跳过。
-   recipe 写法：`factionFile` 加 `"ranks":true, "fleetTypeNames":true`（**2026-09-21 起** `fleetTypeNames` 已内置；RYAZ 实测此前内置 kind 不抓、反向网兜出 10 条）。`.faction` 若有**未加引号键**（如 `id:"ryaz"`），`parseJsonLoose` 解析不了，脚本用块级正则兜底（R8）。
+   recipe 写法：`factionFile` 加 `"ranks":true, "fleetTypeNames":true`（**2026-09-21 起** `fleetTypeNames` 已内置；RYAZ 实测此前内置 kind 不抓、反向网兜出 10 条）。`.faction` 若有**未加引号键**（如 `id:"ryaz"`），`parseJsonLoose` 解析不了，脚本用块级正则兜底（R8）。另有 `displayNameIsOrAre`（情报句"is/are"系动词）：**核心惯例=空串**（中文语序无需系动词，2026-10-02 Hyperion 定例）——非空的英文值应一并提取处置，太短过不了反向网、只能靠这里记住。
 5. **`designTypeColors` 键**：`config\settings.json` 的**键**是设计类型名，须译为与 CSV `tech/manufacturer` 中文值**精确一致**（否则不上色）且**键必须唯一**（事故：`Abyss`/`Abyssal` 都译"深渊" → `Duplicate key "深渊"` fatal）。原版没有颜色键的设计类型（如 Anomalous Phase-Tech）保持原样。
 6. **`customStarts.json`**：`config\exerelin\customStarts.json` 的 name/difficulty/desc。
 7. **rules.csv 行内列错位**：只译 `AddText "…"` 引号内文字，保留 `AddText`/颜色参数/引号（事故：3 行 flavor text 整行丢失）。
@@ -132,6 +132,7 @@ node <skills>\shared\scripts\check_designtype.js <modRoot>   # 必须 0 问题
     - 上游常中英混排或中途改成英文：**只补/改正文英文**，已中文的条目不要重写。
     - 若 mod 无 `changelog.txt`：不要新建（那不是汉化工作；只有作者改版本时才由 `wf-game-update` 加条目）。
     - 与 `wf-game-update` 第 10 步的"加新版本条目"是两件事：那里**新增**条目，这里**翻译**已有条目。
+17. **`data/strings/ship_names.json` 可能整体替换核心同名文件**（2026-10-02 Hyperion 实测）：一进清单就是 2000+ 条且**影响全星域所有势力**的随机舰名——务必在 `worklist_index.json` 标注影响面与策略选项（全意译/只译短语类/全部保留原文，交给译者整表统一）；列表里可能有十六进制色值"名"（作者设计，建议保留原文）；**跨名单同名词**给相同译文（R10）、**名单内重复**是加权设计（合并为一条并注明）；`.skin` 的 `tech` 等"CSV 之外"的字段记得用 `jsonDirObjects` + 任意扩展名 glob 抓（见登记表 2026-10-02 修正）。
 
 ## 3. jar 层提取（仅当字符串硬编码进 jar）
 

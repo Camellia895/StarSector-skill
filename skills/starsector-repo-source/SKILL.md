@@ -86,9 +86,10 @@ git -C <dir> remote add origin https://github.com/<you>/<repo>.git
 下载的 fork 分支未必等于 `mods\` 里装的发布版，逐项比对再决定以谁为基准：
 
 - `mod_info.json`/`*.version`：id/版本/依赖是否一致；
-- 数据文件逐文件 **SHA-256**（仓库 `assets\data\...` vs `mods\<Mod>\data\...`）；
+- 数据文件比对用 `<skills>\shared\scripts\cmp_norm.js`（行尾+尾随空白归一化后逐文件比 `data/`）——**裸 SHA-256 会把行尾风格差误判成内容差异**（2026-10-02 Hyperion 实测：raw 哈希 92/158 挂，规范化后 0 差异）；
 - jar：先比整包哈希（常因打包时间戳不同而不同），再**解包逐条目比内容哈希**，内容一致才算同一产物；
-- 不一致时：到 fork 上 checkout 与发布版对应的 tag/commit（`gh api repos/<owner>/<repo>/releases` 列 tag）再走第 5/6 步。
+- 不一致时：到 fork 上 checkout 与发布版对应的 tag/commit（`gh api repos/<owner>/<repo>/releases` 列 tag）再走第 5/6 步；
+- **master HEAD 可能含"只动 src/ 的未发版提交"**（2026-10-02 Hyperion 实测：上游 2026-04 的 "Update" 提交 20 个文件全在 `src/`——纯源码重构，data/ 与发布版零差异、版本号未提升、仓库无成品 jar ⇒ **无内容可应用**，作者没发就是没发；此时以 release 为汉化基准、HEAD 源码只作语境参考，别擅自替作者编译）。用 `gh api repos/<owner>/<repo>/commits` 看 release 之后还有没有提交、动了什么。
 
 ## 2. 后续衔接
 
