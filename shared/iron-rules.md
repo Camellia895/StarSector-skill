@@ -360,7 +360,7 @@ node <skills>\shared\scripts\check_install_source.js <modRoot> <EN原版备份�
    `称为"风暴"` → org.json FAIL；修复 = 值内 `"风暴"` → `“风暴”`。该问题被 `check_refs` 首先报警，
    由 JsonProbe + 基线对照确诊。
 
-## R19 · jar 层"成对文本"：整句与其高亮/匹配片段必须同批翻译（2026-09 The Vass）
+## R23 · jar 层"成对文本"：整句与其高亮/匹配片段必须同批翻译（2026-09 The Vass）
 
 jar 里有两类"同一中文决策必须同时落到多个常量"的成对文本，只译其一必然静默劣化：
 
