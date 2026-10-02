@@ -70,6 +70,10 @@ ai\
 ## 3. 本地 git
 
 - 仓库不存在 → `git init`，写 `.gitignore`（`Thumbs.db`/`desktop.ini`/`*.bak`/`.idea/` 等杂项；**不要忽略交付所需内容**）。
+- ⚠️ **必须同时写 `.gitattributes`（内容一行：`* -text`）并 `git config core.autocrlf false`**（2026-10-02 Apex 实测）：
+  mod 目录里的 CSV/JSON 是**按字节加载**的游戏数据（混合行尾、多行单元格），git 默认的 CRLF↔LF 归一化
+  会在 add/checkout 时改写行尾字节（add 时报 "CRLF will be replaced by LF" 就是信号），下次 checkout/克隆
+  得到的文件与交付时**字节不同**。若 init 后才发现：`git rm -r --cached . && git add -A` 重暂存。
 - 每次交付前 → `git add -A && git commit -m "<版本号>：<改动摘要>"`，工作树干净。
 - 报 `Author identity unknown` → 先 `git config user.name/email`。
 - 用户明确不需要版本管理时跳过，并在交付说明中注明。

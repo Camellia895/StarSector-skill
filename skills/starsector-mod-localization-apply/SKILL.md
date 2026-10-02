@@ -20,6 +20,11 @@ Vayra's Sector 汉化（2026-09-16）沉淀了一对可直接改造的通用注�
   从基线恢复原字节并按 span 精确重放译文（R17 红灯的专用修复）。
 > 教训：整文件重建 CSV 会把上游"混搭"的行尾统一掉（hull_mods/descriptions/rules 实测全是混合体）。
 > 注入器要么做 span 级替换，要么注入后必跑 `check_eol.js` 并用 `fix_csv_eol.js` 修复。
+>
+> ⚠️ `fix_csv_eol.js` 自身的两条坑（2026-10-02 Apex 实测，详见 script-registry 该行）：
+> ① id 复合键（descriptions 的 `::type`、rules 的 `|trigger`）与 id 列裸值不等 ⇒ 全 MISS，
+> 且 **0 命中也会用基线字节整体覆写**（静默回滚已注入译文）⇒ 必须核对 `cells replaced`/`miss` 计数；
+> ② 基线恢复会把**不在清单里的列**（uiTags）打回英文 ⇒ 修后必跑 `fix_uitags_zh.js` + `check_uitags_zh.js`。
 
 ## 0. 动手前
 
@@ -54,7 +59,7 @@ Vayra's Sector 汉化（2026-09-16）沉淀了一对可直接改造的通用注�
 | 设计类型名（收尾一遍） | 注入最后**再扫一遍** `settings.json` 的 `designTypeColors` 键 + `ship_data.csv`/`weapon_data.csv` 的 `tech/manufacturer` 全列（铁律 R16：这三处 recipe 覆盖不到，键值不一致 = 静默不上色） | 自写；改完必跑 `check_designtype.js` |
 | rules.csv `text`/`script` | 只回填 `text` 列整格与 `script` 列 `AddText "…"`/`$var = "…"` 的**引号内文字**，保留 `AddText`/颜色参数/`$变量` | `migrate_rules_script.js` 思路；改完必跑 R2 校验 |
 | rules.csv `options` | **合成字段，必须结构级重建**（铁律 R13）：以英文原版的**行数 + 每行 optionId**为准，只替换标签；长式（`数字:optionId:标签`）保留数字前缀；多行之间用**真实换行**（不是字面 `\n`），由写入器按 RFC4180 加引号。**行数/optionId 不符就报错并保留原文，绝不猜** | 自写（本项目 `apply_data.js` 的 `translateOptions`）；改完必跑 `check_options_structure.js` |
-| 伪 JSON | **文本替换**式（`replaceOnce(path, 原片段, 译文片段)`），保持 `#` 注释与缩进原样 | `migrate_json.js`；**严禁** `ConvertTo-Json` 回写（铁律 R8） |
+| 伪 JSON | **文本替换**式（`replaceOnce(path, 原片段, 译文片段)`），保持 `#` 注释与缩进原样 | `migrate_json.js`；**严禁** `ConvertTo-Json` 回写（铁律 R8）。⚠️ **同键+同值可能跨条目出现**（magicBounty 的 `job_pick_option`/`fleet_name` 在多个悬赏里重复，2026-10-02 Apex 实测 needle 命中 2~3 次）⇒ 值定位不唯一时改**按键域分组全量替换**（`"键"\s*:\s*"值"` 正则 + 断言命中数=清单中该组条数） |
 | **JSON 字符串表**（`data/strings/strings.json` 这类"界面文本全外置"的表：`{"命名空间":{"camelCaseKey":"文本"}}`） | 按「键 JSON 串 + 冒号 + 值 JSON 串」做**正则文本替换**（冒号两侧空白用 `\s*`，保留原缩进/键序/行尾），**绝不 `JSON.stringify` 整体重写**；同一 `strings.json` 里可能并列**多个 mod 的命名空间**，只碰自己那个。替换前断言 needle **在文件内唯一**，否则报错退出 | 自写（范式见 `_work\mod_work\RetroLib\tools\build_zh_strings.js`：容忍空白的唯一性正则 + 生成后自查「可解析/键序一致/占位符集合一致/无 BOM/行尾计数」）；改完必跑 `verify_strings_json.js`（`-verify` §1.5） |
 | `.faction` 嵌套 | 按"行前缀 + 引号值"匹配（`"spaceSailor":{"name":"Page"}` → 换引号内值），`#` 注释行跳过。**三种形状要分开处理**（2026-09 armaa 实测）：① `displayName`/`description` 等标量 → `("键"\s*:\s*")…(")` ；② `rank/name` 类 → `"id":{"name":"值"}` **嵌套**，正则须含 `\{\s*"name"`；③ `fleetTypeNames` → 扁平 `"键":"值"`，id 形如 `fleetTypeNames/patrolSmall` 要取 `/` 后半段。三种都用错正则 = 静默 miss。⚠️ **JS 正则取值实现坑**（2026-10-02 Hyperion）：非 `g` 正则的 `str.match(re)` 返回数组**混着捕获组**、`g` 正则只返回完整匹配——校验"命中位现值==en"必须用 `exec` 循环取 `m[2]`，替换用 replacer 函数，否则 displayName 形状被组污染误判"en 不匹配" | 自写；`_work/mod_work/Arma Armatura/tools/apply_zh.js` 的 `injectKeyed` 是三形状参照 |
 | `.ship`/`.skin`/`.variant` | 替换 `hullName` / `displayName` 的值文本；**`.skin` 还有 `descriptionPrefix`（图鉴描述前缀，铁律 R14）与 `hullDesignation`（人可读短语才译）** | 直接用 `build_data_worklist.js` 的对应 kind 反查 locator |
@@ -84,6 +89,10 @@ node <skills>\shared\scripts\scan_data_stragglers.js <modRoot> <EN原版备份> 
 |---|---|
 | ❌ 自写"字节偏移 + `indexOf` 定位"的 CSV 原地替换 | ① 多行引号单元格的段尾 `\r\n` 被算进替换范围 → **下一条记录被并进来**（整表塌成一行）；② 字段内含 `""` 转义时**闭合引号定位错位**（`SetTooltip x ""O""` 一段内引号数为奇数）→ 该行之后字段全部串行 |
 | ✅ **结构级重建**：`csvlib.parseCsv` 解析 → 只改目标单元格的**值** → 用同一套规则**整文件重写**（含 `, " \r \n` 才加引号、内部 `"`→`""`、行尾统一 CRLF、**按 header 补足空单元格**） | 解析结果与英文基线**逐格等价**，这条是可用脚本证明的硬保证 |
+
+⚠️ **header 行必须写回**（机理见 script-registry `csvlib.js` 行：`parseCsv` 的 `header` 与 `rows` 分离，
+只拼 `rows` 会静默丢表头）。下游症状：rules.csv 首行变成数据行/注释行，
+`check_options_structure` 报"两个目标文件都不存在或无 options 列"、按 `header.indexOf` 的脚本全空。
 
 **理由**：字节偏移方案要同时正确实现"引号开关 / `""` 转义 / 行内换行 / 行尾 CRLF / 引号边界"五件事，任何一件算错都**静默**破坏结构（引擎侧表现为启动崩 `JSONObject["options"] not found`，但脚本不报错）。
 结构级重建把"正确性"降到只有一条规则（解析器自己的一致口径），且**重写结果可被解析器验证**。

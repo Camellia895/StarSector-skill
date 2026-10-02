@@ -150,6 +150,10 @@
 | **Header 行的 `defaultValue`** | 只译 `fieldName`，`verify_all_data.js` 仍报英文残留 | LunaSettings 的 **Header 行**把 `defaultValue` 一起译（LunaLib 在 `tab` 为空时用它当分区标题）；非 Header 行一律不译 |
 | **Radio 取值被译** | 译了 LunaLib 的 `Disabled`/`All Contacts`… ⇒ 代码 `when(string)` 不匹配，功能静默失效 | 取值保持英文，并在 `settings.json` 注释里加中文警示；校验脚本只提示不改 |
 | **"有中文目录"≠"有汉化"** | 旧版存档只有 2 条中文串，却按"有旧汉化"走 ② 档 | 先做 §1 step 0 的体检，用数字说话 |
+| **script 列 `AddText"无空格` 形态漏抓**（2026-10-02 Apex 追加） | 旧译明明译了 rules.csv 市场风味文 4 行（`AddText"…"textGrayColor`），迁移却丢译；census 正则 `AddText\s+"` 与 stragglers 的 script 列跳过**双盲区叠加**，闸门全绿仍漏（玩家报告才发现） | 提取正则一律 `\s*`；交付前跑 `sweep_quoted_segments.js` 引号段兜底反查（extract §1.5 / script-registry A 节） |
+| **注入后重跑普查工具 = 全崩**（2026-10-02 Apex 追加） | 普查/三方比对的"新版 EN"输入指向 `mods\`（已是中文），中文被当英文原文，`old-migrated` 归零、直补条目被冲掉 | 工具把基线目录参数化并默认指向 `mod_bak\..._EN_backup`；直补进清单的条目必须同步收编进译文源表（migrate §7） |
+| **基线恢复类修复的连带回滚**（2026-10-02 Apex 追加） | `fix_csv_eol.js` 在 id 复合键（`::type`/`\|trigger`）不匹配时 **0 命中也整文件覆写**（译文静默回滚英文），且基线恢复会把清单外的 uiTags 打回英文 | 用后核对 `cells replaced`/`miss` 计数；修后必跑 `fix_uitags_zh.js` + `check_uitags_zh.js`（script-registry 该行） |
+| **git 归一化改写游戏数据**（2026-10-02 Apex 追加） | mod 目录 `git init` 后 add 报 "CRLF will be replaced by LF"——CSV/JSON 是按字节加载的，checkout 后行尾与交付时不同 | `.gitattributes` 写 `* -text` + `git config core.autocrlf false`，再 `git rm -r --cached . && git add -A` 重暂存（delivery §3） |
 
 > 工具复用：本类任务的注入器/清单器结构直接抄 `_work\mod_work\Hostile Intercept\tools\`（`zh_table.json` 单一译文源 +
 > `build_worklist.js` + `fill_review.js` + `apply_zh.js`（`--dry` + 结构自查 + EOL 保持）），比每次重写省一半时间。

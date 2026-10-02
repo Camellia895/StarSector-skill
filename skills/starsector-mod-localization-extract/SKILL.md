@@ -85,6 +85,16 @@ node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版�
 
 必须 **0 候选**才算提取完整。有候选 → 补提取（写专用提取脚本或扩 recipe）→ 重跑，**不要**靠目检文件。
 
+**第二张反查网：引号段兜底（stragglers 的两个盲区）**：`scan_data_stragglers` **不扫 JSON 数组内的短语**（Kayse 实测），
+且 **script/命令列整体被 SKIP_COLS 跳过**——而 rules.csv 的 script 列可以携带玩家可见文本，命令与引号间
+**空白可有可无**（`AddText"…"textGrayColor`，连 `AddText\s+"` 正则都会漏；2026-10-02 Apex 实测 4 行市场风味文迁移丢译）。
+
+```powershell
+node <skills>\shared\scripts\sweep_quoted_segments.js <modRoot> <worklist.json...>   # 有候选须人工判（见 script-registry A 节）
+```
+
+候选处置：注释行 / 禁用行（id 以 `#` 开头）/ 无代码引用的死文件 / 开发者注释 = 假阳性留档；真漏译补进 worklist 重注入。
+
 **反查设计类型名（铁律 R16，反例实测）**：`settings.json` 的 `designTypeColors` **键**不属于任何 CSV 列，
 **任何 recipe 都抓不到**；而同一个设计类型名还出现在 `ship_data.csv` 与 `weapon_data.csv` 的
 `tech/manufacturer` **全列**（不只是 `hull_mods.csv`）。只译 `hull_mods.csv` 会得到
@@ -111,7 +121,7 @@ node <skills>\shared\scripts\check_designtype.js <modRoot>   # 必须 0 问题
    recipe 写法：`factionFile` 加 `"ranks":true, "fleetTypeNames":true`（**2026-09-21 起** `fleetTypeNames` 已内置；RYAZ 实测此前内置 kind 不抓、反向网兜出 10 条）。`.faction` 若有**未加引号键**（如 `id:"ryaz"`），`parseJsonLoose` 解析不了，脚本用块级正则兜底（R8）。另有 `displayNameIsOrAre`（情报句"is/are"系动词）：**核心惯例=空串**（中文语序无需系动词，2026-10-02 Hyperion 定例）——非空的英文值应一并提取处置，太短过不了反向网、只能靠这里记住。
 5. **`designTypeColors` 键**：`config\settings.json` 的**键**是设计类型名，须译为与 CSV `tech/manufacturer` 中文值**精确一致**（否则不上色）且**键必须唯一**（事故：`Abyss`/`Abyssal` 都译"深渊" → `Duplicate key "深渊"` fatal）。原版没有颜色键的设计类型（如 Anomalous Phase-Tech）保持原样。
 6. **`customStarts.json`**：`config\exerelin\customStarts.json` 的 name/difficulty/desc。
-7. **rules.csv 行内列错位**：只译 `AddText "…"` 引号内文字，保留 `AddText`/颜色参数/引号（事故：3 行 flavor text 整行丢失）。
+7. **rules.csv 行内列错位**：只译 `AddText "…"` 引号内文字，保留 `AddText`/颜色参数/引号（事故：3 行 flavor text 整行丢失）。⚠️ 命令与引号间**空白可有可无**（`AddText"…"textGrayColor`，2026-10-02 Apex 实测）——正则一律写 `\s*`；script 列是 stragglers 盲区，交付前跑 `sweep_quoted_segments.js` 兜底（§1.5）。
 8. **全原版副本角色表**：`data\factions\fighter_wings.csv`、`weapon_categories.csv` 可能整表只含原版 id 行（势力"开放使用权"的副本）——**整表跳过不译**（在中文核心下会按 id 覆盖核心译名，属上游问题，别在汉化里"顺手修"）。
 9. **伪 JSON 解析**：`#` 注释、尾随逗号、Java float 后缀（`1.2f`）、BOM——一律用 `<skills>\shared\scripts\pseudojson.js`（`parseJsonLoose`），**禁止** `ConvertFrom-Json`/`JSON.parse`（铁律 R8）。
 10. **starmap / 代码命名联动**：`data\campaign\starmap.json` 的星系键与代码 `createStarSystem("Archimedes")`/`star.setName` 常量必须**同译**，否则星系不迁移定位；`custom_entities.json` 的 `defaultName` 与代码 `addCustomEntity(id,"显式名",…)` 两处译成一致。

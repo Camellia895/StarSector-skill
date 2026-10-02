@@ -45,6 +45,7 @@
 | `scan_stragglers.js` | green | sample | 漏译网；`sweep_sentences.js` 是其句子级补充 |
 | `check_jar_stragglers.js` | red | base | **交付 jar 英文残留闸门**：直接吃 jar 文件（避 `scan_stragglers.js` 对着补丁前副本跑出假警报），用 patch_map + skip 审计判定 A（要译却仍英文，必错）/ B（已记账跳过，允许）/ C（未记账）；A=C=0 才通过 |
 | `check_java_residue.js` | red | cond | 仅 Janino 源码 mod（无 jars、`data/plugins|scripts/*.java`）：与提取器不同解析路径的独立复查网，未覆盖英文字面量 = 0（2026-09 SiC Aux 事故：提取器行注释 bug 漏 79 条被它抓回） |
+| `sweep_quoted_segments.js` | yellow | cond | **data 层"引号段"兜底反查**（stragglers 的第二张网：抓其 script 列跳过 + JSON 数组两个盲区；2026-10-02 新增，Apex 市场风味文 4 行迁移丢译被它兜回——census 正则 `AddText\s+"` 漏 `AddText"无空格` 形态 + stragglers 跳过 script 列，双盲区叠加）。句子级未覆盖引号段须人工判：注释行/禁用行(#id)/无引用死文件/开发者注释是常见假阳性 |
 | `check_java_equiv.js` | red | cond | 仅 Janino 源码 mod：注入后骨架逐字节等价 + 字面量数一致 + 词法完整（= "只改了字面量内容"的机器证明；源码层 G4/G5 替代） |
 | `check_perfile_resolvability.py` | red | cond | 仅 janino mod（铁律 R22）：一文件一顶层公共类 + `import data.*` 有同名文件（0.98a 按文件名逐个按需编译，违反=启动 Fatal）；**批量探针全绿≠本闸门过**（2026-09-30 MagicMaster：批量 65/65 绿、游戏仍 Fatal） |
 | `JaninoProbe.java` | red | cond | 仅 janino mod：游戏自带 janino.jar 批量编译+加载全部源码类（签名级兼容闸门；javac 会为一文件多类报伪错，弃用） |

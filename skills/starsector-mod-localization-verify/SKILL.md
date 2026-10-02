@@ -40,6 +40,9 @@ node <skills>\shared\scripts\run_check.js --check=check_content.js --target=<Mod
 - [ ] 字段结构变化 = 0（除 `zh` 外不改任何字段：`file`/`id`/`field`/`line`/`locator`/`c`/元数据）
 - [ ] 占位符与变量不匹配 = 0：`%s`/`%d`/`%%`/`\n`/`\u0001`/`%PLAYER_NAME`/`%LORD_NAME`/`%c0`
 - [ ] `%s`/`%d` 有对应传参（没有传参就不要写占位符）；字面 `%` 写成 `%%`（铁律 R4）
+  ⚠️ **已知误报（2026-10-02 Apex 实测）**：`check_content.js` 对 `descriptions.csv` 图鉴列的"字面裸 %"
+  报 ERROR，但图鉴是 raw 渲染、不走 `String.format`（EN 基线同裸 `%`）——判假阳性的依据是
+  **对照英文基线同位置形态**，基线也裸 % 就不改（改成 `%%` 反而会显示成 `%%`）
 - [ ] 应同步的重复项一致（同 EN 按约定求同或求异，见 `content` §1）
 - [ ] 与旧版汉化的差异已记录（有意不沿用/有意修正）
 
@@ -83,6 +86,12 @@ node <skills>\shared\scripts\verify_all_data.js <data根目录>           # 易�
       坏了会在启动时 `Rules.o00000` 抛 `NumberFormatException` → 启动崩溃。
 - [ ] **data 层无未覆盖的英文残留（R14）**：`scan_data_stragglers.js` 0 候选。
       这条同样是**提取阶段**的 G1 闸门（那时拿英文原版当 mod 跑）。
+      ⚠️ stragglers 跳过 script 列与 JSON 数组 ⇒ 交付前补一张引号段反查网
+      `sweep_quoted_segments.js`（见 script-registry A 节；候选人工判）。
+- [ ] **EOL 旗红先判性质**（`check_eol.js` 报 mismatch 时）：逐文件 diff——
+      风格性破坏（换行风格被改）→ 用 `fix_csv_eol.js` 修复；
+      内容性差异（如 `"Open\nMarket"` 译作「开放市场」少一个格内换行，2026-10-02 Apex 实测）
+      = 豁免留档，不要为了凑字节一致把译文改坏。
 - [ ] rules `script` 列：弯引号 = 0、严格结构问题 = 0、**奇数引号行 = 0**
       （偶数个引号的"多参数命令"合法，如 `SetTextHighlights "a" "b" "c"`；脚本单列为 INFO，不计命中）
 - [ ] 缺字形字符种类 = 0 / 总出现 = 0
