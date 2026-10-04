@@ -83,8 +83,8 @@ shipRoles 35 变体 PASS / worldgen 0 FAIL。
 
 ### 3.0 骨架（两个类 + 一行注册）
 
-- `data.scripts.<Mod>ModPlugin extends BaseModPlugin`：`onNewGame()` 里做 Nexerelin 守卫（§4）再调世界生成；
-  `mod_info.json` 加 `"modPlugin": "data.scripts.<Mod>ModPlugin"`。
+- `data.scripts.<Mod>ModPlugin extends BaseModPlugin`：`onNewGame()` 里直接调世界生成（**推荐无条件生成**，
+  见 §4 守卫时序警告）；`mod_info.json` 加 `"modPlugin": "data.scripts.<Mod>ModPlugin"`。
 - `data.scripts.world.<Mod>WorldGen implements SectorGeneratorPlugin`（0.98a 仍在）：
   `generate(SectorAPI)` 里 `new <Mod>_系统类().generate(sector)` +
   `SharedData.getData().getPersonBountyEventData().addParticipatingFaction("<id>")` +
@@ -137,6 +137,12 @@ system.autogenerateHyperspaceJumpPoints(true, true);               // ⑦ 跳跃
 
 > **先查 `mods\nexerelin\data\config\exerelinFactionConfig\` 有没有该派系的内置配置**（Citadel 的
 > citadeldefenders 就有，含 spawnpoints）——有内置就不要在 mod 侧重做，改它属于 Nexerelin 本体的事。
+>
+> ⚠️ **onNewGame 里别用 `SectorManager.getCorvusMode()` 这类守卫决定是否生成**（CMC/Citadel 同款）：
+> Citadel 实证（2026-10-05 用户报告）——存档 `corvusMode=true`、日志零异常，但自建星系整个没生成
+> ⇒ 守卫在插件调用时刻读到的模式与最终模式不一致（时序/类加载器）。**首选无条件生成**：
+> Corvus 模式下 Nexerelin 按 spawnpoints 安置派系时星系已存在；随机模式下星系就在生成的星域里
+> （硬编码坐标有与随机星系重叠的小概率，接受或用控制台挪）。旧档世界已生成，无法补建，需开新档。
 
 1. `data\config\exerelinFactionConfig\<id>.json`：`playableFaction`/`corvusCompatible`/`rebelFleetSuffix`/
    `alignments`/`diplomacyTraits`/`startShipsSolo|CombatSmall|CombatLarge|CarrierSmall`/`startSpecialItems`…（抄 cmc.json）。
@@ -219,6 +225,11 @@ IDE 设置细节：starsector.wiki.gg/wiki/IntelliJ_IDEA_Setup。**给旧 mod �
     `GetClientRect`=0×0 → Bitmap 构造崩；主菜单日志标记可能早于窗口就绪 → 一次性查找窗口有竞态。
     已加 SW_RESTORE 自愈 + 30s 查找重试。深烟测 newgame 段 FAIL 时先看是不是自动化层（证据目录
     verdict.json 的 load 判定 PASS + 无游戏栈帧 ⇒ 别急着怀疑 mod）。
+17. **"派系只剩开局选项、星域里找不到派系和星系" = onNewGame 生成被跳过**（Citadel 0.9.2 实证）：
+    取证三连——存档 `corvusMode` 字段值、星系实体 id 计数、日志有无 `at data.scripts.world` 栈帧；
+    三者组合（true / 0 / 无异常）⇒ 生成被静默跳过而非崩溃。元凶多为 onNewGame 里的模式守卫
+    （坑 16 前述时序），修法=无条件生成。注意带 nexerelin 的深烟测自动化过不了 NGC 配置页
+    （rc=3 卡配置屏属预期，验证改走用户实测）。
 
 ## 完成标准
 
