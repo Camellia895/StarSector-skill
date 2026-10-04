@@ -88,3 +88,4 @@
 {"t": "2026-10-04T09:19:29.000Z", "check": "check_java_equiv.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "11 个 .java 骨架/字面量全等（本任务未动 java 层）"}
 {"t": "2026-10-04T09:19:29.000Z", "check": "verify_strings_local.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "strings.json 等价闸门自写版（verify_strings_json.js 因裸键解析崩，见 script-registry pseudojson 行）"}
 {"t":"2026-10-04T16:48:18.174Z","check":"check_worldgen_ids.js","target":"Celestial_Mount_Circle","exit":0,"hit":false,"probe":false,"note":"新闸门首次正账：CMC 阳性对照全绿（2026-10-05 制作流程沉淀）"}
+{"t":"2026-10-04T16:49:19.504Z","check":"check_worldgen_ids.js","target":"Celestial_Mount_Circle","exit":0,"hit":false,"probe":false,"note":"新闸门首次正账：CMC 阳性对照 16 文件全绿；此前 _tmp 阴性对照注入 11 种坏 id 全拦"}

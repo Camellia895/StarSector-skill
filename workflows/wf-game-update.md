@@ -24,6 +24,7 @@
 | 情况 | 走法 |
 |---|---|
 | **目标准入版本 ≤0.8x（0.9 以下）** | 主体流程 + **必读 skill §7 专项**：三个 faction/wing 闸门（`check_wing_data_schema` / `check_faction_shiproles` / `check_faction_known_lists`）+ **读档冒烟**（verifyFactionData 在读档期跑） |
+| **给这个旧 mod 新增/补做派系、星系、星球**（内容制作，不是修坏） | `skills\starsector-mod-legacy-content\SKILL.md`（路线判定 + 配方 + id 闸门 `check_worldgen_ids.js`）；做出来的东西仍按本流程过闸门与冒烟 |
 | Java 源码 + jar | 主体流程（下 §2），编译探测 + jar↔源码一致性证明 |
 | Kotlin 源码 + jar | `starsector-mod-kotlin-rebuild` 的编译链；编译探测/一致性仍按主体流程 |
 | **只有 jar（无源码）** | 主体流程 §1.1（先只读审计 → 确认 API 真断 → 只替换少数类 → 才考虑整包重编译）；反编译用 `starsector-jar-decompile` |

@@ -32,6 +32,7 @@
 | `check_refs.js` | red | cond | 改过装配/舰船/武器/贴图引用 |
 | `check_mission_refs.js` | red | cond | 改过任务（mission）或删过 variant/武器/舰体时：任务引用闭包，含 jar 任务类字节取证与惰性源码降级（2026-09-23 YRXP 沉淀：点击任务即崩） | G5 |
 | `check_faction_file.js` | red | cond | `.faction` 必填键/资产/登记（缺 `names` = 启动崩） |
+| `check_worldgen_ids.js` | red | cond | **Java 世界生成 id 语义闸门**（starsector-mod-legacy-content 沉淀）：worldgen 代码里的字符串/常量 id（行星/恒星类型、条件、产业、子市场、商品、物品、派系）编译器不查、加载期不崩或运行期才崩；阳性对照=CMC 16 文件全绿、阴性注入 11 种坏 id 全拦 |
 | `LoadTest.java` | red | cond | 离线类加载/实例化 + 脚本类存在性（skill 自带脚本，见 `script-registry.md` F 节） |
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3）；零宽字符单列提示、不计命中 |
 | `check_content.js` | yellow | base | 空译文/占位符/字段结构（skill 自带脚本） |

@@ -13,7 +13,8 @@ description: 把一个旧版本 Starsector（远行星号）mod（0.7x/0.8x/0.95
 > 分工：渲染坐标专项 → `starsector-mod-render-fix`（第 7 步先判定是否命中）；
 > jar 已汉化要改字符串 → `starsector-mod-localization-apply`（常量池补丁，不重编译）；
 > Kotlin 编译链 → `starsector-mod-kotlin-rebuild`；打包交付 → `starsector-mod-delivery`；
-> 引擎行为存疑 → `starsector-engine-diagnose`。
+> 引擎行为存疑 → `starsector-engine-diagnose`；
+> 为旧 mod **新增**派系/星系/星球内容（而非修坏）→ `starsector-mod-legacy-content`（§7 闸门共用）。
 > **必读**：`<skills>\shared\env.md`（路径/JDK/三条环境毒点）、`<skills>\shared\iron-rules.md`、`<skills>\shared\conventions.md`。
 
 ## 1. 判定树：先给 mod 分类（决定走哪条路）
@@ -371,6 +372,7 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 ## 7. 0.9 以下的 mod（0.7x/0.8x）专项断点（AI War 0.7.2a→0.98a 全量沉淀）
 
 > 适用判定：`mod_info.json` 的 `gameVersion` ≤ 0.8x。除主体十步外**必过本节**。
+> 要给这个 mod **新增/补做**派系、星系、星球（而非修坏的）→ `starsector-mod-legacy-content`（本节闸门共用）。
 > 这些断点编译器全查不出、且沿加载顺序**逐层暴露**：启动 spec 加载（wing_data）→ faction shipRoles
 > （NPE）→ faction knownShips（schema）→ **读档期** verifyFactionData（knownHullMods id）——
 > AI War 实际连爆 5 轮。三个专属闸门（`shared\scripts\`，均已登记 script-registry.md D 节）：
