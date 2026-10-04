@@ -89,3 +89,9 @@
 {"t": "2026-10-04T09:19:29.000Z", "check": "verify_strings_local.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "strings.json 等价闸门自写版（verify_strings_json.js 因裸键解析崩，见 script-registry pseudojson 行）"}
 {"t":"2026-10-04T16:48:18.174Z","check":"check_worldgen_ids.js","target":"Celestial_Mount_Circle","exit":0,"hit":false,"probe":false,"note":"新闸门首次正账：CMC 阳性对照全绿（2026-10-05 制作流程沉淀）"}
 {"t":"2026-10-04T16:49:19.504Z","check":"check_worldgen_ids.js","target":"Celestial_Mount_Circle","exit":0,"hit":false,"probe":false,"note":"新闸门首次正账：CMC 阳性对照 16 文件全绿；此前 _tmp 阴性对照注入 11 种坏 id 全拦"}
+{"t": "2026-10-04T17:01:08.000Z", "check": "check_zh_quality.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "回传 692 条实译 0 机翻 0 边缘"}
+{"t": "2026-10-04T17:01:08.000Z", "check": "normalize_zh_entries.js", "target": "JYD", "exit": 0, "hit": true, "probe": false, "note": "R1 弯引号 19 条（01_data）"}
+{"t": "2026-10-04T17:01:08.000Z", "check": "apply_zh.js v2 全量注入", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "692 注入/4 保留原文/1 空条目(faction description 本为空)/miss 0；修复值锚定 2 组正则的回调偏移量拼入 bug 后 mod_info 干净"}
+{"t": "2026-10-04T17:01:08.000Z", "check": "check_java_equiv.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "java 弹窗字面量注入后骨架/字面量数/词法全等"}
+{"t": "2026-10-04T17:01:08.000Z", "check": "check_font_glyphs.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "译轮修复 α/β/Ⅲ 后 0 缺字形"}
+{"t": "2026-10-04T17:01:08.000Z", "check": "check_encoding.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "交付前 0 BOM/0 invalid（ai 归档 U+FFFD 还原为撇号后）"}

@@ -9,8 +9,9 @@ description: 为旧版（0.9 以下，≤0.8x）Starsector（远行星号）mod 
 **不做**：整体升级（→ `wf-game-update` + `starsector-mod-game-upgrade`）、修跑不通（→ `wf-mod-fix`）、CSS 星系制作细节（→ `starsector-mod-star-system`）。
 **上游/下游**：常被 `wf-game-update` §1 分派表点名；产出后闸门与冒烟仍走该 wf，交付走 `starsector-mod-delivery` 简化档。
 **必读**：`shared\env.md`、`shared\iron-rules.md`（R8 宽松 JSON）、`shared\conventions.md`（闸门编号）。
-**实战参照**：`mods\Celestial Mount Circle`（下称 CMC，仙山密教）——0.9 时代 mod 已跑在 0.98a-RC8，
-本文每个配方都有 CMC 对应文件可整段照抄。**改了本 skill 的脚本/配方，先对 CMC 跑一遍闸门，全绿才可信。**
+**实战参照**：`mods\Celestial Mount Circle`（下称 CMC，仙山密教）与 `mods\Citadel`（城塞财团，0.8.3Dev2 已适配 0.98a +
+汉化，2026-10-05 按 skill 完成内容现代化 0.9.1）。本文每个配方都有对应文件可整段照抄。
+**改了本 skill 的脚本/配方，先对 CMC 与 Citadel 各跑一遍闸门，全绿才可信。**
 
 ## 0. 三条已核实的前提（动手前先记住，别再查）
 
@@ -75,6 +76,8 @@ node <skills>\skills\starsector-mod-legacy-content\scripts\check_worldgen_ids.js
 ```
 
 **阳性对照基线**：CMC 四闸 = file 全过（两条惯例键警告属预期）/ known* 39 条 PASS / 无 shipRoles / worldgen 0 FAIL。
+Citadel 四闸 = file 解析失败属已知假阳性（`noPatrols:False` 游戏能读，JsonProbe 实证）/ known* 72 条 PASS /
+shipRoles 35 变体 PASS / worldgen 0 FAIL。
 
 ## 3. 星系 + 星球（Java 路线，CMC 配方七步）
 
@@ -86,6 +89,14 @@ node <skills>\skills\starsector-mod-legacy-content\scripts\check_worldgen_ids.js
   `generate(SectorAPI)` 里 `new <Mod>_系统类().generate(sector)` +
   `SharedData.getData().getPersonBountyEventData().addParticipatingFaction("<id>")` +
   一组 `setRelationship(Factions.X, 值)`（CMCWorldGen.java 照抄）。
+- **给同时代其它 mod 势力设关系必须判空**（旧 mod 常硬编码友 mod 派系 id，对方没装=静默无效，
+  Citadel 对 blackrock/shadow_industry/exigency 等 9 处实证）：
+
+```java
+private static void setRelIfPresent(SectorAPI sector, FactionAPI f, String id, RepLevel lv) {
+    if (sector.getFaction(id) != null) f.setRelationship(id, lv);
+}
+```
 
 ### 3.1 七步（代码骨架摘自 CMC_PeachGarden.java，完整实现照抄该文件）
 
@@ -124,6 +135,9 @@ system.autogenerateHyperspaceJumpPoints(true, true);               // ⑦ 跳跃
 
 ## 4. Nexerelin 适配（可选，CMC 实证"四件套 + 一守卫"）
 
+> **先查 `mods\nexerelin\data\config\exerelinFactionConfig\` 有没有该派系的内置配置**（Citadel 的
+> citadeldefenders 就有，含 spawnpoints）——有内置就不要在 mod 侧重做，改它属于 Nexerelin 本体的事。
+
 1. `data\config\exerelinFactionConfig\<id>.json`：`playableFaction`/`corvusCompatible`/`rebelFleetSuffix`/
    `alignments`/`diplomacyTraits`/`startShipsSolo|CombatSmall|CombatLarge|CarrierSmall`/`startSpecialItems`…（抄 cmc.json）。
 2. `data\config\exerelinFactionConfig\mod_factions.csv`：列头 `faction`，登记 id（**大小写敏感**）。
@@ -150,11 +164,15 @@ node <skills>\skills\starsector-mod-legacy-content\scripts\check_worldgen_ids.js
 覆盖：`Conditions/Industries/Submarkets/Commodities/Items/Factions/Planets/StarTypes.<常量>` →
 解析 `_work\_api_src` 的 `impl\campaign\ids\*.java` 常量值后对照注册表（core+已启用 mod+被测 mod）；
 调用点字面量：`initStar` 第 2 参（恒星类型）、`addPlanet` 第 4 参（行星类型）、`addCondition`/`addIndustry`/
-`addSubmarket` 第 1 参、`getFaction`/`setRelationship`/`addParticipatingFaction`/`addMarketplace` 第 1 参（派系）。
-验证记录：CMC 阳性 16 文件全绿；注入 11 种坏 id（含 API 无此常量）全部 FAIL。
+`addSubmarket` 第 1 参、`getFaction`/`setRelationship`/`addParticipatingFaction`/`addMarketplace` 第 1 参（派系）、
+`setInteractionImage` 第 1+2 参（插图类别/键 → settings.json graphics 类别注册表；核心大文件解析失败时
+自动降级为 graphics 块正则提取——core settings.json 含 `:.5` 裸浮点，parseJsonLoose 不认，铁律 R8）。
+验证记录：CMC 阳性 16 文件全绿；Citadel 阳性 29 文件全绿；注入 11 种坏 id + `("illustrations","twin_cities")`
+（真崩溃案例）全部 FAIL。
 
 之后照 `wf-smoke-first` **深烟测（-NewGame）+ 读一次档**：`verifyFactionData` 在**读档期**逐条核对 known*，
 只进主菜单测不出来（AI War 五轮炸点教训）。游戏内检查：新档星系出现 → 市场/产业正确 → 势力舰队带自机翼 → 关系值生效。
+存档取证：新 `save_*\campaign.xml` grep 星系实体 id（如 citadelprime/gateway）与派系 id 计数 >0。
 
 ## 6. 项目骨架（旧 mod 没有像样源码工程时）
 
@@ -181,6 +199,26 @@ IDE 设置细节：starsector.wiki.gg/wiki/IntelliJ_IDEA_Setup。**给旧 mod �
 9. 星系位置撞核心世界：原点 ±8000px 内就有 Hybrasil/Valhalla 等（§3.1 位置红线）。
 10. **改闸门/脚本先对 CMC 跑**（阳性对照）；怀疑闸门失效时，注入一个坏 id 看它会不会 FAIL（阴性对照）——
     本 skill 的脚本两项都做过并留档于此。
+11. **`setInteractionImage` 的"怪类别"可能是 mod 自定义，不是拼写错误**：Citadel 的 `illustrationz` 是
+    settings.json graphics 里定义的自定义插图类别（streets/twin_cities），把它"改回"核心 `illustrations`
+    ⇒ 开局世界生成直接 `RuntimeException: Texture [twin_cities] not found`（**不是静默**，用户会看到错误弹窗，
+    2026-10-05 实际翻车一次）。判据=查 mod+core 合并的 graphics 类别注册表，交给闸门 B2，别靠眼睛。
+12. **世界生成类常被常量池汉化**（天体/市场/空间站显示名：Citadel 的 Citadel.class 有 10 键中文名）。
+    改这类代码的正确姿势：①先 `scan_jar_cjk` 该类摸清中文键；②源码照常改（英文）；
+    ③用"中文化临时源码"直接编译（10 键 EN→ZH 机械替换，等效常量池补丁、零字节码手术）；
+    ④`cmp_build` 归一化对比（基线编译 vs 原 jar 应 diff=0）+ `dump_utf8` 多重集差（应只剩声明改动）+
+    条目哈希比对（原位替换，其余条目逐字节一致）。
+13. **Nexerelin 兼容先查它自带的**：`mods\nexerelin\data\config\exerelinFactionConfig\` 内置了一大批旧 mod
+    派系配置（citadeldefenders/exigency/exipirated…，含 startShips/corvus_spawnpoints/customStations）。
+    有内置 ⇒ mod 侧**不要**再建四件套（重复/冲突）；没有才按 §4 自建。
+14. **上游 jar 可能带 central-dir CRC=0 的条目**（Citadel 31 处，JVM 按 local header 读、游戏无感）：
+    `7z x` 会拒写、`unzip` 照常解内容（非零退出码属预期）——条目级比对用 unzip；**不要**为此整体重打 jar。
+15. **cmp_build 的 classpath 参数传错会假绿**：javap "找不到类" 的失败被当作空输出=两侧"相等"。
+    第 3/4 参必须传**各自类目录**（不是 API jar）。采信前看输出里有没有"找不到类"。
+16. 烟测自动化的窗口坑（`_work\explore\modcheck\NewGame.ps1`，2026-10-05 已修）：游戏窗口最小化时
+    `GetClientRect`=0×0 → Bitmap 构造崩；主菜单日志标记可能早于窗口就绪 → 一次性查找窗口有竞态。
+    已加 SW_RESTORE 自愈 + 30s 查找重试。深烟测 newgame 段 FAIL 时先看是不是自动化层（证据目录
+    verdict.json 的 load 判定 PASS + 无游戏栈帧 ⇒ 别急着怀疑 mod）。
 
 ## 完成标准
 

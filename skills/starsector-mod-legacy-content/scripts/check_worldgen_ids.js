@@ -267,6 +267,50 @@ const CALL_CHECKS = [
   ['addMarketplace', 0, 'Factions', '派系'],
 ];
 
+// setInteractionImage(类别, 键)：类别必须是 mod/core settings.json "graphics" 里定义的类别，
+// 且键必须在该类别下——"长得像拼写错误的自定义类别"（Citadel 的 illustrationz，2026-10-05 实证）
+// 与真拼写错误（键不存在）只能靠注册表区分，引擎对两者都只静默失败或晚崩。
+function collectIllustrationCats() {
+  const { parseJsonLoose } = require(path.join(__dirname, '..', '..', '..', 'shared', 'scripts', 'pseudojson.js'));
+  const cats = new Map(); // cat -> Set(keys)
+  const addCat = (cat, obj) => {
+    if (!cats.has(cat)) cats.set(cat, new Set());
+    if (obj && typeof obj === 'object') for (const k of Object.keys(obj)) cats.get(cat).add(k);
+  };
+  for (const root of [CORE, ...enabledMods(), modDir]) {
+    const p = path.join(root, 'data', 'config', 'settings.json');
+    if (!fs.existsSync(p)) continue;
+    const raw = readText(p);
+    try {
+      const g = parseJsonLoose(raw).graphics || {};
+      for (const cat of Object.keys(g)) addCat(cat, g[cat]);
+    } catch (e) {
+      // 核心大 settings.json 常含 parseJsonLoose 不支持的裸写法（如 ":.5"，R8 合法）。
+      // 降级：定位 "graphics" 块（括号配平），类别均为扁平键→字符串映射，用正则提取。
+      const gi = raw.search(/"graphics"\s*:\s*\{/);
+      if (gi < 0) { console.error(`! ${p}：解析失败且无 graphics 块（${e.message}）`); continue; }
+      let depth = 0, i = raw.indexOf('{', gi);
+      const start = i;
+      for (; i < raw.length; i++) {
+        if (raw[i] === '{') depth++;
+        else if (raw[i] === '}') { depth--; if (depth === 0) break; }
+      }
+      const gblock = raw.slice(start, i + 1);
+      const catRe = /"([A-Za-z0-9_]+)"\s*:\s*\{([^{}]*)\}/g;
+      let m;
+      while ((m = catRe.exec(gblock))) {
+        const keys = new Set();
+        const kRe = /"([^"]+)"\s*:/g;
+        let km;
+        while ((km = kRe.exec(m[2]))) keys.add(km[1]);
+        if (!cats.has(m[1])) cats.set(m[1], keys);
+        else for (const k of keys) cats.get(m[1]).add(k);
+      }
+    }
+  }
+  return cats;
+}
+
 for (const f of files) {
   const rel = path.relative(modDir, f) || path.basename(f);
   const raw = readText(f);
@@ -291,6 +335,17 @@ for (const f of files) {
       if (!registries[regKey].set.has(lit)) {
         add('FAIL', call.file, call.line, `${callee}(…) 第${idx + 1}参 "${lit}"：${label}不存在于注册表`);
       }
+    }
+  }
+  // B2. setInteractionImage(类别, 键) → settings.json graphics 类别注册表
+  const illuCats = collectIllustrationCats();
+  for (const call of extractCalls(text, 'setInteractionImage', rel)) {
+    const cat = literalOf(call.args[0] || '');
+    const key = literalOf(call.args[1] || '');
+    if (cat == null) continue;
+    if (!illuCats.has(cat)) { add('FAIL', call.file, call.line, `setInteractionImage 类别 "${cat}"：mod/core settings.json 的 graphics 未定义该类别`); continue; }
+    if (key != null && !illuCats.get(cat).has(key)) {
+      add('FAIL', call.file, call.line, `setInteractionImage 键 "${key}"：类别 "${cat}" 下不存在（mod+core 合并）`);
     }
   }
 }
