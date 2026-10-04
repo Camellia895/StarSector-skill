@@ -77,3 +77,14 @@
 {"t":"2026-09-19T14:30:12.288Z","check":"check_eol.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
 {"t":"2026-09-19T14:30:22.997Z","check":"scan_data_stragglers.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
 {"t":"2026-09-19T14:30:23.177Z","check":"verify_all_data.js","target":"TVVFW","exit":0,"hit":false,"probe":false,"note":""}
+{"t": "2026-10-04T09:19:29.000Z", "check": "cmp_csv_struct.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "9 CSV 结构全等（bounty 格内换行+10 属旧译内容差异）"}
+{"t": "2026-10-04T09:19:29.000Z", "check": "cmp_csv_cells.js", "target": "JYD", "exit": 0, "hit": true, "probe": false, "note": "总差异 421=注入数 440-17(faction)-2(strings)；40'未登记'为工具 id 列名假设(bounty_id≠id)，逐条核对为已登记注入"}
+{"t": "2026-10-04T09:19:29.000Z", "check": "check_eol.js", "target": "JYD", "exit": 0, "hit": true, "probe": false, "note": "唯一 DIFF=bounty 格内 CRLF 换行 +10（旧译多行 greeting，风格仍纯 CRLF）"}
+{"t": "2026-10-04T09:19:29.000Z", "check": "check_encoding.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "0 BOM；基线的 1 个无效 UTF-8(descriptions.csv 乱码字节)随注入消失→0"}
+{"t": "2026-10-04T09:19:29.000Z", "check": "check_csv_quotes.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "8 个改动 CSV 全过"}
+{"t": "2026-10-04T09:19:29.000Z", "check": "check_font_glyphs.js", "target": "JYD", "exit": 1, "hit": true, "probe": false, "note": "旧译自带 α/β/Ⅲ ×3 缺字形——已入清单复核注记，交译者本轮修正"}
+{"t": "2026-10-04T09:19:29.000Z", "check": "verify_all_data.js", "target": "JYD", "exit": 1, "hit": true, "probe": false, "note": "3 处=variants 短词口径排除 + 2 条弃用旧译待译（Demi-Prospector/Compliance Fleet），均留档"}
+{"t": "2026-10-04T09:19:29.000Z", "check": "check_designtype.js", "target": "JYD", "exit": 1, "hit": true, "probe": false, "note": "未注册设计类型=EN 基线同构（JYD Kinetic 等 4 值），行为与英文版一致，保留原文指引入注记"}
+{"t": "2026-10-04T09:19:29.000Z", "check": "check_java_equiv.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "11 个 .java 骨架/字面量全等（本任务未动 java 层）"}
+{"t": "2026-10-04T09:19:29.000Z", "check": "verify_strings_local.js", "target": "JYD", "exit": 0, "hit": false, "probe": false, "note": "strings.json 等价闸门自写版（verify_strings_json.js 因裸键解析崩，见 script-registry pseudojson 行）"}
+{"t":"2026-10-04T16:48:18.174Z","check":"check_worldgen_ids.js","target":"Celestial_Mount_Circle","exit":0,"hit":false,"probe":false,"note":"新闸门首次正账：CMC 阳性对照全绿（2026-10-05 制作流程沉淀）"}
