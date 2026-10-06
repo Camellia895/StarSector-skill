@@ -84,6 +84,11 @@
 - 本仓库现成工具：`_work\mod_work\<Mod>\tools\balance_apply.js`（配方驱动，CSV 状态机防 R1 引号事故、
   保持原行尾 R17、UTF-8 无 BOM、跳过 `#` 行 R21；JSON 走 parse→mutate→stringify(2空格)，
   应用前先做"空转对照"——原文件 parse→stringify 与原文 byte 比对，不一致就停）。
+- ⚠️ **多行记录坑（2026-10-07 RYAZ 实测）**：hull_mods.csv 等文件的 desc 单元格含**内嵌换行**
+  （一条记录占多个物理行），**行级状态机改写目标行会把记录拆坏**（引号提前闭合、后续行散架）。
+  共享版 `shared\scripts\balance_apply.js` 已改为检测到目标行是多行记录片段即 **fail**（不许静默）；
+  此时改用**记录级**工具（范例：`_work\mod_work\RYAZ\tools\fix_hullmods_apply.js`：
+  parse→按记录定位→整条 RFC 序列化重写→其余记录原字节保留）。干跑不算数，改完必须过 G3'。
 - 一次跑完全部 items，输出 `applied / skipped(conflict) / failed` 三张表；
   **failed=0 才进下一阶段**，skipped 逐条人工复核。
 
@@ -182,6 +187,11 @@
 - 本仓库现成工具：`_work\mod_work\<Mod>\tools\balance_apply.js`（配方驱动，CSV 状态机防 R1 引号事故、
   保持原行尾 R17、UTF-8 无 BOM、跳过 `#` 行 R21；JSON 走 parse→mutate→stringify(2空格)，
   应用前先做"空转对照"——原文件 parse→stringify 与原文 byte 比对，不一致就停）。
+- ⚠️ **多行记录坑（2026-10-07 RYAZ 实测）**：hull_mods.csv 等文件的 desc 单元格含**内嵌换行**
+  （一条记录占多个物理行），**行级状态机改写目标行会把记录拆坏**（引号提前闭合、后续行散架）。
+  共享版 `shared\scripts\balance_apply.js` 已改为检测到目标行是多行记录片段即 **fail**（不许静默）；
+  此时改用**记录级**工具（范例：`_work\mod_work\RYAZ\tools\fix_hullmods_apply.js`：
+  parse→按记录定位→整条 RFC 序列化重写→其余记录原字节保留）。干跑不算数，改完必须过 G3'。
 - 一次跑完全部 items，输出 `applied / skipped(conflict) / failed` 三张表；
   **failed=0 才进下一阶段**，skipped 逐条人工复核。
 
@@ -198,6 +208,11 @@
    ⚠️ `jar uf -C` 后**一次只跟一个文件**——第二个文件会按当前目录解析、假报"没有这个文件或目录"
    （与文件名含不含 `$` 无关；env.md §4.10）；**含内部类的类必须把 `Foo$Bar.class` 一并入包**，
    否则要到加载探针/战斗期才发现。
+   ⚠️ **jar 本地头 CRC=0 坑（2026-10-07 RYAZ 实测）**：经 rezip.js 重打包过的 jar，全部条目的
+   本地头（和中央目录）CRC 字段为 0——游戏按中央目录读无恙，但 `jar uf`（ZipInputStream 流式校验）
+   报 `invalid entry CRC` 且**更新静默失败**。先用
+   `_work\mod_work\RYAZ\tools\fix_local_crc.js <jar>`（逐条解压算真实 CRC 回填本地头+中央目录，
+   压缩数据不动）修复后再 `jar uf`；装完必须解包回读核对新类确已入包。
 4. 注册：`data\hullmods\hull_mods.csv` 加行（id/中文名/desc/script 列，内置专用则 `hiddenEverywhere` 留空不外显）；
    目标舰 `.ship` 的 `builtInMods` 数组追加该 id。
 5. 编译自证（**类链接探针**，实战必备）：解包回读 class 魔数 `CAFEBABE`、major=52；
@@ -249,3 +264,11 @@
   `_work\mod_work\FDS_ROTS\out\{revision_items, value_conflicts, assumptions}.*` 与 mod 根 `BALANCE_PATCH.md`；
   DP 系矛盾、塔利/忏悔别字、"中后方4槽"判定等一手经验都已回灌本文相应章节。
 - **烟测战果**：第一轮深烟测加载 PASS 但建存档被弹窗挡住 ⇒ 根因是系统 id 凭记忆写错（加速填弹器/导弹自动工厂的正确 id = `ammofeed`/`forgevats`，§1.1 字典已修正）——**烟测 newgame 段失败先查自己的改动，再怀疑脚手架**；配套补了"类链接探针"（§3 第 5 步）。
+
+- **2026-10-07 RYAZ 2.0.1**（16 舰船/槽位项 + 30 武器项 + 10 战机项 + 30 船插项 + 新机制"法术模块"×4）：
+  配方与结果见 `_work\mod_work\RYAZ\out\{revision_items, value_conflicts, assumptions}.*` 与 mod 根 `BALANCE_PATCH.md`。
+  一手经验已回灌：§2 多行记录坑 + §3 jar CRC 坑；光束开火间隔公式（chargeup+burst+chargedown+burstDelay，
+  原版速子长矛持续 DPS 交叉验证）已由本次 6 组"原为"值反向证实。另：深烟测 newgame 段
+  `fail_nostart` 两次复现但游戏画面正常（按钮可见、探针 0.048<0.08）= 脚手架亮度探针边缘化，
+  处置=向存活窗口手动 PostMessage 'G' 完成建档验证（`manual_finish_newgame.ps1`）；
+  **残留游戏进程（各 17GB）会拖垮后续自动化**，重测前先 tasklist 清场。

@@ -20,6 +20,24 @@ if (!modRoot || !recipePath) { console.error('用法: node balance_apply.js <mod
 const recipe = JSON.parse(fs.readFileSync(recipePath, 'utf8'));
 
 // ---------- CSV 状态机 ----------
+// 返回 {cells, complete}; complete=false ⇒ 该物理行是"内嵌换行多行记录"的片段(RYAZ 2026-10-07 事故:
+// 行级改写会把多行 desc 记录拆坏)。调用方对目标行必须检查 complete, 不完整即 fail。
+function splitCsvLineChecked(line) {
+  const out = []; let cur = '', q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (q) {
+      if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else {
+      if (c === '"') q = true;
+      else if (c === ',') { out.push(cur); cur = ''; }
+      else cur += c;
+    }
+  }
+  out.push(cur);
+  return { cells: out, complete: !q };
+}
 function splitCsvLine(line) {
   const out = []; let cur = '', q = false;
   for (let i = 0; i < line.length; i++) {
@@ -139,6 +157,8 @@ for (const item of recipe.items) {
       if (ci < 0) throw new Error(`列不存在: ${column}`);
       const ri = rec.lines.findIndex((l, i) => i > 0 && !l.startsWith('#') && splitCsvLine(l)[rec.header.indexOf('id')] === matchId);
       if (ri < 0) throw new Error(`找不到 id=${matchId}`);
+      if (!splitCsvLineChecked(rec.lines[ri]).complete)
+        throw new Error(`id=${matchId} 所在记录含内嵌换行(多行引用单元格)，行级状态机会拆坏记录；请改用记录级工具(参照 _work\\mod_work\\RYAZ\\tools\\fix_hullmods_apply.js)`);
       const cells = splitCsvLine(rec.lines[ri]);
       actual = cells[ci];
       apply = () => { cells[ci] = item.value; rec.lines[ri] = joinCsvRow(cells); rec.dirty = true; saveCsv(rec); };
@@ -172,6 +192,8 @@ for (const item of recipe.items) {
         return c[idCi] === matchId && (type === undefined || c[tyCi] === type);
       });
       if (ri < 0) throw new Error(`找不到描述行 id=${matchId}${type ? ' type=' + type : ''}`);
+      if (!splitCsvLineChecked(rec.lines[ri]).complete)
+        throw new Error(`id=${matchId} 所在记录含内嵌换行(多行引用单元格)，行级状态机会拆坏记录；请改用记录级工具(参照 _work\\mod_work\\RYAZ\\tools\\fix_hullmods_apply.js)`);
       const cells = splitCsvLine(rec.lines[ri]);
       actual = cells[txCi];
       const has = item.assertContains || null;
