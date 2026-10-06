@@ -221,11 +221,17 @@
 
 1. **`BALANCE_PATCH.md`**（mod 根，双语，可转发）：意见来源 → 每舰/武器/战机前后值表 →
    **矛盾清单**（1.2-1）→ **假设清单**（1.2-2/3）→ 未动区域与理由。
-2. `项目说明.md`（若有）补一节"强度调整记录"；git commit（mod 仓库，信息=动作：对象；原因）。
-3. 台账：`_work\mod_work\<Mod>\` 留 revision_items.json / value_conflicts.md / assumptions.md / 工具脚本；
+2. **`Changelog.txt` 记录一笔（用户要求过，默认必做）**：⚠️ 先验编码再写（上游 changelog 常为
+   ASCII/GBK，禁 UTF-8 覆盖 GBK=全文乱码；env.md §3），保持原行尾与**制表符缩进**，新条目**置顶**，
+   格式沿用既有 `[日期] /(版本) / Changes: / 分类:` 结构；标题行标注"local balance revision"并指向 BALANCE_PATCH.md。
+3. **详细说明 docx（中文交付件，用户要才做）**：python-docx 生成（`pip install python-docx`，样式设
+   `w:eastAsia=微软雅黑`），结构=头部元信息表/背景/舰船·武器·战机逐表前后值/新船插专章/文本改动/执行口径/矛盾清单/验证与回滚；
+   落 `_work\mod_work\<Mod>\out\`（**不放 mod 根**，避免混进交付 zip）。
+4. `项目说明.md`（若有）补一节"强度调整记录"；git commit（mod 仓库，信息=动作：对象；原因）。
+5. 台账：`_work\mod_work\<Mod>\` 留 revision_items.json / value_conflicts.md / assumptions.md / 工具脚本；
    新增**跨 mod 可复用**脚本才进 `<skills>\shared\scripts\` 并登记 `script-registry.md`；
    新坑固化为 iron-rule 或本 wf 增补（R 编号）。
-4. 交付 zip（可选，用户要才做）：`starsector-mod-delivery` 简化档。
+6. 交付 zip（可选，用户要才做）：`starsector-mod-delivery` 简化档。
 
 ## 完成标准
 
@@ -233,6 +239,7 @@
 - [ ] 每条意见都有 item 与回链；`applied+skipped+failed = 意见总数`，failed=0；
 - [ ] 原值冲突 100% 记录进 `value_conflicts.md`，指代假设 100% 记录进 `assumptions.md`；
 - [ ] G3'/译文零漂移/G5/G5'/深烟测 全过；改动清单 = 配方清单（git diff 无计划外差异）；
+- [ ] Changelog.txt 已按原编码/制表符风格置顶记一笔（或注明本次不记的理由）；
 - [ ] `BALANCE_PATCH.md` 可独立转发（外人不懂聊天记录也能看懂为什么这么改）；
 - [ ] mod 仓库 git 提交 + 台账/索引更新。
 
