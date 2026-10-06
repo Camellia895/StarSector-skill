@@ -14,6 +14,8 @@
 //   4. knownShips/Weapons/Fighters 的显式 id 存在；tags 标签在 mod 或 core 的对应 spec 上至少出现一次
 //   5. shipRoles 引用的变体 id 存在（mod + core variants 目录）
 //   6. factions.csv（若存在）已登记该 .faction
+//   7. descriptions.csv 有 `<id>,FACTION` 派系介绍行（缺失不崩，但情报页/Nexerelin 选派系页
+//      无势力描述可显示——2026-10-05 IFR 用户报告实证；阳性对照 CMC/Citadel 各有且仅有一条）
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -174,6 +176,20 @@ for (const f of facFiles) {
     const t = fs.readFileSync(fcCsv, 'utf8');
     if (!t.includes('data/world/factions/' + f)) fail(`${f} 未登记进 data/world/factions/factions.csv`);
     else ok(`${f} 已登记 factions.csv`);
+  }
+
+  // descriptions.csv 派系介绍行（覆盖原版的同名文件除外——原版派系自带介绍）
+  if (!isCoreOverride) {
+    const fid = typeof j.id === 'string' ? j.id : f.replace(/\.faction$/, '');
+    const descPath = path.join(MOD, 'data/strings/descriptions.csv');
+    if (!fs.existsSync(descPath)) {
+      fail(`${f} 无 data/strings/descriptions.csv，缺 ${fid},FACTION 派系介绍行`);
+    } else {
+      const dt = fs.readFileSync(descPath, 'utf8');
+      if (!new RegExp('^' + fid + ',FACTION\\s*,', 'm').test(dt)) {
+        fail(`${f} descriptions.csv 缺 ${fid},FACTION 行（情报页/Nexerelin 选派系页将无势力介绍）`);
+      } else ok(`${f} 派系介绍 ${fid},FACTION 行在位`);
+    }
   }
 }
 

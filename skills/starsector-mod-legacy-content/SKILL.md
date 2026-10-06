@@ -45,6 +45,7 @@ mod 有 jar 或源码（或本次升级本来就要重编译）？
 | `data\world\factions\factions.csv` | 登记：列头 `faction`，一行路径 | 同目录 |
 | `data\world\factions\default_ship_roles.json` | 舰队角色 → 变体权重（多 mod 同名**合并**；空对象 `"combatSmall":{}` 占位合法） | 有 |
 | `data\config\settings.json` | `designTypeColors` 键=设计类型名，须与 CSV `tech` 列逐字一致（否则静默不上色） | `"仙山密教"` |
+| `data\strings\descriptions.csv` | **派系介绍**：`<id>,FACTION` 行（text1=情报页与 Nexerelin 选派系页的势力描述）。缺失**不崩**，游戏里就是"这个势力没有介绍"（IFR 上游从没写过这行，2026-10-05 用户报告实证；已入 check_faction_file 检查 7） | `cmc,FACTION` |
 | `data\campaign\special_items.csv` | （可选）蓝图包物品 | `cmc_package` |
 
 ### 2.2 `.faction` 键要点（照 hegemony.faction 打底 + CMC 对照）
@@ -178,7 +179,15 @@ node <skills>\skills\starsector-mod-legacy-content\scripts\check_worldgen_ids.js
 
 之后照 `wf-smoke-first` **深烟测（-NewGame）+ 读一次档**：`verifyFactionData` 在**读档期**逐条核对 known*，
 只进主菜单测不出来（AI War 五轮炸点教训）。游戏内检查：新档星系出现 → 市场/产业正确 → 势力舰队带自机翼 → 关系值生效。
-存档取证：新 `save_*\campaign.xml` grep 星系实体 id（如 citadelprime/gateway）与派系 id 计数 >0。
+存档取证（`saves\save_*\campaign.xml`，**用 Buffer + latin1 逐字节搜**——node 按 utf8 解码后 indexOf 会丢
+ASCII 匹配，IFR 实测一次；也别猜 UTF-16）：
+
+- 星系实体 id（如 `ifed_corinth_star`/`ifed_concord`）与派系 id 计数 >0；
+- **产业核对**（population 缺失不崩、殖民地只是不增长，编译器与闸门都查不到，只有存档能证明）：
+  产业在存档里是**类名元素**（`<Farming id="farming">`、`<PopulationAndInfrastructure>`…），
+  **不是** `<Industry>` 节点；提取式：`<(\w+) z="\d+" id="([a-z_0-9]+)"[^>]*>\s*<m [^>]*ref="市场z"`。
+  市场 z 取自其开标签（`<Market z="…">` 与 `<market cl="Market" z="…">` 两种形态都出现）。
+  目标市场产业列表里没有 population ⇒ onNewGame 的产业数组漏了 `Industries.POPULATION`（IFR 实测踩过）。
 
 ## 6. 项目骨架（旧 mod 没有像样源码工程时）
 
@@ -228,18 +237,38 @@ IDE 设置细节：starsector.wiki.gg/wiki/IntelliJ_IDEA_Setup。**给旧 mod �
 17. **"派系只剩开局选项、星域里找不到派系和星系" = onNewGame 生成被跳过**（Citadel 0.9.2 实证）：
     取证三连——存档 `corvusMode` 字段值、星系实体 id 计数、日志有无 `at data.scripts.world` 栈帧；
     三者组合（true / 0 / 无异常）⇒ 生成被静默跳过而非崩溃。元凶多为 onNewGame 里的模式守卫
-    （坑 16 前述时序），修法=无条件生成。注意带 nexerelin 的深烟测自动化过不了 NGC 配置页
-    （rc=3 卡配置屏属预期，验证改走用户实测）。
+    （坑 16 前述时序），修法=无条件生成。带 nexerelin 的深烟测自动化 2026-10-05 实测可自动走完
+    NGC 配置并建出存档（IFR 全默认集 rc=0）；仅当复现 rc=3 卡配置屏时改走用户实测。
+18. **派系介绍不在 `.faction` 里，在 descriptions.csv 的 `<id>,FACTION` 行**：漏写不崩，
+    玩家只会看到"势力没有介绍"（情报页与 Nexerelin 选派系页都吃这一行）——IFR 上游从没写过、
+    用户报告后才补（2026-10-05）。已入 `check_faction_file` 检查 7（阳性对照 CMC/Citadel 各恰一条）。
+19. **`.system` 的 `statsScript` 引用核心 janino 类是常态，不是缺陷**：LoadTest 的 SYS 段对
+    `data.shipsystems.scripts.FortressShieldStats` 这类引用报"缺失"是**假阳性**——核心源在
+    `starsector-core\data\shipsystems\scripts\` 由引擎运行时编译，离线工具看不到。全库普查
+    78 例生态常态（SWP 的 swp_boss_zeusshield 同款、Starsector AI Overhaul 整套照抄原版系统、
+    Vayra Ship Pack 等）⇒ **不要**按这条"修"mod（IFR 2026-10-05 定性，详见 registry LoadTest 行）。
+20. **mod 派系市场建在 onNewGame + Nexerelin = 开局即征服胜利**（The Nomads 1.4.12 实证，2026-10-05）：
+    Nexerelin 分配/转移核心首都走 `SectorManager.transferMarket`，每次转移末尾 `checkForVictory()`；
+    新档早期全场计入人口只有 ~19（自家市场 + 首个首都），mod 派系 14 人口 ≥ max(0.501×total,
+    1.5×第二名) ⇒ 瞬间 CONQUEST（存档证据：`victoryHasOccured=true` + VictoryScreenScript）。
+    旧版单 6 人口空间站恰好低于阈值线所以以前没爆——**"以前没问题"不证明写法安全**。修法：
+    市场/舰队/跳跃点挪到 **`onNewGameAfterEconomyLoad`**（此时首都分配完毕、全场市场齐备），
+    星系布局/实体留 onNewGame；并反射调用 `exerelin.campaign.SectorManager.addLiveFactionId("<id>")`
+    补登记存活派系（它的 reinitLiveFactions 先于我方市场创建跑，漏登记=派系在 Nexerelin
+    外交/AI 里当已死）。验证：新档 `victoryHasOccured` 必须为 false——**烟测框架不查这个字段，
+    要手动 grep 存档**。
 
 ## 完成标准
 
 - [ ] `.faction`：必填键齐、id=文件名、factions.csv 已登记；三个 faction 闸门 PASS（惯例键警告可留）
+- [ ] descriptions.csv 有 `<id>,FACTION` 派系介绍行（faction 闸门检查 7，缺失=情报页无介绍）
 - [ ] `check_worldgen_ids.js` 0 FAIL；有机翼 ⇒ wing 闸门 PASS
 - [ ] Java 路线：编译探测干净（`--release 8`）；LoadTest 通过；系统七步齐全（含 population 产业、跳跃点）
 - [ ] CSS 路线：`validate_star_system.ps1` PASS（星系路线细节归 star-system skill）
 - [ ] 描述接线：descriptions.csv `type=CUSTOM` 行齐；`designTypeColors` 与 tech 列一致
 - [ ] （做了 Nexerelin）四件套齐 + onNewGame 守卫在位
 - [ ] 深烟测 + **读档**通过；游戏内新档：星系/市场/舰队/关系全部生成
+- [ ] 存档取证含**产业核对**：目标市场产业列表里有 population（§5 提取式）
 - [ ] 版本号/changelog/交付按 `wf-game-update` 第 10 步 + `starsector-mod-delivery` 简化档
 
 ## 脚本（本 skill 的 `scripts\`）

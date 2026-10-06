@@ -380,9 +380,12 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 
 ### 7.1 wing_data.csv：缺列会崩（"缺列=默认"的**唯一已知例外**）
 
-- `FighterWingSpreadsheetLoader` 对 **16 列** `getString` 硬读：id/variant/tier/tags/role desc/role/
-  refit/rarity/range/op cost/num/formation/fleet pts/base value/attackRunRange/attackPositionOffset。
+- `FighterWingSpreadsheetLoader` 对 **15 列** `getString` 硬读：id/variant/tier/tags/role desc/role/
+  refit/rarity/range/op cost/num/formation/fleet pts/base value/attackRunRange。
   0.7 时代 23 列表头缺 `role desc` 等 → 启动崩溃 `JSONObject["role desc"] not found`（资源加载线程死亡）。
+  ⚠️ 修正（2026-10-05 The Nomads 反汇编）：`attackPositionOffset` 是 `optDouble(col, 0)` **软读**、
+  缺列=默认 0 不崩 ⇒ wing 闸门对"缺 attackPositionOffset"的 FAIL 是**假阳性**（The Nomads
+  缺该列多年照跑）；真崩的是硬读列（`role desc` 等）。
 - 修法：**表头照抄 core 重建**（脚本程序化取 core 表头，别手数逗号——29 列）；原值（id/variant/FP/
   formation/num/role/refit/base value/number）保留；新列按 core 同类机翼估值并留档；
   `role desc` 可写中文（与本地化核心一致，过 `check_font_glyphs.js`）。

@@ -31,7 +31,7 @@
 | `check_faction_known_lists.js` | red | base | **faction known\* 条目对照注册表**（2026-09-15 AI War 事故⑤沉淀）：复刻 verifyFactionData；id 填错（如类名而非 id）在读档/开局才炸，冒烟必须读档 |
 | `check_refs.js` | red | cond | 改过装配/舰船/武器/贴图引用 |
 | `check_mission_refs.js` | red | cond | 改过任务（mission）或删过 variant/武器/舰体时：任务引用闭包，含 jar 任务类字节取证与惰性源码降级（2026-09-23 YRXP 沉淀：点击任务即崩） | G5 |
-| `check_faction_file.js` | red | cond | `.faction` 必填键/资产/登记（缺 `names` = 启动崩） |
+| `check_faction_file.js` | red | cond | `.faction` 必填键/资产/登记（缺 `names` = 启动崩）；descriptions.csv 的 `<id>,FACTION` 介绍行（2026-10-05 增，缺失=情报页无介绍） |
 | `check_worldgen_ids.js` | red | cond | **Java 世界生成 id 语义闸门**（starsector-mod-legacy-content 沉淀）：worldgen 代码里的字符串/常量 id（行星/恒星类型、条件、产业、子市场、商品、物品、派系）编译器不查、加载期不崩或运行期才崩；阳性对照=CMC 16 文件全绿、阴性注入 11 种坏 id 全拦 |
 | `LoadTest.java` | red | cond | 离线类加载/实例化 + 脚本类存在性（skill 自带脚本，见 `script-registry.md` F 节） |
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3）；零宽字符单列提示、不计命中 |
