@@ -49,7 +49,7 @@
 
 | 文档用语 | 落点 |
 |---|---|
-| 部署点/DP | ship_data.csv **`supplies/mo`** 列（维护费=DP，游戏内面板读它；原版锚点：厄运 35/猎鹰 14/攻势 40。⚠️ `fleet pts` 是 AI 舰队生成计价列，DP 面板不读——改错列=改了看不见的数据，iron-rules **R24**） |
+| 部署点/DP | ship_data.csv **`supplies/rec`** 列（引擎反汇编定论，R24）；月维护=`supplies/mo`；`fleet pts`=AI 舰队计价（面板不读）。多数 mod rec==mo，相等时会互相掩盖——改 DP 后**让用户在游戏内复核面板值** |
 | 装配点/OP | ship_data.csv `ordnance points`；武器 = weapon_data.csv `OPs` |
 | 幅能容量/耗散 | `max flux` / `flux dissipation` |
 | 结构/装甲 | `hitpoints` / `armor rating` |
@@ -272,4 +272,7 @@
   `_work\mod_work\FDS_ROTS\out\{revision_items, value_conflicts, assumptions}.*` 与 mod 根 `BALANCE_PATCH.md`；
   DP 系矛盾、塔利/忏悔别字、"中后方4槽"判定等一手经验都已回灌本文相应章节。
 - **烟测战果**：第一轮深烟测加载 PASS 但建存档被弹窗挡住 ⇒ 根因是系统 id 凭记忆写错（加速填弹器/导弹自动工厂的正确 id = `ammofeed`/`forgevats`，§1.1 字典已修正）——**烟测 newgame 段失败先查自己的改动，再怀疑脚手架**；配套补了"类链接探针"（§3 第 5 步）。
+- **用户实测纠错一（DP 列语义）**：v1 把 DP 写进 `fleet pts`，用户在游戏内发现恐怖显示 75、折磨 60 与记录不符 ⇒ 据"原版锚点 rec==mo"改落 `supplies/mo`——被两列相等骗过；
+- **用户实测纠错二（rec 列定论）**：复测"DP 仍是旧值(35)、维护却变了(22)" ⇒ **反汇编 `ShipHullSpreadsheetLoader` 定论：DP=`supplies/rec`、月维护=`supplies/mo`、`fleet pts`=AI 计价**（R24 重写为引擎定论版）。已在 rec 落 DP 目标、保持 rec==mo 约定，并让用户游戏内复核。
+  教训：**列义拿不准就反汇编加载器（`grep -a` 找字面量→CFR→读 setXxx），"数值对照"在两列恒等时会骗人；替换脚本必须校验 replace 真的命中**。
 

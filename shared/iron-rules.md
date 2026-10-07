@@ -447,16 +447,17 @@ janino `JavaSourceClassLoader` 一次 cook 全部）**全绿≠游戏能过**—
 `JaninoProbe.java`（游戏自带 janino.jar 批量编译+加载，见 script-registry）＋
 ③类任务烟测（`wf-smoke-first.md`）。
 
-## R24 · ship_data 的"部署点/DP"＝ `supplies/mo` 列，不是 `fleet pts`（改错列=改了看不见的数据）（2026-10-07 FDS 实测）
+## R24 · ship_data 三列语义：**DP=`supplies/rec`**，月维护=`supplies/mo`，`fleet pts`=AI 舰队计价（改错列=改了看不见的数据）（2026-10-07 FDS 两次实测+反汇编定论）
 
-**引擎事实**：0.98a 的游戏内"部署点"= `supplies/mo`（月补给）列——**维护费与 DP 同源**。
-原版锚点（可随时复核）：厄运 supMo=35＝游戏内 DP 35、猎鹰 14、攻势 40、监视者 6；
-`fleet pts` 是**AI 舰队生成计价列**（小船上常与 supMo 相同、大船明显更小，如厄运 22 vs 35），DP 面板不读它。
+**引擎事实（权威=反编译 `com.fs.starfarer.loading.ShipHullSpreadsheetLoader`，CFR 输出第 77/158/159 行）**：
+- **游戏内部署点（DP）＝ `supplies/rec` 列** → `setSuppliesToRecover()`；
+- 月度维护消耗＝ `supplies/mo` 列 → `setSuppliesPerMonth()`；
+- `fleet pts` 列 → `setFleetPoints()`＝AI 舰队生成计价，DP 面板**不读**（0.6x 遗留列）；
+- 原版锚点：攻势 rec=40=游戏内 DP40、厄运 35、猎鹰 14、监视者 6；原版有 7 艘 rec≠mo（引擎允许两列不等）。
 
-**事故经过**：意见文档"部署点降低至65（恐怖）"被落到 fleet pts（40→65），游戏内 DP 纹丝不动；
-用户在游戏里看到恐怖 75、折磨 60 才暴露。文档原值与 supMo 全列吻合——"文档基线错位"纯属读错列。
+**事故经过（两次踩坑）**：①把 DP 落到 `fleet pts`（游戏内纹丝不动）；②据"原版锚点 rec==mo"推断 DP=`supplies/mo`，改后用户实测"DP 仍是旧值、维护却变了"——因为 FDS 原数据 41 艘 **rec==mo**，游戏内 DP（读 rec）恰好等于月维护（读 mo），两列相等掩盖了真实列义；只改 mo 后两者立刻分离，用户一眼看穿。
 
 **判定与自保**：
-1. 改/核对 DP 一律用 `supplies/mo`，并用**原版锚点三列互查**（同 id 的 fleet pts vs supMo vs 已知游戏内 DP）定列义；
-2. "文档原值对不上的列"先怀疑**自己读错列**，再怀疑版本差异——把矛盾当结论写进补丁说明前，先用用户可看见的锚点（游戏内面板）验证；
-3. 误改过的列要**断言回退**（fix 脚本断言现值=误改值→还原），不要顺手再改一次了事。
+1. 改 DP 一律用 **`supplies/rec`**；月维护用 `supplies/mo`；两列在多数 mod 中相等（沿用作者约定时同步改，如 FDS rec==mo），但**语义独立、必须分开定位**；
+2. 列义拿不准时：**反汇编加载器定论**（grep -a 定位字面量→CFR 反编译→读 setXxx 映射），`grep -a` 必须加（二进制会被静默跳过）；"原版数值对照"只能当旁证，当两列值恒等时它会骗人；
+3. 误改过的列要**断言回退**，并让用户在游戏内复核面板值（面板值=地面真相）。
