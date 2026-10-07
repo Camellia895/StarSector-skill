@@ -49,7 +49,7 @@
 
 | 文档用语 | 落点 |
 |---|---|
-| 部署点/DP | ship_data.csv `fleet pts` |
+| 部署点/DP | ship_data.csv **`supplies/mo`** 列（维护费=DP，游戏内面板读它；原版锚点：厄运 35/猎鹰 14/攻势 40。⚠️ `fleet pts` 是 AI 舰队生成计价列，DP 面板不读——改错列=改了看不见的数据，iron-rules **R24**） |
 | 装配点/OP | ship_data.csv `ordnance points`；武器 = weapon_data.csv `OPs` |
 | 幅能容量/耗散 | `max flux` / `flux dissipation` |
 | 结构/装甲 | `hitpoints` / `armor rating` |
