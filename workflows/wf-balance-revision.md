@@ -152,7 +152,7 @@
 
 | 文档用语 | 落点 |
 |---|---|
-| 部署点/DP | ship_data.csv **`supplies/mo`** 列（维护费=DP，游戏内面板读它；原版锚点：厄运 35/猎鹰 14/攻势 40。⚠️ `fleet pts` 是 AI 舰队生成计价列，DP 面板不读——改错列=改了看不见的数据，iron-rules **R24**） |
+| 部署点/DP | ship_data.csv **`supplies/rec`** 列（引擎反汇编定论，R24）；月维护=`supplies/mo`；`fleet pts`=AI 舰队计价（面板不读）。多数 mod rec==mo，相等时会互相掩盖——改 DP 后**让用户在游戏内复核面板值** |
 | 装配点/OP | ship_data.csv `ordnance points`；武器 = weapon_data.csv `OPs` |
 | 幅能容量/耗散 | `max flux` / `flux dissipation` |
 | 结构/装甲 | `hitpoints` / `armor rating` |
@@ -265,9 +265,11 @@
   一手经验已回灌：§2 多行记录坑 + §3 jar CRC 坑；光束开火间隔公式（chargeup+burst+chargedown+burstDelay，原版速子长矛持续 DPS 交叉验证）已由本次 6 组"原为"值反向证实。深烟测 newgame 段 `fail_nostart` 两次复现但游戏画面正常
   （按钮可见、探针 0.048<0.08）= 脚手架亮度探针边缘化，处置=向存活窗口手动 PostMessage 'G' 完成建档验证
   （`manual_finish_newgame.ps1`）；**残留游戏进程（各 17GB）会拖垮后续自动化**，重测前先 tasklist 清场。
-  **同日 DP 改列修正（R24）**：马蜂窝/袭击者两项 DP 初版误落 `fleet pts`（=FDS 同源事故，本 wf 字典 v1 的错），
-  依用户另一会话实证 + 原版锚点复核后，用 `out\revision_items_dpfix.json` 断言回退并改落 `supplies/mo`；
-  文档原值 30/26 与 supMo 完全吻合，v1 的两条"基线冲突"撤案——**再证 §1.1 字典必须以 R24 为准**。
+  **同日 DP 改列修正（R24，两次）**：马蜂窝/袭击者两项 DP 初版误落 `fleet pts`，第一次更正又误落 `supplies/mo`
+  （原版 rec==mo 的数值锚点骗人，见 R24 判定 2），最终依 setter 级反汇编结论落 **`supplies/rec`**（30→22、26→22），
+  fleet pts/mo 全部断言回退上游原值（15/14、30/26）；配方 `out\revision_items_dpfix.json`（回退 fleet pts）+
+  `dpfix2.json`（回退 mo + 落 rec）；文档原值 30/26 与 rec 完全吻合，v1 两条"基线冲突"撤案——
+  **三列语义只有反汇编是地面真相，数值对照两轮都有盲区；改完必须让用户游戏内复核面板值**。
 - **2026-10-07 FDS_ROTS 0.11.4m**（31 舰 + 16 武器 + 8 战机 + 新船插）：配方与结果见
   `_work\mod_work\FDS_ROTS\out\{revision_items, value_conflicts, assumptions}.*` 与 mod 根 `BALANCE_PATCH.md`；
   DP 系矛盾、塔利/忏悔别字、"中后方4槽"判定等一手经验都已回灌本文相应章节。
