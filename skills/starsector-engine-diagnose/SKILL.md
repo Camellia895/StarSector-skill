@@ -124,6 +124,19 @@ classpath：`starfarer_obf.jar;starfarer.api.jar;json.jar;fs.common_obf.jar;log4
    `_api_src\...\BarEventManager.java` 的 `advance()` ⇒ 事件只从 `creators` 列表产生，
    唯一入口是 `addEventCreator()`，原版在 `CoreLifecyclePluginImpl.onGameLoad → addBarEvents()` 注册
    ⇒ **确认是真 bug**，且从 0.95 就没接线（不是 0.98 regression）。
+3. **市场货架为何货不对板**（2026-10-09 YRXP 实证，"mod 自带军用市场只卖出一艘船/全员 D-mod"）：
+   - `submarket` 插件若走 `BaseSubmarketPlugin.addShips(..., ShipPickMode.IMPORTED, ...)`，
+     引擎（反编译 `com.fs.starfarer.campaign.Faction.getBaseValidEntries`）只收
+     **角色池 ∩ knownShips ∩ shipsWhenImporting 三重都命中的船**——角色池来自
+     `data/world/factions/default_ship_roles.json`（**mod 自带一份即整体覆盖原版**），
+     `knownShips`/`knownWeapons` 清单本身**不会**自动变成货架。症状"势力清单写了一堆但市场不卖"
+     先查这三层，别急着改清单。
+   - `addShips` 的 `qualityOverride` 是**装箱 Float，`null` 才是"用市场产能质量"**；抄模板传 `0f`
+     = 强制最差质量 ⇒ D-mod 公式 `round((1-q)/qualityPerDMod(=0.2) + rand*3 - 2)` 截上限 5 ⇒
+     "在售船全员 3-5 D-mod"。要零 D-mod 货架：不走 addShips，直接
+     `addShip(hullId + "_Hull", withDmods=false, 0f)`（protected，子类可调）。
+   - 军用市场武器/舰载机分级上限：原版 `addWeapons/addFighters(..., 3, ...)`；写成 1 会静默滤掉
+     tier 2-3 的全部装备（无任何报错，纯"不出现"）。
 
 **方法要点**：
 
