@@ -18,7 +18,7 @@
 | `check_jar_registry_keys.js` | red | cond | **jar 映射 × 引擎注册表交集**（2026-10-01 crabshack 沉淀：`barren-bombarded`→「荒芜-轰击」致新游戏 NPE；连字符 id 漏过形态判据）：patchdir 前对 patch_map 全键求交集，命中=回退或写 --allow 白名单（附反编译证据） |
 | `check_install_source.js` | red | base | **注入前置断言**：目标目录必须是英文原版，否则合成字段会被追加成"一行变两行 + optionId 重复" |
 | `check_jar_patch_integrity.js` | red | cond | **补丁洁净性**：类集合一致 + 映射外常量改动 = 0（补丁脚本退化成全量替换会立刻暴露） |
-| `diff_utf8_multiset.js` | red | cond | **重编译保汉化**（2026-09-20 Nightcross 代码修复沉淀）：重建后旧 jar vs 新产物 Utf8 多重集差 = 0（含 indy recipe）；重建前跑用于提取待回填中文。方法与三闸门见 `starsector-mod-java-hardcoded-text` §5 |
+| `diff_utf8_multiset.js` | red | cond | **重编译保汉化**（2026-09-20 Nightcross 代码修复沉淀）：重建后旧 jar vs 新产物 Utf8 多重集差 = 0（含 indy recipe）；重建前跑用于提取待回填中文。方法与三闸门见 `starsector-mod-java-hardcoded-text` §5。**2026-10-09 YRXP 首次实战拦截**：重编译冲掉市场插件 getName 汉化补丁（市场名变英文），流程漏跑未拦住、事后补跑确认回填零丢失 ⇒ 已在 `wf-mod-fix.md` §3 内联三步命令防再漏 |
 | `cmp_build.js` | red | cond | **重编译等价**（同上沉淀）：归一化 javap -c 逐类对比，动刀前 diff=0、修复后差异=本次改动本身 |
 | `check_variant_slots.js` | red | base | **变体武器槽位 × 船体 weaponSlots**（2026-09-20 FlowerGod 事故沉淀）：幽灵槽位 = `Slot id [X] not found on hull [Y]`，崩溃可在主菜单演习战；`check_refs` 只对 id 引用、查不出槽位漂移。**2026-09-21 补登记**：registry D 节已录而本表漏录，体检发现的存量不一致 |
 | `check_homoglyphs.js` | yellow | base | 同形异义字符（西里尔/希腊伪拉丁）→ 字库缺字形显示 `?` + 英文检索静默失败 |
@@ -27,11 +27,12 @@
 | `check_uitags_zh.js` | red | base | **船插分类显示列**（`hull_mods.csv` 的 `uiTags`）：该列是**显示列**，引擎直接把值当分类标签显示、**不查表**，英文标签=分类名变英文且无任何报错。词表以核心中文同列为准（武器/特殊/后勤/需要船坞/防御/护盾/引擎/战机/相位/支援）。2026-09-18 Kyeltziv 1.10.7 迁移把中文 uiTags 覆盖回英文，`check_designtype`/`verify_all_data`/`scan_data_stragglers` 三闸门全漏检 ⇒ 新增本闸门 |
 | `verify_uitags_fix.js` | red | base | **批量 uiTags 改动的三合一复核**（配套注入器 `fix_uitags_zh.js`）：对每个 mod 比对"备份快照 vs 当前"——目标格差异数 > 0、EOL 字节级一致、结构未损 |
 | `check_wing_data_schema.js` | red | base | **wing_data 表头硬需求**（2026-09-15 AI War 事故沉淀）：`FighterWingSpreadsheetLoader` 对 `role desc` 等 16 列 `getString` 硬读，缺列=启动崩溃。"缺列=默认"对 hulls/weapons/hullmods 成立、对 wing_data **不成立**；旧版 mod 升级必跑 |
-| `check_faction_shiproles.js` | red | base | **faction shipRoles 变体可解析**（2026-09-15 AI War 事故沉淀）：不存在的变体 id = faction 加载 NPE 启动崩溃；dead 角色键也会被解析。fallback 里是角色名不是变体，先剥掉再匹配；变体 id 按「文件内 variantId 字段」校验 |
+| `check_faction_shiproles.js` | red | base | **faction shipRoles 变体可解析**（2026-09-15 AI War 事故沉淀）：不存在的变体 id = faction 加载 NPE 启动崩溃；dead 角色键也会被解析。fallback 里是角色名不是变体，先剥掉再匹配；变体 id 按「文件内 variantId 字段」校验。2026-10-09 YRXP：tags-only 块（无显式数组）报 FAIL 属比引擎严，补空数组即消，非真问题 |
 | `check_faction_known_lists.js` | red | base | **faction known\* 条目对照注册表**（2026-09-15 AI War 事故⑤沉淀）：复刻 verifyFactionData；id 填错（如类名而非 id）在读档/开局才炸，冒烟必须读档 |
 | `check_refs.js` | red | cond | 改过装配/舰船/武器/贴图引用 |
 | `check_mission_refs.js` | red | cond | 改过任务（mission）或删过 variant/武器/舰体时：任务引用闭包，含 jar 任务类字节取证与惰性源码降级（2026-09-23 YRXP 沉淀：点击任务即崩） | G5 |
-| `check_faction_file.js` | red | cond | `.faction` 必填键/资产/登记（缺 `names` = 启动崩） |
+| `check_faction_file.js` | red | cond | `.faction` 必填键/资产/登记（缺 `names` = 启动崩）；descriptions.csv 的 `<id>,FACTION` 介绍行（2026-10-05 增，缺失=情报页无介绍） |
+| `check_worldgen_ids.js` | red | cond | **Java 世界生成 id 语义闸门**（starsector-mod-legacy-content 沉淀）：worldgen 代码里的字符串/常量 id（行星/恒星类型、条件、产业、子市场、商品、物品、派系）编译器不查、加载期不崩或运行期才崩；阳性对照=CMC 16 文件全绿、阴性注入 11 种坏 id 全拦 |
 | `LoadTest.java` | red | cond | 离线类加载/实例化 + 脚本类存在性（skill 自带脚本，见 `script-registry.md` F 节） |
 | `check_font_glyphs.js` | yellow | base | 缺字形 → `?`（R3）；零宽字符单列提示、不计命中 |
 | `check_content.js` | yellow | base | 空译文/占位符/字段结构（skill 自带脚本） |
@@ -45,6 +46,7 @@
 | `scan_stragglers.js` | green | sample | 漏译网；`sweep_sentences.js` 是其句子级补充 |
 | `check_jar_stragglers.js` | red | base | **交付 jar 英文残留闸门**：直接吃 jar 文件（避 `scan_stragglers.js` 对着补丁前副本跑出假警报），用 patch_map + skip 审计判定 A（要译却仍英文，必错）/ B（已记账跳过，允许）/ C（未记账）；A=C=0 才通过 |
 | `check_java_residue.js` | red | cond | 仅 Janino 源码 mod（无 jars、`data/plugins|scripts/*.java`）：与提取器不同解析路径的独立复查网，未覆盖英文字面量 = 0（2026-09 SiC Aux 事故：提取器行注释 bug 漏 79 条被它抓回） |
+| `sweep_quoted_segments.js` | yellow | cond | **data 层"引号段"兜底反查**（stragglers 的第二张网：抓其 script 列跳过 + JSON 数组两个盲区；2026-10-02 新增，Apex 市场风味文 4 行迁移丢译被它兜回——census 正则 `AddText\s+"` 漏 `AddText"无空格` 形态 + stragglers 跳过 script 列，双盲区叠加）。句子级未覆盖引号段须人工判：注释行/禁用行(#id)/无引用死文件/开发者注释是常见假阳性 |
 | `check_java_equiv.js` | red | cond | 仅 Janino 源码 mod：注入后骨架逐字节等价 + 字面量数一致 + 词法完整（= "只改了字面量内容"的机器证明；源码层 G4/G5 替代） |
 | `check_perfile_resolvability.py` | red | cond | 仅 janino mod（铁律 R22）：一文件一顶层公共类 + `import data.*` 有同名文件（0.98a 按文件名逐个按需编译，违反=启动 Fatal）；**批量探针全绿≠本闸门过**（2026-09-30 MagicMaster：批量 65/65 绿、游戏仍 Fatal） |
 | `JaninoProbe.java` | red | cond | 仅 janino mod：游戏自带 janino.jar 批量编译+加载全部源码类（签名级兼容闸门；javac 会为一文件多类报伪错，弃用） |

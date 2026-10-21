@@ -13,7 +13,8 @@ description: 把一个旧版本 Starsector（远行星号）mod（0.7x/0.8x/0.95
 > 分工：渲染坐标专项 → `starsector-mod-render-fix`（第 7 步先判定是否命中）；
 > jar 已汉化要改字符串 → `starsector-mod-localization-apply`（常量池补丁，不重编译）；
 > Kotlin 编译链 → `starsector-mod-kotlin-rebuild`；打包交付 → `starsector-mod-delivery`；
-> 引擎行为存疑 → `starsector-engine-diagnose`。
+> 引擎行为存疑 → `starsector-engine-diagnose`；
+> 为旧 mod **新增**派系/星系/星球内容（而非修坏）→ `starsector-mod-legacy-content`（§7 闸门共用）。
 > **必读**：`<skills>\shared\env.md`（路径/JDK/三条环境毒点）、`<skills>\shared\iron-rules.md`、`<skills>\shared\conventions.md`。
 
 ## 1. 判定树：先给 mod 分类（决定走哪条路）
@@ -371,6 +372,7 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 ## 7. 0.9 以下的 mod（0.7x/0.8x）专项断点（AI War 0.7.2a→0.98a 全量沉淀）
 
 > 适用判定：`mod_info.json` 的 `gameVersion` ≤ 0.8x。除主体十步外**必过本节**。
+> 要给这个 mod **新增/补做**派系、星系、星球（而非修坏的）→ `starsector-mod-legacy-content`（本节闸门共用）。
 > 这些断点编译器全查不出、且沿加载顺序**逐层暴露**：启动 spec 加载（wing_data）→ faction shipRoles
 > （NPE）→ faction knownShips（schema）→ **读档期** verifyFactionData（knownHullMods id）——
 > AI War 实际连爆 5 轮。三个专属闸门（`shared\scripts\`，均已登记 script-registry.md D 节）：
@@ -378,9 +380,12 @@ node <skills>\shared\scripts\check_deprecated.js <apiSrcDir> <srcDir>  # 是否�
 
 ### 7.1 wing_data.csv：缺列会崩（"缺列=默认"的**唯一已知例外**）
 
-- `FighterWingSpreadsheetLoader` 对 **16 列** `getString` 硬读：id/variant/tier/tags/role desc/role/
-  refit/rarity/range/op cost/num/formation/fleet pts/base value/attackRunRange/attackPositionOffset。
+- `FighterWingSpreadsheetLoader` 对 **15 列** `getString` 硬读：id/variant/tier/tags/role desc/role/
+  refit/rarity/range/op cost/num/formation/fleet pts/base value/attackRunRange。
   0.7 时代 23 列表头缺 `role desc` 等 → 启动崩溃 `JSONObject["role desc"] not found`（资源加载线程死亡）。
+  ⚠️ 修正（2026-10-05 The Nomads 反汇编）：`attackPositionOffset` 是 `optDouble(col, 0)` **软读**、
+  缺列=默认 0 不崩 ⇒ wing 闸门对"缺 attackPositionOffset"的 FAIL 是**假阳性**（The Nomads
+  缺该列多年照跑）；真崩的是硬读列（`role desc` 等）。
 - 修法：**表头照抄 core 重建**（脚本程序化取 core 表头，别手数逗号——29 列）；原值（id/variant/FP/
   formation/num/role/refit/base value/number）保留；新列按 core 同类机翼估值并留档；
   `role desc` 可写中文（与本地化核心一致，过 `check_font_glyphs.js`）。

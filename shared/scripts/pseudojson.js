@@ -23,10 +23,39 @@ function stripJsonComments(raw) {
   return out;
 }
 
-// 宽松解析：去注释 → 去 Java float 后缀 → 去尾随逗号 → 裸枚举值加引号 → JSON.parse。
+// 2026-10-06 修复：mod_info.json 等文件允许单引号字符串字面量（实测 Orion-Friedberg Union：
+// "version": { "major": '0', "minor": '8', "patch": '4a' }，游戏解析器接受）。
+// 在注释剥离后把“字符串外”的 '...' 归一成 "..."：内部 " 转义、\' 取字面；
+// 未配对的撇号（结构区）原样保留。只影响“读”，不回写。
+function normalizeSingleQuotes(s) {
+  let out = '';
+  let inDq = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inDq) {
+      out += c;
+      if (c === '\\') { out += s[i + 1] || ''; i++; }
+      else if (c === '"') inDq = false;
+    } else if (c === '"') { inDq = true; out += c; }
+    else if (c === '\'') {
+      let j = i + 1, body = '';
+      while (j < s.length && s[j] !== '\'' && s[j] !== '\n') {
+        if (s[j] === '\\' && s[j + 1] === '\'') { body += '\''; j += 2; }
+        else { body += s[j]; j++; }
+      }
+      if (s[j] === '\'') { out += '"' + body.replace(/"/g, '\\"') + '"'; i = j; }
+      else { out += c; }
+    }
+    else out += c;
+  }
+  return out;
+}
+
+// 宽松解析：去注释 → 单引号归一 → 去 Java float 后缀 → 去尾随逗号 → 裸枚举值加引号 → JSON.parse。
 // 注意：文件内字符串若含 “数字+f” 字面（几乎不会），会被误伤；可先人工确认。
 function parseJsonLoose(raw) {
   let s = stripJsonComments(raw);
+  s = normalizeSingleQuotes(s);
   s = s.replace(/(\d+(?:\.\d+)?)f\b/g, '$1');   // 1.2f -> 1.2
   s = s.replace(/,\s*}/g, '}').replace(/,\s*\]/g, ']');
   // 引擎 JSON 允许裸枚举值（实测 custom_entities.json 的 "layers":[STATIONS]）：

@@ -147,3 +147,4 @@ powershell -ExecutionPolicy Bypass -File "<skills>\skills\starsector-mod-star-sy
 
 > 相关：中文文本（星系名/描述）的写法与格式铁律 → `starsector-mod-localization-spec` + `<skills>\shared\iron-rules.md`；
 > 描述行 `type=CUSTOM` 是引擎硬要求（踩坑 ①），汉化时**不要**把 `CUSTOM` 改成 `PLANET`。
+> 相关：给旧 mod 做派系、或走 Java 世界生成路线的星系 → `starsector-mod-legacy-content`。

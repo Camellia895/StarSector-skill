@@ -96,7 +96,9 @@ node <skills>\shared\scripts\align_newjar_oldzh.js <新jar解包目录> <旧ZH j
    旧版没有就**新译**（普通/压制），不要留英文。
 3. **多列文本**：`rules.csv` 除 `text`/`options` 外，**`script` 列也有文本**（`AddText "…"` 的对话、
    `$marketLeaveTooltip = "…"` 的提示）——按行 zip 迁移引号内容，规则语法与 `$变量` 原样保留
-   （`migrate_rules_script.js`）；改完必跑 R2 校验。
+   （`migrate_rules_script.js`）；改完必跑 R2 校验。⚠️ 命令与引号间**空白可有可无**
+   （`AddText"…"textGrayColor`，2026-10-02 Apex 实测 4 行市场风味文因 `AddText\s+"` 正则漏抓而丢译）——
+   正则一律写 `\s*`，且旧 ZH 有 CJK 而 worklist 没有的 script 格要做"漏抓对账"。
 4. **嵌套对象**：`templars.faction` 的 `ranks`/`posts`/`fleetTypeNames` 是嵌套结构
    （`"spaceSailor":{"name":"Page"}`）——按"行前缀 + 引号值"匹配迁移（`migrate_faction2.js`），**不要按外层 key**。
 5. **版本扩写**：新版 `mission_text.txt` 等纯文本若比旧版长很多（内容扩写），**不能直接覆盖旧译**——
@@ -130,6 +132,9 @@ node <skills>\shared\scripts\align_newjar_oldzh.js <新jar解包目录> <旧ZH j
 - [ ] **旧译的空格/标点瑕疵被发现并修正**（RetroLib 实测：`…获得 $cost 。` 中英混排空格；沿用即交付 bug）
 - [ ] **旧译的关键术语误译被识破**（RetroLib 实测：`source ship` 被旧译成「原材料」，
       实际是"可作为改装来源的舰船"；判据是读新版 `src/**` 里该串的渲染位置）
+- [ ] **旧汉化自身的存量 bug 已体检**（2026-10-02 Apex 实测）：对旧汉化目录跑 `check_designtype.js`
+      ——旧译可能"CSV tech 全列已译而 settings.json 的 designTypeColors 键没跟"（遗物舰不上色，静默），
+      迁移会原样继承；闸门旗出的旧译保留英文条目（变体名等）逐条决策补译或豁免留档
 
 > 质量判定标准见 `starsector-mod-localization-content` §1（原创译写，不照抄）。
 
@@ -161,3 +166,12 @@ node <skills>\shared\scripts\align_newjar_oldzh.js <新jar解包目录> <旧ZH j
 
 **闸门**：迁移预填完成后，对回传/预填清单跑"中文行 $变量集合 vs 本行英文 $变量集合"一致性检查
 （armaa 工具：`_work/mod_work/Arma Armatura/tools/detect_shift.js` 思路）。
+
+## 7. 工具输入口径：三方比对的"新版"必须是英文基线（2026-10-02 Apex 实测）
+
+普查/比对类工具（census、`extract_old_map.js`、`align_newjar_oldzh.js` 等）的"新版 EN"输入
+**必须是英文基线**（`mod_bak\..._EN_backup` 或官方包），**不能是 `mods\<Mod>\`**——注入完成后
+那里已经是中文版，重跑会把中文当英文原文，三方比对整场崩掉（`old-migrated` 归零、全部误判 `new`）。
+工具应把基线目录参数化并默认指向英文备份；注入后需要"重新生成清单"时，先还原英文原版或显式传基线路径。
+连带动线：填充/注入脚本从清单重建产物时，**直补进清单的条目**（闸门补译、定点修复）必须同步收编进
+译文源表（如 zh_new.js），否则重跑管线会把它们冲掉。

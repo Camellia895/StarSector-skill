@@ -17,16 +17,18 @@ smoke_run.ps1 — 启动烟测的统一入口（包装 modcheck 自动化项目�
   # 烟测后不还原 mod 列表（调试用）
   powershell -NoProfile -ExecutionPolicy Bypass -File smoke_run.ps1 -ModIds <modId> -KeepEnabled
 
-⚠️ -ModIds 规范（2026-10-02 起）：
-   缺省（不传）= **标准测试集** 7 mod：EmergentThreats_Vice / EmergentThreats_IX_Revival /
-   lw_lazylib / lunalib / MagicLib / shaderLib / nexerelin（本机标准环境组合）。
-   测**具体 mod** 时必须显式传 `-ModIds <modid>` —— 它**整体替换**默认集（不是叠加），
-   声明的依赖由 ModCheck 按 mod_info 自动补齐。id 是 mod_info.json 的 id（**不是文件夹名**，
-   实例：GraphicsLib 的 id 是 shaderLib）。
+⚠️ -ModIds 规范（2026-10-05 起）：
+   **默认集必挂**：无论是否传 -ModIds，标准测试集 7 mod（EmergentThreats_Vice /
+   EmergentThreats_IX_Revival / lw_lazylib / lunalib / MagicLib / shaderLib / nexerelin，
+   本机标准环境组合）**始终包含**在本次烟测里。
+   测**具体 mod** 时显式传 `-ModIds <modid>` —— 它是**叠加**在默认集之后（去重），
+   **不再整体替换**（用户规范：烟测就是为默认环境开局设计的）。声明的依赖仍由
+   ModCheck 按 mod_info 自动补齐。id 是 mod_info.json 的 id（**不是文件夹名**，
+   实例：GraphicsLib 的 id 是 shaderLib）；**含空格的 id 可直接传**（2026-10-05 修复）。
    启动后输出首行 mod=<ids> 与"游戏加载"行必须含目标 id，否则立即中止重跑。
 
 参数：
-  -ModIds <id[,id]>  目标 mod id（逗号或空格分隔）；默认 = 标准测试集（见上）
+  -ModIds <id[,id]>  额外目标 mod id（逗号或空格分隔，含空格 id 可传）；总集 = 默认集 + 这些 id（去重）
   -NewGame           加载成功后继续自动创建存档（深烟测）
   -KeepEnabled       不还原用户的 enabled_mods.json
   -TimeoutSec <n>    单段超时（默认 420）
@@ -50,19 +52,23 @@ smoke_run.ps1 — 启动烟测的统一入口（包装 modcheck 自动化项目�
 #>
 [CmdletBinding()]
 param(
-  # 标准测试集（2026-10-02 规范）：本机标准环境组合；顺序即启用优先级。测单个 mod 时用 -ModIds 整体替换。
-  [string[]]$ModIds = @(
-    'EmergentThreats_Vice',
-    'EmergentThreats_IX_Revival',
-    'lw_lazylib',
-    'lunalib',
-    'MagicLib',
-    'shaderLib',
-    'nexerelin'
-  ),
+  # 额外目标 mod id（可空）。标准测试集见下方 $DefaultMods（2026-10-05 起：默认集必挂，-ModIds 叠加其上）。
+  [string[]]$ModIds = @(),
   [switch]$NewGame,
   [switch]$KeepEnabled,
   [int]$TimeoutSec = 420
+)
+
+# 标准测试集：本机标准环境组合，顺序即启用优先级。烟测必须包含它（用户规范 2026-10-05）；
+# 显式 -ModIds 传入的 id 去重后叠加在其后。
+$DefaultMods = @(
+  'EmergentThreats_Vice',
+  'EmergentThreats_IX_Revival',
+  'lw_lazylib',
+  'lunalib',
+  'MagicLib',
+  'shaderLib',
+  'nexerelin'
 )
 
 $ErrorActionPreference = 'Continue'
@@ -92,6 +98,36 @@ if (-not (Test-Path -LiteralPath $modCheck)) { Write-Output "SMOKE-ENV-FAIL: 缺
 # 拆分逗号/空白分隔的 id（实测 2026-09-23：'-ModIds a,b,c' 被绑成单元素字符串，原样写进
 # enabled_mods.json 成为一个假 mod id，且被脚本中断后无法自愈）。
 $idList = @($ModIds | ForEach-Object { $_ -split '[,\s]+' } | Where-Object { $_ })
+# 2026-10-05：支持含空格的 mod id（首例 "Interstellar Federation Refurbished"）——上面的空白拆分
+# 会把它拆碎成假 id（实测 enabled_mods 写入 3 个假 id、游戏裸跑、结论作废）。修法：若相邻 token
+# 的空格重组合【恰好】等于某个已安装 mod 的 id，则重新合并；普通多 id 用法行为不变。
+# mod_info.json 是宽松 JSON（可带尾逗号）⇒ 用正则取 id，禁 ConvertFrom-Json（铁律 R8）。
+$installedIds = @()
+if ($game) {
+  $installedIds = @(Get-ChildItem -LiteralPath (Join-Path $game 'mods') -Directory | ForEach-Object {
+    $mi = Join-Path $_.FullName 'mod_info.json'
+    if (Test-Path -LiteralPath $mi) {
+      $miMatch = [regex]::Match([System.IO.File]::ReadAllText($mi), '(?m)"id"\s*:\s*"([^"]+)"')
+      if ($miMatch.Success) { $miMatch.Groups[1].Value }
+    }
+  })
+}
+$rejoined = New-Object System.Collections.Generic.List[string]
+$tk = 0
+while ($tk -lt $idList.Count) {
+  $merged = [string]$idList[$tk]; $last = $tk
+  if ($installedIds -cnotcontains $merged) {
+    for ($k2 = $tk + 1; $k2 -lt $idList.Count; $k2++) {
+      $tryId = ($idList[$tk..$k2] -join ' ')
+      if ($installedIds -ccontains $tryId) { $merged = $tryId; $last = $k2; break }
+    }
+  }
+  [void]$rejoined.Add($merged)
+  $tk = $last + 1
+}
+$idList = $rejoined
+# 2026-10-05 用户规范：烟测必须包含默认集——显式 -ModIds 是【叠加】（去重），不再整体替换。
+$idList = @($DefaultMods + @($idList | Where-Object { $DefaultMods -cnotcontains $_ }))
 $ids = ($idList -join ',')
 Write-Output "== 烟测开始 ==  mod=$ids  newGame=$([bool]$NewGame)  timeout=${TimeoutSec}s"
 

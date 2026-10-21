@@ -82,6 +82,14 @@ node <skills>\shared\scripts\check_java_equiv.js <EN备份> <modRoot>     # 骨�
     保持原样；基线 OK 注入版 FAIL 才是注入引入的破坏（2026-09 实抓：译文 ASCII 引号截断 `.skin` 字符串，
     `check_refs` 的严格解析报警是真问题，`JsonProbe` + 基线对照定分责任）。
 - 无依赖 mod 编译不过 = 预期（缺 SiC/LunaLib 类），**不要**为此补依赖；骨架闸门已覆盖语法风险。
+- **★双 janino 探针（2026-10-05 Citadel 0.9.3 实测，闸门没拦住的真事故）**：玩家环境可能仍是
+  **原版核心 `starsector-core\janino.jar`（2.7.8）**（没装 mikohime/Prepatcher 的占多数）——
+  2.7.8 不支持 Java 7+ 语法（diamond `<>`、try-with-resources、multi-catch 等），
+  **3.0.12 探针 15/15 全绿 ≠ 玩家可用**（本机被 mikohime 换成 3.0.12，烟测过、玩家炸）。
+  改/译 `.java` 后必须用核心 2.7.8 再 cook 一遍（API 形态：SimpleCompiler 隔离 cook 可验单文件语法；
+  `starsector-core\commons-compiler.jar` 必须同上 classpath；工具样例 `_work\mod_work\Citadel\verify\jp278\`）。
+  排查写法：`grep -rnE "<\>\(|try \(|catch *\(" data --include="*.java"`，diamond 改显式类型实参即可双兼容。
+  另：**MSYS 的 `sed -i` 会把 CRLF 文件整体剥成 LF**（R17）——改 .java 一律用 python/node 字节级写回，别用 sed。
 
 ## 6. 交付与留档
 

@@ -150,6 +150,18 @@
 | **Header 行的 `defaultValue`** | 只译 `fieldName`，`verify_all_data.js` 仍报英文残留 | LunaSettings 的 **Header 行**把 `defaultValue` 一起译（LunaLib 在 `tab` 为空时用它当分区标题）；非 Header 行一律不译 |
 | **Radio 取值被译** | 译了 LunaLib 的 `Disabled`/`All Contacts`… ⇒ 代码 `when(string)` 不匹配，功能静默失效 | 取值保持英文，并在 `settings.json` 注释里加中文警示；校验脚本只提示不改 |
 | **"有中文目录"≠"有汉化"** | 旧版存档只有 2 条中文串，却按"有旧汉化"走 ② 档 | 先做 §1 step 0 的体检，用数字说话 |
+| **script 列 `AddText"无空格` 形态漏抓**（2026-10-02 Apex 追加） | 旧译明明译了 rules.csv 市场风味文 4 行（`AddText"…"textGrayColor`），迁移却丢译；census 正则 `AddText\s+"` 与 stragglers 的 script 列跳过**双盲区叠加**，闸门全绿仍漏（玩家报告才发现） | 提取正则一律 `\s*`；交付前跑 `sweep_quoted_segments.js` 引号段兜底反查（extract §1.5 / script-registry A 节） |
+| **注入后重跑普查工具 = 全崩**（2026-10-02 Apex 追加） | 普查/三方比对的"新版 EN"输入指向 `mods\`（已是中文），中文被当英文原文，`old-migrated` 归零、直补条目被冲掉 | 工具把基线目录参数化并默认指向 `mod_bak\..._EN_backup`；直补进清单的条目必须同步收编进译文源表（migrate §7） |
+| **基线恢复类修复的连带回滚**（2026-10-02 Apex 追加） | `fix_csv_eol.js` 在 id 复合键（`::type`/`\|trigger`）不匹配时 **0 命中也整文件覆写**（译文静默回滚英文），且基线恢复会把清单外的 uiTags 打回英文 | 用后核对 `cells replaced`/`miss` 计数；修后必跑 `fix_uitags_zh.js` + `check_uitags_zh.js`（script-registry 该行） |
+| **git 归一化改写游戏数据**（2026-10-02 Apex 追加） | mod 目录 `git init` 后 add 报 "CRLF will be replaced by LF"——CSV/JSON 是按字节加载的，checkout 后行尾与交付时不同 | `.gitattributes` 写 `* -text` + `git config core.autocrlf false`，再 `git rm -r --cached . && git add -A` 重暂存（delivery §3） |
+| **latin1 span 注入把中文截成垃圾字节**（2026-10-04 JYD 追加） | 无效 UTF-8 文件（作者乱码）走"latin1 字节保真 span 替换"时，把含中文的替换文本直接拼进 latin1 串、最后 `Buffer.from(out,'latin1')` 写回 ⇒ 中文码点 mod 256 截断，27728B→14275B 全毁（症状：行数暴增/乱码） | 拼接前先 `Buffer.from(zh,'utf8').toString('latin1')` 把替换文本也变成"每字符=一字节"的字节视角再 splice；写回两侧都是 latin1 才是纯字节操作 |
+| **`String.replace(re, fn)` 回调参数语义用错**（2026-10-04 JYD 追加） | 写成 `(mm) => mm[1] + zh + mm[3]`：fn 首参是**完整匹配字符串**，`mm[1]` 取到它的第 2 个字符 ⇒ 替换结果只剩 4 个字符（faction 的 displayName 行塌成 `d鬣犬矿业s`），且命中计数先过、错在替换步，静默写坏 | 要组就用 `text.replace(re, (full, p1, p2, p3) => p1 + zh + p3)`，或用 `text.match(re)` 数组的捕获组拼接；**回调参数个数必须与正则捕获组数一致**——值锚定 2 组正则时第 4 参是匹配偏移量（数字），写 p3 会把偏移量拼进译文（2026-10-04 JYD 二次实测：mod_info 的 name 变成 `鬣犬矿业（Junk Yard Dogs）25`）；注入后必须抽查值形态（grep 键名）而不只看 hit 计数 |
+| **cmp_csv_struct/cmp_csv_cells 签名误用 = 永远假绿**（2026-10-04 JYD 追加） | 两脚本签名是 `<基线目录> <注入后目录> <相对路径...>`（cells 还有 worklistDir）；把两个**文件路径**当目录传 ⇒ 相对路径列表为空 ⇒ 循环零次 ⇒ "全部文件解析结构一致" | 传**目录 + 相对路径**；闸门结果可信前提是"比对文件数 = 预期文件数"——在命令后 echo 校验过文件数再采信 |
+| **strings.json 无引号键：共享工具连英文基线都解析不了**（2026-10-04 JYD 追加） | 上游 strings.json 是 `jyd_asteroid1:"..."` 裸键形态 ⇒ `parseJsonLoose` 抛错，`build_data_worklist.js`（jsonObjects kind）与 `verify_strings_json.js` 都直接崩；且其文本与 descriptions.csv 的 CUSTOM 行**重复**，`sweep_quoted_segments` 因"文本已被覆盖"不报 ⇒ 双盲区叠加漏提取（本次靠发现 440 预填 ≠ 统计才抓回） | 裸键伪 JSON 用**正则直提**（`key\s*:\s*"((?:[^"\\]|\\.)*)"`，参考 `_work\mod_work\Junk Yard Dogs\tools\extract_extra.js`）；strings 等价闸门用 `verify_strings_local.js`（键集/键序/占位符/EOL 手工等价检查）；recipe 按**载体**全覆盖，不因"文本在别处已覆盖"省略 |
 
 > 工具复用：本类任务的注入器/清单器结构直接抄 `_work\mod_work\Hostile Intercept\tools\`（`zh_table.json` 单一译文源 +
 > `build_worklist.js` + `fill_review.js` + `apply_zh.js`（`--dry` + 结构自查 + EOL 保持）），比每次重写省一半时间。
+> **迁移版四件套**（2026-10-04 JYD 实战，Janino 无 jar 形态）：`_work\mod_work\Junk Yard Dogs\tools\`——
+> `fill_old.js`（按 id+field 预填旧译 + 弃用表 + 复核注记 + 迁移审阅 digest）、`apply_zh.js`（无效 UTF-8 文件 latin1 span 替换 /
+> 有效 CSV 结构级重建 / faction 三形状与裸键 strings.json 正则替换，三路合一，含 hit/miss 报告）、
+> `extract_extra.js`（exerelin 数组 + 裸键 strings.json + java 弹窗补充提取）、`verify_strings_local.js`（裸键 strings 等价闸门）。

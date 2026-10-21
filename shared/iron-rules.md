@@ -360,7 +360,7 @@ node <skills>\shared\scripts\check_install_source.js <modRoot> <EN原版备份�
    `称为"风暴"` → org.json FAIL；修复 = 值内 `"风暴"` → `“风暴”`。该问题被 `check_refs` 首先报警，
    由 JsonProbe + 基线对照确诊。
 
-## R19 · jar 层"成对文本"：整句与其高亮/匹配片段必须同批翻译（2026-09 The Vass）
+## R23 · jar 层"成对文本"：整句与其高亮/匹配片段必须同批翻译（2026-09 The Vass）
 
 jar 里有两类"同一中文决策必须同时落到多个常量"的成对文本，只译其一必然静默劣化：
 
@@ -446,3 +446,18 @@ janino `JavaSourceClassLoader` 一次 cook 全部）**全绿≠游戏能过**—
 （import 的 data.* 类是否都有同名文件；多顶层类文件清单）＋
 `JaninoProbe.java`（游戏自带 janino.jar 批量编译+加载，见 script-registry）＋
 ③类任务烟测（`wf-smoke-first.md`）。
+
+## R24 · ship_data 三列语义：**DP=`supplies/rec`**，月维护=`supplies/mo`，`fleet pts`=AI 舰队计价（改错列=改了看不见的数据）（2026-10-07 FDS 两次实测+反汇编定论）
+
+**引擎事实（权威=反编译 `com.fs.starfarer.loading.ShipHullSpreadsheetLoader`，CFR 输出第 77/158/159 行）**：
+- **游戏内部署点（DP）＝ `supplies/rec` 列** → `setSuppliesToRecover()`；
+- 月度维护消耗＝ `supplies/mo` 列 → `setSuppliesPerMonth()`；
+- `fleet pts` 列 → `setFleetPoints()`＝AI 舰队生成计价，DP 面板**不读**（0.6x 遗留列）；
+- 原版锚点：攻势 rec=40=游戏内 DP40、厄运 35、猎鹰 14、监视者 6；原版有 7 艘 rec≠mo（引擎允许两列不等）。
+
+**事故经过（两次踩坑）**：①把 DP 落到 `fleet pts`（游戏内纹丝不动）；②据"原版锚点 rec==mo"推断 DP=`supplies/mo`，改后用户实测"DP 仍是旧值、维护却变了"——因为 FDS 原数据 41 艘 **rec==mo**，游戏内 DP（读 rec）恰好等于月维护（读 mo），两列相等掩盖了真实列义；只改 mo 后两者立刻分离，用户一眼看穿。
+
+**判定与自保**：
+1. 改 DP 一律用 **`supplies/rec`**；月维护用 `supplies/mo`；两列在多数 mod 中相等（沿用作者约定时同步改，如 FDS rec==mo），但**语义独立、必须分开定位**；
+2. 列义拿不准时：**反汇编加载器定论**（grep -a 定位字面量→CFR 反编译→读 setXxx 映射），`grep -a` 必须加（二进制会被静默跳过）；"原版数值对照"只能当旁证，当两列值恒等时它会骗人；
+3. 误改过的列要**断言回退**，并让用户在游戏内复核面板值（面板值=地面真相）。

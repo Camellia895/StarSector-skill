@@ -114,6 +114,24 @@ node <skills>\shared\scripts\check_refs.js <modDir> <游戏根>     # 引用闭�
 > ① 只补**能让崩溃消失的最小字段**；② 在修复日志里写明"这不是原作者内容"；
 > ③ **交付前先问用户**要不要保留这个补丁（有人宁可等作者更新）。
 
+### 重编译后必跑：保汉化 G4 三步（2026-10-09 YRXP 实证：漏跑 ⇒ 市场名"特遣队/米基娜"变英文）
+
+**凡是替换/重编译了 jar 里任何 class**（含只换一个 class），编译产物落盘后、交付前，
+拿**改动前的 jar**（备份原件）与**新 jar** 各解包出 classes 目录跑：
+
+```powershell
+node <skills>\shared\scripts\dump_utf8.js <旧classes目录> old_utf8.json
+node <skills>\shared\scripts\dump_utf8.js <新classes目录> new_utf8.json
+node <skills>\shared\scripts\diff_utf8_multiset.js old_utf8.json new_utf8.json
+```
+
+- 差异里**凡带 CJK 的串**（旧有新无）= 被冲掉的汉化补丁 ⇒ 按 mod 的 `ai\zh\*jar*.json` 映射
+  （条目形如 `{"c":"英文原文","classes":[...],"zh":"译文"}`）用
+  `node <skills>\shared\scripts\patchdir.js <mapping.json> <classes目录>` 回填后重跑到零丢失；
+- 纯 ASCII 差异 = 本次代码逻辑本身（新/删的方法调用、常量），逐条人工确认即可；
+- 若只改了数据没动 jar，跳过本节。方法背景见 `starsector-mod-java-hardcoded-text` §5，
+  两本账的命中记录见 `script-registry.md` / `verification-ledger.md` 的 `diff_utf8_multiset` 行。
+
 ## 4. 阶段 D · 重测到 PASS（收敛判据）
 
 回阶段 A，`-NewGame` 一起跑。
@@ -143,6 +161,7 @@ node <skills>\shared\scripts\check_refs.js <modDir> <游戏根>     # 引用闭�
 - [ ] 根因有**证据**（表项编号 / 反汇编片段 / 时间戳对照 / 闸门输出），不是"看起来像"
 - [ ] 每处修改都**一次一处且可回滚**（备份 + 原始片段）
 - [ ] 新增/修改的数据文件：无 BOM、行尾风格未变、未碰 id 与逻辑键
+- [ ] 替换/重编译过 jar 的 class ⇒ §3 保汉化 G4 三步已跑，CJK 串零丢失
 - [ ] 新失败特征已回灌 `wf-launch-audit.md` §1 的表（左列 = 抓到的日志行）
 - [ ] 结论交给用户时说明：这是**修复**（版本号未动）、哪些改动属"替作者补数据"、要不要保留
 

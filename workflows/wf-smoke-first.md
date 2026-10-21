@@ -49,20 +49,23 @@
 
 ## 阶段 0 · 前置（30 秒）
 
-1. **`-ModIds` 规范（2026-10-02 起）**：
-   - **缺省（不传）＝标准测试集 7 mod**：`EmergentThreats_Vice` / `EmergentThreats_IX_Revival` /
-     `lw_lazylib` / `lunalib` / `MagicLib` / `shaderLib` / `nexerelin`（本机标准环境组合，裸跑 `smoke_run.ps1` 即测它）；
-   - **测具体 mod 必须显式传 `-ModIds <modid>`**——它**整体替换**默认集（不是叠加），
-     声明的依赖由 ModCheck 按 mod_info 自动补齐；
-   - id 是 `mod_info.json` 的 `id`（**不是文件夹名**：GraphicsLib 的 id 是 `shaderLib`、Nexerelin 的 id 是 `nexerelin`）。
+1. **`-ModIds` 规范（2026-10-05 起：默认集必挂）**：
+   - **标准测试集 7 mod**（`EmergentThreats_Vice` / `EmergentThreats_IX_Revival` /
+     `lw_lazylib` / `lunalib` / `MagicLib` / `shaderLib` / `nexerelin`，本机标准环境组合）
+     **无论传不传参都始终挂载**——烟测就是为默认环境开局设计的（用户规范）；
+   - **测具体 mod 显式传 `-ModIds <modid>`**——它是**叠加**在默认集之后（去重），
+     **不再整体替换**；声明的依赖由 ModCheck 按 mod_info 自动补齐；
+   - id 是 `mod_info.json` 的 `id`（**不是文件夹名**：GraphicsLib 的 id 是 `shaderLib`、Nexerelin 的 id 是 `nexerelin`）；
+     **含空格的 id 可直接传**（2026-10-05 修复，如 `Interstellar Federation Refurbished`）。
    启动后输出首行 `mod=<ids>` 与"游戏加载"行**必须含目标 id**；不一致立即中止，改对参数重跑，**不要**解读那次结果。
 2. **游戏必须完全退出**：烟测会自己关游戏，但**不同时跑两个实例**——`drive.ps1` 的 JVM 固定 `-Xmx16g`，
    启动即提交 16GB，双实例会互相拖死。
    ```powershell
    powershell -File <game>\_work\explore\modcheck\drive.ps1 close   # 需要时先关
    ```
-3. 想带别的 mod 一起测：把它们的 id 一起写进 `-ModIds`（逗号分隔）；`ModCheck.ps1` 会自动补上声明的依赖。
-   **标准集之外另加 mod 时记得把 nexerelin 等也带上**（若目标 mod 与其有联动），否则测的不是真实环境。
+3. 想带别的 mod 一起测：把它们的 id 一起写进 `-ModIds`（逗号或空格分隔）；`ModCheck.ps1` 会自动补上声明的依赖。
+   （默认集已含 nexerelin/shaderLib 等，目标 mod 与它们的联动天然在测；目标 mod 是势力/世界生成类的，
+   这套默认组合正是为"Nexerelin 开局"设计的。）
 
 ## 阶段 1 · 跑烟测（**唯一需要的命令**）
 
@@ -134,9 +137,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File <skills>\shared\scripts\smok
 |---|---|---|
 | `-ModIds a,b` 报 `A positional parameter cannot be found` | PowerShell 具名参数只绑一个 token；smoke_run→ModCheck 的 `-File` 传参链断 | **smoke_run 入口已修**（2026-10-02：合并为单个逗号串传 ModCheck，多 id 可用）；**直调 ModCheck** 仍受此限——单 id + 在 mod 的 `mod_info.json` 声明 `dependencies`（smoke 会自动补全启用） |
 | 建存档段 mod 清单"不对"（历史 bug，2026-09-30 已修） | 旧版 ModCheck 结束即把用户完整列表还原，`drive.ps1 boot -KeepMods`"保留"到的是完整列表 ⇒ 建存档段没挂目标 mod | 现版 `-NewGame` 时 smoke_run 让 ModCheck 以 `-KeepEnabled` 结束、测试集保留给建存档段；若"游戏加载"行仍不含目标 id，先查 `-ModIds` 拼写（不带 `-ModIds` 时测的是**标准测试集**，见阶段 0） |
-| 深烟测（`-NewGame`）带 nexerelin 时开局点不进"芯片选择" | Nexerelin 接管了新战役流程（自家势力选择/自定义开局菜单），NewGame.ps1 的原版点击序列（生涯模式→芯片选择）对不上 | **脚手架失配，非 mod 问题**：轻烟测不受影响；深烟测判归属前先想到这点——转手动建档，或临时去掉 nexerelin 只测目标 mod |
+| 深烟测（`-NewGame`）带 nexerelin 时开局点不进"芯片选择" | Nexerelin 接管了新战役流程（自家势力选择/自定义开局菜单），NewGame.ps1 的原版点击序列（生涯模式→芯片选择）对不上 | **脚手架失配，非 mod 问题**：轻烟测不受影响；深烟测判归属前先想到这点——转手动建档，或临时去掉 nexerelin 只测目标 mod。**2026-10-05 更新**：全默认集（含 nexerelin）的 `-NewGame` 实测已可自动走完并建出 `save_autotest_*`（IFR 深烟测 rc=0，54s）——本行仅当复现卡配置屏（rc=3）时适用 |
 | `newgame rc=3` 而 `fail_name.png`（`modcheck\results\ng_frames\`，**共享目录**不在 per-run 目录）里游戏停在**主菜单** | NewGame.ps1 UI 坐标按 **1366×768** 标定；主菜单面板右侧像素锚定 ⇒ 分辨率不同（实测 2000×1125 / 2560×1440）相对坐标漂移，点不中"生涯模式" | **脚手架失配，非 mod 问题**：转手动建档测试；注意失败帧不在 per-run 结果目录里 |
 | mod 明明没引用 LunaLib 却启动 Fatal `NoClassDefFoundError: lunalib/...` | GraphicsLib 1.12.1 硬引用 LunaSettingsListener（env.md §6） | 启用清单带上 lunalib（标准测试集已含；单测某 mod 时在 mod_info 声明依赖） |
+| **中途强杀 smoke_run 后，之后每轮烟测都把列表恢复成测试集**（用户真实列表"丢了"） | 强杀停在"ModCheck 已写测试集、restore 未跑"之间；下一轮开场的 `user_original` 快照刷新把这份残留**固化**（IFR 会话 2026-10-05 实测） | 取**最早一轮** run 目录的 `enabled_mods.json.before.json`（ModCheck 改写前现场）回写 `mods\enabled_mods.json` **和** `results\enabled_mods.user_original.json` 两处；烟测非正常结束后的下一轮，先核对快照内容再跑 |
 
 ## 阶段 3 · PASS 后：进全量校验（适用用法 A 时）
 

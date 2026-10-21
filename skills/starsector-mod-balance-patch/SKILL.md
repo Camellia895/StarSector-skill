@@ -9,6 +9,8 @@ description: Starsector（远行星号）mod 的数值平衡补丁：玩家/社�
 **不做**：让跑不起来的 mod 跑起来（→ `wf-mod-fix`）、版本适配（→ `wf-game-update`）、汉化（→ `wf-localize`）。
 **上游**：玩家评论 / 用户指示。**下游**：`starsector-mod-delivery`（重打包）。
 **必读**：`<skills>\shared\env.md`、`<skills>\shared\conventions.md`（§1.5 交付命名）。
+> 手里是**整份成文的更改意见文档**（要连舰船/战机/战术系统/槽位/船插一起改）→ 走任务⑨的
+> 工作流层 `workflows\wf-balance-revision.md`，本 skill 作为其中"武器锚点 + CSV 手法"的执行层被引用。
 
 ## 0. 取证：评论数字 vs 数据文件（先证明评论说得对/错）
 

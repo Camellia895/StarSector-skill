@@ -85,6 +85,16 @@ node <skills>\shared\scripts\scan_data_stragglers.js <EN原版目录> <EN原版�
 
 必须 **0 候选**才算提取完整。有候选 → 补提取（写专用提取脚本或扩 recipe）→ 重跑，**不要**靠目检文件。
 
+**第二张反查网：引号段兜底（stragglers 的两个盲区）**：`scan_data_stragglers` **不扫 JSON 数组内的短语**（Kayse 实测），
+且 **script/命令列整体被 SKIP_COLS 跳过**——而 rules.csv 的 script 列可以携带玩家可见文本，命令与引号间
+**空白可有可无**（`AddText"…"textGrayColor`，连 `AddText\s+"` 正则都会漏；2026-10-02 Apex 实测 4 行市场风味文迁移丢译）。
+
+```powershell
+node <skills>\shared\scripts\sweep_quoted_segments.js <modRoot> <worklist.json...>   # 有候选须人工判（见 script-registry A 节）
+```
+
+候选处置：注释行 / 禁用行（id 以 `#` 开头）/ 无代码引用的死文件 / 开发者注释 = 假阳性留档；真漏译补进 worklist 重注入。
+
 **反查设计类型名（铁律 R16，反例实测）**：`settings.json` 的 `designTypeColors` **键**不属于任何 CSV 列，
 **任何 recipe 都抓不到**；而同一个设计类型名还出现在 `ship_data.csv` 与 `weapon_data.csv` 的
 `tech/manufacturer` **全列**（不只是 `hull_mods.csv`）。只译 `hull_mods.csv` 会得到
@@ -105,12 +115,13 @@ node <skills>\shared\scripts\check_designtype.js <modRoot>   # 必须 0 问题
 
 1. **JSON 兜底名**：`config\custom_entities.json`、`config\planets.json` 的 `defaultName`/`nameInText`/`name` 是实体兜底显示名（`addCustomEntity(id, null, …)` 时使用）——事故："Photosphere"/"Sensor Array" 显示英文。
 2. **LunaSettings 的 Text/Header 行**：说明文字在 **defaultValue 列**（段落说明、致谢、各 Header 标题）；**Radio 选项值（`Base`/`150%`/`Wide`）是代码逻辑键，严禁翻译**（`when(x){ "Base" -> }`）。
+   **`tab` 列内置 kind 不抓**（2026-10-02 ItemMarkers 实测）：它是 LunaLib 设置页的**页签显示名**（`Visual` 这类），要译须另写一条 `csv` kind 规则补提取；同一 tab 值的多行**必须同译**（写进 consistencyRequirements）。
 3. **装配变体** `data\variants\*.variant` 的 `displayName`。
 4. **faction 舰队名/官职名**：`fleetTypeNames`（patrolSmall/Medium/Large/battlestation…）与 `ranks`/`officerRanks` 的 `name`（Admiral/CEO/Patrol Director…）——按 `"键":"值"` 形态替换值，`#` 注释行跳过。
    recipe 写法：`factionFile` 加 `"ranks":true, "fleetTypeNames":true`（**2026-09-21 起** `fleetTypeNames` 已内置；RYAZ 实测此前内置 kind 不抓、反向网兜出 10 条）。`.faction` 若有**未加引号键**（如 `id:"ryaz"`），`parseJsonLoose` 解析不了，脚本用块级正则兜底（R8）。另有 `displayNameIsOrAre`（情报句"is/are"系动词）：**核心惯例=空串**（中文语序无需系动词，2026-10-02 Hyperion 定例）——非空的英文值应一并提取处置，太短过不了反向网、只能靠这里记住。
 5. **`designTypeColors` 键**：`config\settings.json` 的**键**是设计类型名，须译为与 CSV `tech/manufacturer` 中文值**精确一致**（否则不上色）且**键必须唯一**（事故：`Abyss`/`Abyssal` 都译"深渊" → `Duplicate key "深渊"` fatal）。原版没有颜色键的设计类型（如 Anomalous Phase-Tech）保持原样。
 6. **`customStarts.json`**：`config\exerelin\customStarts.json` 的 name/difficulty/desc。
-7. **rules.csv 行内列错位**：只译 `AddText "…"` 引号内文字，保留 `AddText`/颜色参数/引号（事故：3 行 flavor text 整行丢失）。
+7. **rules.csv 行内列错位**：只译 `AddText "…"` 引号内文字，保留 `AddText`/颜色参数/引号（事故：3 行 flavor text 整行丢失）。⚠️ 命令与引号间**空白可有可无**（`AddText"…"textGrayColor`，2026-10-02 Apex 实测）——正则一律写 `\s*`；script 列是 stragglers 盲区，交付前跑 `sweep_quoted_segments.js` 兜底（§1.5）。
 8. **全原版副本角色表**：`data\factions\fighter_wings.csv`、`weapon_categories.csv` 可能整表只含原版 id 行（势力"开放使用权"的副本）——**整表跳过不译**（在中文核心下会按 id 覆盖核心译名，属上游问题，别在汉化里"顺手修"）。
 9. **伪 JSON 解析**：`#` 注释、尾随逗号、Java float 后缀（`1.2f`）、BOM——一律用 `<skills>\shared\scripts\pseudojson.js`（`parseJsonLoose`），**禁止** `ConvertFrom-Json`/`JSON.parse`（铁律 R8）。
 10. **starmap / 代码命名联动**：`data\campaign\starmap.json` 的星系键与代码 `createStarSystem("Archimedes")`/`star.setName` 常量必须**同译**，否则星系不迁移定位；`custom_entities.json` 的 `defaultName` 与代码 `addCustomEntity(id,"显式名",…)` 两处译成一致。
@@ -178,6 +189,12 @@ node <skills>\shared\scripts\build_jar_worklist.js <candidates.json> <outTransla
 - **sig 形态误杀**：`[` 开头的招牌 UI 文（`[ CLICK HERE ]`、`[ Right click to analyze ] ` 等）会被`isSig` 自动排除——
   crabshack 的 sig 桶 19 条里 14 条是真 UI，靠 `check_jar_stragglers` 在交付前兜回（17 条补译）。
   **自动排除的 sig 桶必须全量人工过一遍**，别只信形态。
+
+- **★双用途筛选标签**（2026-10-02 ItemMarkers 实测，R12 的 UI 形态）：`MultiSelect`/`RadioPanel` 的按钮文案若
+  经 `getSelectedStrings()` **原样回到代码**再与引擎数据比对（如把标签直接 add 进过滤集合，
+  `EXPLICIT_MANUFACTURERS.contains(engineManufacturer)`），则它既是显示文本又是逻辑键——**必须 skip**
+  （ItemMarkers 的 `Low Tech/Midline/High Tech/Pirate/Luddic Path/Other` 六词，译则筛选全坏）。
+  判据：**回调查的是按钮索引还是按钮文本**——按索引取枚举（`values()[customData]`）可译，按文本回传不可译。
 
 **分类契约**（每项）：
 `{ "c": <jar 常量原文，逐字符一致>, "decision": "translate"|"skip", "category": "ui"|"log"|"id"|"path"|"sig"|"fmt"|"markup"|"other", "cls": "...", "note": "..." }`

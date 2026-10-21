@@ -47,9 +47,13 @@
 
 `Frigate` 护卫舰 · `Phase Frigate` 相位护卫舰 · `Destroyer` 驱逐舰 · `Cruiser` 巡洋舰 ·
 `Heavy Cruiser` 重型巡洋舰 · `Battleship` 战列舰 · `Heavy Battleship` 重型战列舰 ·
-`Dreadnaught` 无畏舰 · `Light Carrier` 轻型航母 · `Carrier` 航母 · `Battlecarrier` 战列航母 ·
+`Dreadnaught` 无畏舰 · `Light Carrier` 轻型航母 · `Carrier` 航母 · `Battlecarrier` 航空战列舰 ·
 `Freighter` 货船 · `Tanker` 油船 · `Tug` 拖船 · `Combat Freighter` 武装货船 ·
 `Gunship` 炮艇 · `Fighter` 战机 · `Interceptor` 截击机 · `Bomber` 轰炸机 · `Heavy Fighter` 重型战机 [核心]
+
+> ⚠️ `Battlecarrier` = **航空战列舰**（2026-10-11 RA_BG 汉化取证修正：旧表作「战列航母」，
+> grep 当前核心 `ship_data.csv`/`descriptions.csv` 均 **0 命中**；核心军团 `legion` 的 designation
+> 实际显示「航空战列舰」，与玩家所见一致，故从核心实际显示）。
 
 ## 4. 势力与专名
 

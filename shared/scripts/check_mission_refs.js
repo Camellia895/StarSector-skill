@@ -219,6 +219,27 @@ if (fs.existsSync(jarsDir)) for (const f of fs.readdirSync(jarsDir)) {
 // ---- 采集每个任务的引用 ----
 const TOKEN = /[A-Za-z][A-Za-z0-9_]{5,}/g;
 const QUOTED = /"([^"\n]+)"/g;
+// R21 同源教训（2026-09-30 MagicMaster）：注释掉的 addToFleet 不是活引用，
+// 必须剥掉 Java 注释再抽字面量；字符串字面量内的 // 与 /* 不得误伤（状态机）。
+function stripJavaComments(text) {
+  let out = '', inStr = false, inLine = false, inBlock = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i + 1];
+    if (inLine) { if (c === '\n') { inLine = false; out += c; } continue; }
+    if (inBlock) { if (c === '*' && n === '/') { inBlock = false; i++; } continue; }
+    if (inStr) {
+      out += c;
+      if (c === '\\') { out += n || ''; i++; }
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; out += c; continue; }
+    if (c === '/' && n === '/') { inLine = true; i++; continue; }
+    if (c === '/' && n === '*') { inBlock = true; i++; continue; }
+    out += c;
+  }
+  return out;
+}
 function tokensFromText(text) {
   const out = new Set(); let m;
   while ((m = QUOTED.exec(text))) {
@@ -275,7 +296,7 @@ function checkVariant(id, mission, level) {
 
 let inertCount = 0, liveCount = 0;
 for (const m of missions) {
-  const srcTok = tokensFromText(fs.readFileSync(path.join(misDir, m, 'MissionDefinition.java'), 'utf8'));
+  const srcTok = tokensFromText(stripJavaComments(fs.readFileSync(path.join(misDir, m, 'MissionDefinition.java'), 'utf8')));
   const jarBufs = jarClasses.get(m) || [];
   const jarTok = jarBufs.length ? tokensFromBytes(jarBufs) : new Set();
   const inert = jarBufs.length > 0; // jar 有编译类 ⇒ 源码惰性
